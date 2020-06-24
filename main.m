@@ -6,20 +6,26 @@ RotorInwardAngle = 0;
 
 m = multirotor(RotorPlacementAngles, RotorRotationDirections);
 m = m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
-m.I = calc_inertia(m.Rotors(1).ArmLength, RotorPlacementAngles, RotorDihedralAngle, ...
-    m.Mass - 6 * (m.Rotors(1).ArmMass + m.Rotors(1).MotorMass), ...
-    m.Rotors(1).ArmMass, m.Rotors(1).MotorMass, 0.15);
 
 RotorSpeedsSquared = [55000, 55000, 55000, 55000, 55000, 55000];
 tic
-X = {};
-for i = 1 : 100
-    m = m.UpdateState(RotorSpeedsSquared, 0.01);
-    X{i, 1} = m.GetState();
+sim = simulation(m);
+X = cell(length(sim.GetTimeSteps()), 1);
+X{1} = sim.Multirotor.State;
+i = 1;
+while true
+    sim = sim.NextStep(RotorSpeedsSquared);
+    i = i + 1;
+    X{i} = sim.Multirotor.State;
+    if sim.IsLastStep()
+        break;
+    end
 end
+states = state_collection();
+states.SetStates(X);
 toc
 
 Pos = cell2mat(cellfun(@(s)s.Position', X, 'uni', 0));
 
 subplot(3, 1, 1);
-plot((1:100) * 0.01, Pos(:, 3))
+plot(sim.GetTimeSteps(), Pos(:, 3))

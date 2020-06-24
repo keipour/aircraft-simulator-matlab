@@ -1,34 +1,44 @@
-function inertia_tensor = hex_inertia(arm_length, arm_angles, phi_dih, m_sphere, m_arm, m_rotor, r_sphere)
+%% Inertia estimator for multirotors
+% Calculate the inertia tensor of the input multirotor
+% Author: Azarakhsh Keipour (keipour@gmail.com)
+% Last updated: June 22, 2020
+function inertia_tensor = calc_inertia(m)
 
-% Convert the angles to radians
-arm_angles = arm_angles * pi / 180;
-phi_dih = phi_dih * pi / 180;
+    % Initialization
+    num_rotors = m.NumOfRotors;
+    arm_lengths = cell2mat(arrayfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
+    arm_angles = cell2mat(arrayfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    phi_dihs = cell2mat(arrayfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    mass_arms = cell2mat(arrayfun(@(s)s.ArmMass', m.Rotors, 'uni', 0));
+    mass_motors = cell2mat(arrayfun(@(s)s.MotorMass', m.Rotors, 'uni', 0));
+    mass_payload = m.Mass - sum(mass_arms) - sum(mass_motors);
+    payload_radius = m.PayloadRadius;
 
-% Calculate the rotor coordinates (which also serve as the end points for arms)
-X_rotors = arm_length * cos(phi_dih) * cos(arm_angles);
-Y_rotors = arm_length * cos(phi_dih) * sin(arm_angles);
-Z_rotors = arm_length * sin(phi_dih) * ones(length(arm_angles), 6);
+    % Calculate the rotor coordinates (which also serve as the end points for arms)
+    X_rotors = arm_lengths .* cos(phi_dihs) .* cos(arm_angles);
+    Y_rotors = arm_lengths .* cos(phi_dihs) .* sin(arm_angles);
+    Z_rotors = arm_lengths .* sin(-phi_dihs);
 
-% Calculate the sphere tensor (the main mass around the center)
-sphere_tensor = solid_sphere_inertia(r_sphere, m_sphere);
+    % Calculate the payload tensor (the main mass around the center assuming that it's a perfect sphere)
+    payload_tensor = solid_sphere_inertia(payload_radius, mass_payload);
 
-% Calculate the rotors tensor (sum of all 6 rotors as point masses)
-rotor_tensor = cell(6, 1);
-for i = 1 : 6
-    rotor_tensor{i} = point_mass_inertia(m_rotor, X_rotors(i), Y_rotors(i), Z_rotors(i));
-end
+    % Calculate the rotors tensor (sum of all the rotors as point masses)
+    rotor_tensor = cell(num_rotors, 1);
+    for i = 1 : num_rotors
+        rotor_tensor{i} = point_mass_inertia(mass_motors(i), X_rotors(i), Y_rotors(i), Z_rotors(i));
+    end
 
-% Calculate the arm tensor (sum of all 6 arms as rods connecting center to rotors)
-arm_tensor = cell(6, 1);
-for i = 1 : 6
-    arm_tensor{i} = rod_inertia(m_arm, 0, 0, 0, X_rotors(i), Y_rotors(i), Z_rotors(i));
-end
+    % Calculate the arm tensor (sum of all the arms as rods connecting center to rotors)
+    arm_tensor = cell(num_rotors, 1);
+    for i = 1 : num_rotors
+        arm_tensor{i} = rod_inertia(mass_arms(i), 0, 0, 0, X_rotors(i), Y_rotors(i), Z_rotors(i));
+    end
 
-% Calculate the overall tensor as the sum of all the tensors
-inertia_tensor = sphere_tensor;
-for i = 1 : 6
-    inertia_tensor = inertia_tensor + rotor_tensor{i} + arm_tensor{i};
-end
+    % Calculate the overall tensor as the sum of all the tensors
+    inertia_tensor = payload_tensor;
+    for i = 1 : num_rotors
+        inertia_tensor = inertia_tensor + rotor_tensor{i} + arm_tensor{i};
+    end
 
 end
 
