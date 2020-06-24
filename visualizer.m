@@ -19,12 +19,12 @@ function visualizer(m)
     rotor_diameter = 12; % in inches
 
     % Initialization
-    num_of_rotors = m.GetNumOfRotors();
+    num_of_rotors = m.NumOfRotors;
 
     payload_size = m.PayloadRadius;
-    arm_lengths = cell2mat(arrayfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
-    arm_angles = cell2mat(arrayfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
-    phi_dihs = cell2mat(arrayfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    arm_lengths = cell2mat(cellfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
+    arm_angles = cell2mat(cellfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    phi_dihs = cell2mat(cellfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
     [~, arms_order] = sort(arm_angles);
     
     % Calculate the rotor coordinates (which also serve as the end points for arms)
@@ -43,8 +43,8 @@ function visualizer(m)
     % Draw the rotors
     for i = 1 : num_of_rotors
         hold on
-        plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors(i).R * [0;0;-1], ...
-            m.Rotors(i).RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
+        plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R * [0;0;-1], ...
+            m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
     end
 
     % Draw the central payload box

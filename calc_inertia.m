@@ -6,11 +6,11 @@ function inertia_tensor = calc_inertia(m)
 
     % Initialization
     num_rotors = m.NumOfRotors;
-    arm_lengths = cell2mat(arrayfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
-    arm_angles = cell2mat(arrayfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
-    phi_dihs = cell2mat(arrayfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
-    mass_arms = cell2mat(arrayfun(@(s)s.ArmMass', m.Rotors, 'uni', 0));
-    mass_motors = cell2mat(arrayfun(@(s)s.MotorMass', m.Rotors, 'uni', 0));
+    arm_lengths = cell2mat(cellfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
+    arm_angles = cell2mat(cellfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    phi_dihs = cell2mat(cellfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    mass_arms = cell2mat(cellfun(@(s)s.ArmMass', m.Rotors, 'uni', 0));
+    mass_motors = cell2mat(cellfun(@(s)s.MotorMass', m.Rotors, 'uni', 0));
     mass_payload = m.Mass - sum(mass_arms) - sum(mass_motors);
     payload_radius = m.PayloadRadius;
 

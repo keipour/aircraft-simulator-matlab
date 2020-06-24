@@ -4,7 +4,7 @@ classdef multirotor
     
     properties
         % Fixed Properties
-        Rotors rotor
+        Rotors
         Mass = 3.0;                 % in Kg
         Gravity = [0; 0; 9.80665];  % in m/s^2
         I                           % Inertia
@@ -32,11 +32,12 @@ classdef multirotor
             obj.NumOfRotors = length(ArmAngles);
             
             % Create the array of rotors
-            obj.Rotors(obj.NumOfRotors, 1) = rotor;
+            obj.Rotors = cell(obj.NumOfRotors, 1);
             
             for i = 1 : obj.NumOfRotors
-                obj.Rotors(i).ArmAngle = ArmAngles(i);
-                obj.Rotors(i).RotationDirection = RotationDirections(i);
+                obj.Rotors{i} = rotor_create();
+                obj.Rotors{i} = rotor_set_arm_angle(obj.Rotors{i}, ArmAngles(i));
+                obj.Rotors{i}.RotationDirection = RotationDirections(i);
             end
             
             obj.InitialState = state();
@@ -82,9 +83,9 @@ classdef multirotor
             
             % Assign the values
             for i = 1 : num_of_rotors
-                obj.Rotors(i).InwardAngle = RotorInwardAngles(i);
-                obj.Rotors(i).SidewardAngle = RotorSidewardAngles(i);
-                obj.Rotors(i).DihedralAngle = RotorDihedralAngles(i);
+                obj.Rotors{i} = rotor_set_inward_angle(obj.Rotors{i}, RotorInwardAngles(i));
+                obj.Rotors{i} = rotor_set_sideward_angle(obj.Rotors{i}, RotorSidewardAngles(i));
+                obj.Rotors{i} = rotor_set_dihedral_angle(obj.Rotors{i}, RotorDihedralAngles(i));
             end
             
             % Update the structure
@@ -146,27 +147,27 @@ classdef multirotor
         function F = GetThrustForce(obj, RotorSpeedsSquared)
             F = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               F = F + obj.Rotors(i).GetThrustForce(RotorSpeedsSquared(i));
+               F = F + rotor_get_thrust_force(obj.Rotors{i}, RotorSpeedsSquared(i));
             end
         end
         
         function M = GetGravityMoment(obj)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-                r = obj.Rotors(i).Position;
-                G_motor = obj.Rotors(i).MotorMass * obj.Gravity;
-                G_motorB = obj.Rotors(i).R * G_motor;
-                G_arm = obj.Rotors(i).ArmMass * obj.Gravity;
-                G_armB = obj.Rotors(i).R * G_arm;
+                r = obj.Rotors{i}.Position;
+                G_motor = obj.Rotors{i}.MotorMass * obj.Gravity;
+                G_motorB = obj.Rotors{i}.R * G_motor;
+                G_arm = obj.Rotors{i}.ArmMass * obj.Gravity;
+                G_armB = obj.Rotors{i}.R * G_arm;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
             end
         end
-                
+        
         function M = GetThrustMoment(obj, RotorSpeedsSquared)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-                r = obj.Rotors(i).Position;
-                F = obj.Rotors(i).GetThrustForce(RotorSpeedsSquared(i));
+                r = obj.Rotors{i}.Position;
+                F = rotor_get_thrust_force(obj.Rotors{i}, RotorSpeedsSquared(i));
                 M = M + cross(r, F);
             end
         end
@@ -174,7 +175,7 @@ classdef multirotor
         function M = GetReactionMoment(obj, RotorSpeedsSquared)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               M = M + obj.Rotors(i).GetReactionMoment(RotorSpeedsSquared(i));
+               M = M + rotor_get_reaction_moment(obj.Rotors{i}, RotorSpeedsSquared(i));
             end
         end
         
@@ -199,3 +200,112 @@ classdef multirotor
     end
 end
 
+%%
+
+function rotor = rotor_create()
+    rotor.InwardAngle = 0;        % in degrees
+    rotor.SidewardAngle = 0;      % in degrees
+    rotor.DihedralAngle = 0;      % in degrees
+    rotor.ArmAngle = 0;           % in degrees
+    rotor.ArmLength = 0.4;        % in meters
+    rotor.TimeConstant = 0.01;    % for motor in secs
+    rotor.ConstantGain = 1;       % for motor
+    rotor.RPMLimit = 3000;        % for motor
+    rotor.ThrustConstant = 1.08105e-4;
+    rotor.TorqueConstant = 0.05;
+    rotor.MotorMass = 0.10;       % in Kilograms
+    rotor.ArmMass = 0.150;        % in Kilograms
+    rotor.rotorationDirection = 1;  % -1 for CW, 1 for CCW around Z
+                                  % Remember that Z is downward
+                               
+    rotor.R = eye(3);             % rotoration matrix RRB
+    rotor.Position = zeros(3, 1); % Position of the rotor in B
+    rotor.MaxrotorSpeedSquared = 0;
+    
+    rotor = rotor_update_structure(rotor);
+end
+
+function rotor = rotor_update_structure(rotor)
+    rotor.R = rotor_calc_rotoration_matrix(rotor);
+    rotor.MaxrotorSpeedSquared = (rotor.RPMLimit / 30 * pi).^2;
+    rotor.Position = rotor_get_position(rotor);
+end
+
+function R = rotor_calc_rotoration_matrix(rotor)
+    if isempty(rotor.ArmAngle)
+        R = eye(3);
+        return;
+    end
+
+    mu = deg2rad(rotor.ArmAngle);            
+    phix = deg2rad(rotor.InwardAngle);
+    phiy = deg2rad(rotor.SidewardAngle);
+
+    rotorZB1 = [0, 1, 0; 
+              -1, 0, 0; 
+              0, 0, 1];
+
+    rotorZB2 = [cos(mu), sin(mu), 0; 
+              -sin(mu), cos(mu), 0;
+              0, 0, 1];
+
+    rotorZB = rotorZB2 * rotorZB1;
+
+    rotorXp = [1, 0, 0;
+             0, cos(phix), sin(phix);
+             0, -sin(phix), cos(phix)];
+
+    rotorYpp = [cos(phiy), 0, -sin(phiy);
+              0, 1, 0;
+              sin(phiy), 0, cos(phiy)];
+
+    R = rotorYpp * rotorXp * rotorZB;
+end
+
+function r = rotor_get_position(rotor)
+    rx = rotor.ArmLength * cosd(rotor.DihedralAngle) * cosd(rotor.ArmAngle);
+    ry = rotor.ArmLength * cosd(rotor.DihedralAngle) * sind(rotor.ArmAngle);
+    rz = -rotor.ArmLength * sind(rotor.DihedralAngle);
+    r = [rx; ry; rz];
+end
+        
+function rotor = rotor_set_inward_angle(rotor, value)
+    rotor.InwardAngle = value;
+    rotor = rotor_update_structure(rotor);
+end
+
+function rotor = rotor_set_dihedral_angle(rotor, value)
+    rotor.DihedralAngle = value;
+    rotor = rotor_update_structure(rotor);
+end
+
+function rotor = rotor_set_arm_length(rotor, value)
+    rotor.ArmLength = value;
+    rotor = rotor_update_structure(rotor);
+end
+        
+function rotor = rotor_set_sideward_angle(rotor, value)
+    rotor.SidewardAngle = value;
+    rotor = rotor_update_structure(rotor);
+end
+
+function rotor = rotor_set_arm_angle(rotor, value)
+    rotor.ArmAngle = value;
+    rotor = rotor_update_structure(rotor);
+end
+
+function rotor = rotor_set_rpm_limit(rotor, value)
+    rotor.RPMLimit = value;
+    rotor = rotor_update_structure(rotor);
+end
+        
+function F = rotor_get_thrust_force(rotor, rotor_speed_squared)
+    rotor_speed_squared = min(rotor_speed_squared, rotor.MaxrotorSpeedSquared);
+    F = rotor.R' * [0; 0; -rotor.ThrustConstant * rotor_speed_squared];
+end
+
+function M = rotor_get_reaction_moment(rotor, rotor_speed_squared)
+    rotor_speed_squared = min(rotor_speed_squared, rotor.MaxrotorSpeedSquared);
+    M = rotor.R' * [0; 0; rotor.rotorationDirection * rotor.TorqueConstant ...
+        * rotor_speed_squared];
+end
