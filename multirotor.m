@@ -13,8 +13,8 @@ classdef multirotor
 
     properties(SetAccess=protected, GetAccess=public)
         NumOfRotors                 % Number of rotors
-        InitialState state          % Initial state
-        State state                 % The current state
+        InitialState                % Initial state
+        State                       % The current state
     end
     
     properties(SetAccess=protected, GetAccess=protected)
