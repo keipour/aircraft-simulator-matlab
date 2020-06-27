@@ -9,8 +9,8 @@ RotorDihedralAngle = 0;
 RotorSidewardAngle = [-30, 30, -30, 30, -30, 30];
 RotorInwardAngle = 0;
 
-m = multirotor.Create(RotorPlacementAngles, RotorRotationDirections);
-m = multirotor.SetRotorAngles(m, RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
+m = multirotor(RotorPlacementAngles, RotorRotationDirections);
+m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 
 RotorSpeedsSquared = [55000, 55000, 55000, 55000, 55000, 55000];
 

@@ -1,6 +1,6 @@
 classdef simulation < handle
     properties
-        TotalTime = 5;      % in secs
+        TotalTime = 10;      % in secs
         TimeStep = 1e-3;    % in secs
         Multirotor
     end
@@ -35,7 +35,7 @@ classdef simulation < handle
         end
         
         function NextStep(obj, RotorSpeedsSquared)
-            obj.Multirotor = multirotor.UpdateState(obj.Multirotor, RotorSpeedsSquared, obj.TimeStep);
+            obj.Multirotor.UpdateState(RotorSpeedsSquared, obj.TimeStep);
             obj.StateHistory.PushBack(obj.Multirotor.State);
             obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
         end
@@ -60,6 +60,16 @@ classdef simulation < handle
                     break;
                 end
             end
+        end
+        
+        function set.TotalTime(obj, value)
+            obj.TotalTime = value;      % in secs
+            obj.Reset();
+        end
+
+        function set.TimeStep(obj, value)
+            obj.TimeStep = value;      % in secs
+            obj.Reset();
         end
     end
 end
