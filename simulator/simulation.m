@@ -1,7 +1,4 @@
 classdef simulation < handle
-    %SIMULATION Summary of this class goes here
-    %   Detailed explanation goes here
-    
     properties
         TotalTime = 5;      % in secs
         TimeStep = 1e-3;    % in secs
@@ -52,7 +49,17 @@ classdef simulation < handle
         end
         
         function traj = GetStateTrajectory(obj)
-            traj = obj.StateHistory.States;
+            traj = obj.StateHistory;
+        end
+        
+        function Simulate(obj, RotorSpeedsSquared)
+            obj.Reset();
+            while true
+                obj.NextStep(RotorSpeedsSquared);
+                if obj.IsLastStep()
+                    break;
+                end
+            end
         end
     end
 end

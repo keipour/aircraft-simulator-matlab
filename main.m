@@ -16,15 +16,14 @@ RotorSpeedsSquared = [55000, 55000, 55000, 55000, 55000, 55000];
 
 tic
 sim = simulation(m);
-while true
-    sim.NextStep(RotorSpeedsSquared);
-    if IsLastStep(sim)
-        break;
-    end
-end
+sim.Simulate(RotorSpeedsSquared);
 toc
 
-Pos = cell2mat(cellfun(@(s)s.Position', sim.GetStateTrajectory(), 'uni', 0));
+Pos = sim.GetStateTrajectory().GetPositions();
 
 subplot(3, 1, 1);
+plot(sim.GetTimeSteps(), Pos(:, 1))
+subplot(3, 1, 2);
+plot(sim.GetTimeSteps(), Pos(:, 2))
+subplot(3, 1, 3);
 plot(sim.GetTimeSteps(), Pos(:, 3))
