@@ -15,9 +15,6 @@ classdef multirotor < handle
         NumOfRotors                 % Number of rotors
         InitialState                % Initial state
         State                       % The current state
-    end
-    
-    properties(SetAccess=protected, GetAccess=protected)
         I_inv                       % Inversion of I
     end
     
@@ -90,10 +87,13 @@ classdef multirotor < handle
         end
         
         function UpdateState(obj, RotorSpeedsSquared, dt)
+            % Calculate the current rotation matrix
+            RBI = obj.GetRotationMatrix();
+            
             % Calculate the total force and moment
             obj.State.Force = obj.GetGravityForce() + ...
-                obj.GetThrustForce(RotorSpeedsSquared);
-            obj.State.Moment = obj.GetGravityMoment() + ...
+                obj.GetThrustForce(RBI', RotorSpeedsSquared);
+            obj.State.Moment = obj.GetGravityMoment(RBI) + ...
                 obj.GetThrustMoment(RotorSpeedsSquared) + ...
                 obj.GetReactionMoment(RotorSpeedsSquared);
             
@@ -165,10 +165,28 @@ classdef multirotor < handle
 
         end
         
+        function CopyFrom(obj, mult)
+            obj.Rotors = mult.Rotors;
+            obj.Mass = mult.Mass;
+            obj.Gravity = mult.Gravity;
+            obj.I = mult.I;
+            obj.PayloadRadius = mult.PayloadRadius;
+            obj.NumOfRotors = mult.NumOfRotors;
+            obj.InitialState = mult.InitialState;
+            obj.State = mult.State;
+            obj.I_inv = mult.I_inv;
+        end
+        
         function Visualize(obj)
             visualize_multirotor(obj);
         end
-       
+        
+        function R = GetRotationMatrix(obj)
+            roll = deg2rad(obj.State.RPY(1));
+            pitch = deg2rad(obj.State.RPY(2));
+            yaw = deg2rad(obj.State.RPY(3));
+            R = angle2dcm(yaw, pitch, roll);
+        end
     end
     
     %% Private Methods
@@ -186,21 +204,22 @@ classdef multirotor < handle
             F = obj.Gravity * obj.Mass;
         end
         
-        function F = GetThrustForce(obj, RotorSpeedsSquared)
-            F = zeros(3, 1);
+        function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared)
+            FB = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               F = F + rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
+               FB = FB + rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
             end
+            F = Rot_IB * FB;
         end
         
-        function M = GetGravityMoment(obj)
+        function M = GetGravityMoment(obj, Rot_BI)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                G_motor = obj.Rotors{i}.MotorMass * obj.Gravity;
-                G_motorB = obj.Rotors{i}.R * G_motor;
-                G_arm = obj.Rotors{i}.ArmMass * obj.Gravity;
-                G_armB = obj.Rotors{i}.R * G_arm;
+                G_motorI = obj.Rotors{i}.MotorMass * obj.Gravity;
+                G_motorB = Rot_BI * G_motorI;
+                G_armI = obj.Rotors{i}.ArmMass * obj.Gravity;
+                G_armB = Rot_BI * G_armI;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
             end
         end
@@ -230,6 +249,8 @@ classdef multirotor < handle
         end
         
         function phi_dot = GetEulerDerivative(obj)
+        % Returns the euler derivatives in degrees   
+            
             sphi = sind(obj.State.RPY(1));
             cphi = cosd(obj.State.RPY(1));
             ttheta = tand(obj.State.RPY(2));
