@@ -11,7 +11,7 @@ classdef simulation < handle
     end
     
     properties(SetAccess=protected, GetAccess=protected)
-        InitialMultirotor
+        InitialMultirotor multirotor
         StateHistory
     end
     
@@ -27,7 +27,8 @@ classdef simulation < handle
         end
         
         function Reset(obj)
-            obj.Multirotor = obj.InitialMultirotor;
+            obj.Multirotor = multirotor(0, 1);
+            obj.Multirotor.CopyFrom(obj.InitialMultirotor);
             obj.CurrentTime = 0;
             obj.StateHistory = state_collection();
             obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
