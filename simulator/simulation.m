@@ -2,7 +2,7 @@ classdef simulation < handle
     properties
         TotalTime = 10;      % in secs
         TimeStep = 1e-3;    % in secs
-        Multirotor
+        Multirotor multirotor
     end
     
     properties(SetAccess=protected, GetAccess=public)
