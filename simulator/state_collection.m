@@ -1,4 +1,4 @@
-classdef state_collection
+classdef state_collection < handle
     %STATE_COLLECTION Summary of this class goes here
     %   Detailed explanation goes here
     
@@ -10,10 +10,10 @@ classdef state_collection
     
     methods
         function obj = state_collection()
-            obj = obj.Reset();
+            obj.Reset();
         end
         
-        function obj = SetCapacity(obj, value)
+        function SetCapacity(obj, value)
             if value == 0
                 obj.States = {};
                 obj.Size = 0;
@@ -23,7 +23,7 @@ classdef state_collection
             elseif obj.Capacity >= value
                 obj.States = obj.States{1:value, 1};
             else 
-                obj.States{value, 1} = state;
+                obj.States{value, 1} = state.Create();
             end
             obj.Capacity = value;
         end
@@ -32,11 +32,11 @@ classdef state_collection
             flag = obj.Size > 0;
         end
         
-        function obj = Reset(obj)
-            obj = obj.SetCapacity(0);
+        function Reset(obj)
+            obj.SetCapacity(0);
         end
         
-        function obj = PushBack(obj, new_state)
+        function PushBack(obj, new_state)
             obj.Size = obj.Size + 1;
             obj.States{obj.Size, 1} = new_state;
             if obj.Capacity < obj.Size
@@ -44,11 +44,10 @@ classdef state_collection
             end
         end
         
-        function obj = SetStates(obj, value)
-            obj.States = value;
-            obj.Size = value;
-            obj.Capacity = value;
+        function SetStates(obj, states)
+            obj.States = states;
+            obj.Size = length(states);
+            obj.Capacity = length(states);
         end
     end
 end
-

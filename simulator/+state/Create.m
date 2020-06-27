@@ -1,4 +1,4 @@
-function s = state()
+function s = Create()
     s.Acceleration        = zeros(3, 1);  % Linear acceleration
     s.EulerDerivative     = zeros(3, 1);  % The derivatives of RPY
     s.AngularAcceleration = zeros(3, 1);  % Angular acceleration
