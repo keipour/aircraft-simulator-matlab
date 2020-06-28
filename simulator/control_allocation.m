@@ -26,8 +26,55 @@ classdef control_allocation < handle
         function rotor_speeds_squared = CalcRotorSpeeds(obj, multirotor, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
+            if obj.Method == control_allocation_types.NDI
+                rotor_speeds_squared = obj.NDIRotorSpeeds(multirotor, lin_accel, ang_accel);
+            end
+
+            for i = length(rotor_speeds_squared)
+                if rotor_speeds_squared(i) > multirotor.Rotors{i}.MaxrotorSpeedSquared
+                    rotor_speeds_squared(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
+                end
+                if rotor_speeds_squared(i) < 0
+                    rotor_speeds_squared(i) = 0;
+                end
+            end
+        end
+    end
+    
+    %% Private Methods
+    methods(Access=protected)
+        function InitializeNDIMethod(obj, multirotor)
+        % Initialize the NDI method
+        
+            % Calculate L matrix (related to body thrust forces)
+            obj.NDI_L = zeros(3, multirotor.NumOfRotors);
+            for i = 1 : multirotor.NumOfRotors
+               obj.NDI_L(:, i) = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
+            end
+
+            % Calculate G matrix (related to body reaction moments)
+            NDI_G = zeros(3, multirotor.NumOfRotors);
+            for i = 1 : multirotor.NumOfRotors
+               NDI_G(:, i) = rotor.GetReactionMoment(multirotor.Rotors{i}, 1);
+            end
+            
+            % Calculate F matrix (related to body thrust moments)
+            NDI_F = zeros(3, multirotor.NumOfRotors);
+            for i = 1 : multirotor.NumOfRotors
+                r = multirotor.Rotors{i}.Position;
+                F = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
+                NDI_F(:, i) = cross(r, F);
+            end
+            
+            obj.NDI_M = NDI_F + NDI_G;
+        end
+        
+        function rotor_speeds_squared = NDIRotorSpeeds(obj, multirotor, lin_accel, euler_accel)
+        % Calculate the rotor speeds from the desired linear and angular accelerations
+        % using NDI method
+            
             % Create the desired output matrix y
-            y = [lin_accel; ang_accel];
+            y = [lin_accel; euler_accel];
         
             % Get the rotation matrix
             RBI = multirotor.GetRotationMatrix();
@@ -67,36 +114,6 @@ classdef control_allocation < handle
             % Calculate the rotor speeds
             rotor_speeds_squared = pinv(B) * (y - A); 
         end
-    end
-    
-    %% Private Methods
-    methods(Access=protected)
-        function InitializeNDIMethod(obj, multirotor)
-        % Initialize the NDI method
-        
-            % Calculate L matrix (related to body thrust forces)
-            obj.NDI_L = zeros(3, multirotor.NumOfRotors);
-            for i = 1 : multirotor.NumOfRotors
-               obj.NDI_L(:, i) = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
-            end
-
-            % Calculate G matrix (related to body reaction moments)
-            NDI_G = zeros(3, multirotor.NumOfRotors);
-            for i = 1 : multirotor.NumOfRotors
-               NDI_G(:, i) = rotor.GetReactionMoment(multirotor.Rotors{i}, 1);
-            end
-            
-            % Calculate F matrix (related to body thrust moments)
-            NDI_F = zeros(3, multirotor.NumOfRotors);
-            for i = 1 : multirotor.NumOfRotors
-                r = multirotor.Rotors{i}.Position;
-                F = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
-                NDI_F(:, i) = cross(r, F);
-            end
-            
-            obj.NDI_M = NDI_F + NDI_G;
-        end
-        
     end
 end
 

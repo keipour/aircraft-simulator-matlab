@@ -17,13 +17,13 @@ rpy = [0; 0; 0];
 omega = [0; 0; 0];
 m.SetInitialState(pos, vel, rpy, omega);
 
-
-RotorSpeedsSquared = [52373, 52375, 52373, 52375, 52373, 52375];
+c = controller(m);
+c.AttitudeController.SetPID(eye(3), zeros(3), eye(3));
 
 tic
-sim = simulation(m);
-sim.TotalTime = 5;
-sim.Simulate(RotorSpeedsSquared);
+sim = simulation(m, c);
+sim.TotalTime = 30;
+sim.Simulate();
 toc
 
 Pos = sim.GetStateTrajectory().GetPositions();
@@ -33,32 +33,41 @@ Ms = sim.GetStateTrajectory().GetAngularAccelerations();
 t = sim.GetTimeSteps();
 
 subplot(3, 4, 1);
-plot(t, Pos(:, 1))
+spplot(t, Pos(:, 1), 'x')
 subplot(3, 4, 5);
-plot(t, Pos(:, 2))
+spplot(t, Pos(:, 2), 'y')
 subplot(3, 4, 9);
-plot(t, Pos(:, 3))
+spplot(t, Pos(:, 3), 'z')
 
 subplot(3, 4, 2);
-plot(t, RPY(:, 1))
+spplot(t, RPY(:, 1))
 subplot(3, 4, 6);
-plot(t, RPY(:, 2))
+spplot(t, RPY(:, 2))
 subplot(3, 4, 10);
-plot(t, RPY(:, 3))
+spplot(t, RPY(:, 3))
 
 subplot(3, 4, 3);
-plot(t, Fs(:, 1))
+spplot(t, Fs(:, 1))
 subplot(3, 4, 7);
-plot(t, Fs(:, 2))
+spplot(t, Fs(:, 2))
 subplot(3, 4, 11);
-plot(t, Fs(:, 3))
+spplot(t, Fs(:, 3))
 
 subplot(3, 4, 4);
-plot(t, Ms(:, 1))
+spplot(t, Ms(:, 1))
 subplot(3, 4, 8);
-plot(t, Ms(:, 2))
+spplot(t, Ms(:, 2))
 subplot(3, 4, 12);
-plot(t, Ms(:, 3))
+spplot(t, Ms(:, 3))
 
 ca = control_allocation(m);
 ca.CalcRotorSpeeds(m, [0; 0; 0], [0; 0; 2])
+
+function spplot(t, X, str)
+    plot(t, X);
+    lim = ylim;
+    ylim([lim(1) - 1, lim(2) + 1]);
+    if nargin > 2
+        title(str);
+    end
+end

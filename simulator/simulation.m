@@ -1,8 +1,9 @@
 classdef simulation < handle
     properties
-        TotalTime = 10;      % in secs
+        TotalTime = 5;      % in secs
         TimeStep = 1e-3;    % in secs
         Multirotor multirotor
+        Controller controller
     end
     
     properties(SetAccess=protected, GetAccess=public)
@@ -17,8 +18,9 @@ classdef simulation < handle
     
     %% Methods
     methods
-        function obj = simulation(multirotor)
+        function obj = simulation(multirotor, controller)
             obj.InitialMultirotor = multirotor;
+            obj.Controller = controller;
             obj.Reset();
         end
         
@@ -35,8 +37,9 @@ classdef simulation < handle
             obj.StateHistory.PushBack(obj.Multirotor.State);
         end
         
-        function NextStep(obj, RotorSpeedsSquared)
-            obj.Multirotor.UpdateState(RotorSpeedsSquared, obj.TimeStep);
+        function NextStep(obj)
+            rotor_speeds_squared = obj.Controller.Control(obj.Multirotor, zeros(3, 1), [0; 0; 10]);
+            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.TimeStep);
             obj.StateHistory.PushBack(obj.Multirotor.State);
             obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
         end
@@ -53,10 +56,10 @@ classdef simulation < handle
             traj = obj.StateHistory;
         end
         
-        function Simulate(obj, RotorSpeedsSquared)
+        function Simulate(obj)
             obj.Reset();
             while true
-                obj.NextStep(RotorSpeedsSquared);
+                obj.NextStep();
                 if obj.IsLastStep()
                     break;
                 end
