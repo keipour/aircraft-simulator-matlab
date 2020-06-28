@@ -58,7 +58,7 @@ classdef state_collection < handle
             pos = cell2mat(cellfun(@(s)s.EulerDerivative', obj.States, 'uni', 0));
         end
 
-        function pos = GetAngularAcceleration(obj)
+        function pos = GetAngularAccelerations(obj)
             pos = cell2mat(cellfun(@(s)s.AngularAcceleration', obj.States, 'uni', 0));
         end
 

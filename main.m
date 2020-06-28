@@ -18,7 +18,7 @@ omega = [0; 0; 0];
 m.SetInitialState(pos, vel, rpy, omega);
 
 
-RotorSpeedsSquared = [55000, 55000, 55000, 55000, 55000, 55000];
+RotorSpeedsSquared = [52373, 52375, 52373, 52375, 52373, 52375];
 
 tic
 sim = simulation(m);
@@ -28,8 +28,8 @@ toc
 
 Pos = sim.GetStateTrajectory().GetPositions();
 RPY = sim.GetStateTrajectory().GetRPYs();
-Fs = sim.GetStateTrajectory().GetForces();
-Ms = sim.GetStateTrajectory().GetMoments();
+Fs = sim.GetStateTrajectory().GetAccelerations();
+Ms = sim.GetStateTrajectory().GetAngularAccelerations();
 t = sim.GetTimeSteps();
 
 subplot(3, 4, 1);
@@ -59,3 +59,6 @@ subplot(3, 4, 8);
 plot(t, Ms(:, 2))
 subplot(3, 4, 12);
 plot(t, Ms(:, 3))
+
+ca = control_allocation(m);
+ca.CalcRotorSpeeds(m, [0; 0; 0], [0; 0; 2])
