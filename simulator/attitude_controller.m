@@ -6,7 +6,7 @@ classdef attitude_controller < handle
     end
     
     properties(SetAccess=protected, GetAccess=protected)
-        ErrorIntegral = [0; 0; 0];
+        ErrorIntegral = zeros(3, 1);
         WindupMax = [10; 10; 10];
     end
     
@@ -25,6 +25,10 @@ classdef attitude_controller < handle
             end
             euler_accel = obj.P * rpy_err - ...
                 obj.D * rpy_dot_err + obj.I * obj.ErrorIntegral;
+        end
+        
+        function Reset(obj)
+            obj.ErrorIntegral = zeros(3, 1);
         end
     end
     

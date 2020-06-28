@@ -13,17 +13,17 @@ m = multirotor(RotorPlacementAngles, RotorRotationDirections);
 m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 pos = [0; 0; 0];
 vel = [0; 0; 0];
-rpy = [0; 0; 0];
+rpy = [0; 0; 60];
 omega = [0; 0; 0];
 m.SetInitialState(pos, vel, rpy, omega);
 
 c = controller(m);
-c.AttitudeController.SetPID(5*eye(3), 0*eye(3), 5*eye(3));
+c.AttitudeController.SetPID(5*eye(3), 0*eye(3), 1*eye(3));
 
 tic
 sim = simulation(m, c);
-sim.TotalTime = 30;
-sim.Simulate();
+sim.TotalTime = 10;
+sim.SimulateAttitudeResponse([0;0;10]);
 toc
 
 Pos = sim.GetStateTrajectory().GetPositions();
@@ -59,9 +59,6 @@ subplot(3, 4, 8);
 spplot(t, Ms(:, 2))
 subplot(3, 4, 12);
 spplot(t, Ms(:, 3))
-
-ca = control_allocation(m);
-ca.CalcRotorSpeeds(m, [0; 0; 0], [0; 0; 2])
 
 function spplot(t, X, str)
     plot(t, X);
