@@ -18,7 +18,7 @@ omega = [0; 0; 0];
 m.SetInitialState(pos, vel, rpy, omega);
 
 c = controller(m);
-c.AttitudeController.SetPID(eye(3), zeros(3), eye(3));
+c.AttitudeController.SetPID(5*eye(3), 0*eye(3), 5*eye(3));
 
 tic
 sim = simulation(m, c);

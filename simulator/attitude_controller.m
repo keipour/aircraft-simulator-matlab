@@ -6,7 +6,8 @@ classdef attitude_controller < handle
     end
     
     properties(SetAccess=protected, GetAccess=protected)
-        Integral = 0;
+        ErrorIntegral = [0; 0; 0];
+        WindupMax = [10; 10; 10];
     end
     
     methods
@@ -16,15 +17,27 @@ classdef attitude_controller < handle
             obj.D = d;
         end
         
-        function euler_accel = Control(obj, multirotor, rpy_des)
-            rpy = multirotor.State.RPY;
-            rpy_dot = multirotor.State.EulerDerivative;
-            euler_accel = obj.P * deg2rad(rpy_des - rpy) - obj.D * deg2rad(rpy_dot);
+        function euler_accel = Control(obj, multirotor, rpy_des, dt)
+            rpy_err = deg2rad(rpy_des - multirotor.State.RPY);
+            rpy_dot_err = deg2rad(multirotor.State.EulerDerivative);
+            if (nargin > 3)
+                obj.UpdateErrorIntegral(rpy_err, dt);
+            end
+            euler_accel = obj.P * rpy_err - ...
+                obj.D * rpy_dot_err + obj.I * obj.ErrorIntegral;
         end
     end
     
     methods(Access=protected)
+        function UpdateErrorIntegral(obj, err, dt)
+            obj.ErrorIntegral = obj.ErrorIntegral + err * dt;
 
+            for i = 1 : 3
+                if obj.ErrorIntegral(i) > obj.WindupMax(i)
+                    obj.ErrorIntegral(i) = obj.WindupMax(i);
+                end
+            end
+        end
     end
 end
 

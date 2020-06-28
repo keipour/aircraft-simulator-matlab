@@ -38,7 +38,7 @@ classdef simulation < handle
         end
         
         function NextStep(obj)
-            rotor_speeds_squared = obj.Controller.Control(obj.Multirotor, zeros(3, 1), [0; 0; 10]);
+            rotor_speeds_squared = obj.Controller.Control(obj.Multirotor, zeros(3, 1), [0; 0; 10], obj.TimeStep);
             obj.Multirotor.UpdateState(rotor_speeds_squared, obj.TimeStep);
             obj.StateHistory.PushBack(obj.Multirotor.State);
             obj.CurrentTime = obj.CurrentTime + obj.TimeStep;

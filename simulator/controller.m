@@ -10,8 +10,8 @@ classdef controller < handle
             obj.AttitudeController = attitude_controller;
         end
         
-        function rotor_speeds_squared = Control(obj, multirotor, pos_des, rpy_des)
-            euler_accel = obj.AttitudeController.Control(multirotor, rpy_des);
+        function rotor_speeds_squared = Control(obj, multirotor, pos_des, rpy_des, dt)
+            euler_accel = obj.AttitudeController.Control(multirotor, rpy_des, dt);
             rotor_speeds_squared = obj.ControlAllocation.CalcRotorSpeeds(multirotor, [0; 0; -2], euler_accel);
         end
     end
