@@ -38,7 +38,7 @@ classdef simulation < handle
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
             obj.CurrentTime = 0;
-            obj.StateHistory = state_collection();
+            obj.StateHistory = state_collection(obj.Multirotor.NumOfRotors);
             obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
             obj.StateHistory.PushBack(obj.Multirotor.State);
         end

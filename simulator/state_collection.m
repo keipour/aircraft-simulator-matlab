@@ -1,15 +1,15 @@
 classdef state_collection < handle
-    %STATE_COLLECTION Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties(SetAccess=protected, GetAccess=public)
         States
         Size
         Capacity
+        NumOfRotors
     end
     
     methods
-        function obj = state_collection()
+        function obj = state_collection(n_rotors)
+            obj.NumOfRotors = n_rotors;
             obj.Reset();
         end
         
@@ -23,7 +23,7 @@ classdef state_collection < handle
             elseif obj.Capacity >= value
                 obj.States = obj.States{1:value, 1};
             else 
-                obj.States{value, 1} = state.Create();
+                obj.States{value, 1} = state.Create(obj.NumOfRotors);
             end
             obj.Capacity = value;
         end

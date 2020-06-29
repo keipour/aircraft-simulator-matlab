@@ -9,6 +9,13 @@ classdef multirotor < handle
         Gravity = [0; 0; 9.80665];  % in m/s^2
         I                           % Inertia
         PayloadRadius = 0.15;       % in meters
+        
+        TotalSpeedLimit = 20;                       % in m/s
+        VelocityLimits = [10; 10; 8];               % in m/s
+        TotalAccelerationLimit = 3;                 % in m/s^2
+        AccelerationLimits = [2; 2; 3];             % in m/s^2
+        EulerDerivativeLimits = [70; 70; 30];       % in deg/s
+        AngularAccelerationLimit = [pi/2; pi/2; pi];% in rad/s^2
     end
 
     properties(SetAccess=protected, GetAccess=public)
@@ -37,8 +44,8 @@ classdef multirotor < handle
                 obj.Rotors{i}.RotationDirection = RotationDirections(i);
             end
             
-            obj.InitialState = state.Create();
-            obj.State = state.Create();
+            obj.InitialState = state.Create(obj.NumOfRotors);
+            obj.State = state.Create(obj.NumOfRotors);
             
             obj.UpdateStructure();
         end
@@ -106,12 +113,19 @@ classdef multirotor < handle
             obj.State.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
                 obj.State.Velocity * dt;
             obj.State.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
+            obj.State.Velocity = check_limits(obj.State.Velocity, obj.VelocityLimits);
+            obj.State.Velocity = check_limits(obj.State.Velocity, obj.TotalSpeedLimit);
             obj.State.Acceleration = p_dotdot;
 
             obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerDerivative * dt);
             obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
             obj.State.EulerDerivative = phi_dot;
             obj.State.AngularAcceleration = omega_dot;
+            
+            for i = 1 : obj.NumOfRotors
+                [obj.State.RotorSpeeds(i), sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
+                obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
+            end
         end
         
         function set.I(obj, value)
@@ -242,10 +256,13 @@ classdef multirotor < handle
         
         function p_dotdot = GetLinearAcceleration(obj, force)
             p_dotdot = force / obj.Mass;
+            p_dotdot = check_limits(p_dotdot, obj.AccelerationLimits);
+            p_dotdot = check_limits(p_dotdot, obj.TotalAccelerationLimit);
         end
         
         function omega_dot = GetAngularAcceleration(obj, moment)
             omega_dot = obj.I_inv * (moment - cross(obj.State.Omega, obj.I * obj.State.Omega));
+            omega_dot = check_limits(omega_dot, obj.AngularAccelerationLimit);
         end
         
         function phi_dot = GetEulerDerivative(obj)
@@ -259,7 +276,32 @@ classdef multirotor < handle
                    0, cphi, -sphi;
                    0, sphi / ctheta, cphi / ctheta];
             phi_dot = rad2deg(eta * obj.State.Omega);
+            phi_dot = check_limits(phi_dot, obj.EulerDerivativeLimits);
         end
+    end
+end
+
+%% Other functions
+function x_lim = check_scalar_limit(x, lim)
+    x_lim = min(x, lim);
+    if x < 0
+        x_lim = max(x, -lim);
+    end
+end
+
+function x_lim = check_limits(x, lim)
+    x_lim = x;
+    
+    if length(lim) == 1
+        nx = norm(x);
+        if nx > lim
+            x_lim = x / nx * lim;
+        end
+        return;
+    end
+
+    for i = 1 : length(x)
+        x_lim(i) = check_scalar_limit(x(i), lim(i));
     end
 end
 
