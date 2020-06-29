@@ -15,13 +15,15 @@ pos = [0; 0; 0];
 vel = [0; 0; 0];
 rpy = [0; 0; 60];
 omega = [0; 0; 0];
-m.SetInitialState(pos, vel, rpy, omega);
 
 c = controller(m);
-c.AttitudeController.SetPID(5*eye(3), 0*eye(3), 1*eye(3));
 
 tic
 sim = simulation(m, c);
+
+
+sim.Controller.AttitudeController.SetPID(5*eye(3), 0*eye(3), 5*eye(3));
+sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 sim.TotalTime = 10;
 sim.SimulateAttitudeResponse([0;0;10]);
 toc

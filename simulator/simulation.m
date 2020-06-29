@@ -18,9 +18,10 @@ classdef simulation < handle
     
     %% Methods
     methods
-        function obj = simulation(multirotor, controller)
-            obj.InitialMultirotor = multirotor;
+        function obj = simulation(multrotor, controller)
+            obj.InitialMultirotor = multrotor;
             obj.Controller = controller;
+            obj.Multirotor = multirotor(0, 1);
             obj.Reset();
         end
         
@@ -30,8 +31,12 @@ classdef simulation < handle
         
         function Reset(obj)
             obj.Controller.Reset();
-            obj.Multirotor = multirotor(0, 1);
+            
+            % Keep some state fields
+            istate = obj.Multirotor.InitialState;
             obj.Multirotor.CopyFrom(obj.InitialMultirotor);
+            obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
+            
             obj.CurrentTime = 0;
             obj.StateHistory = state_collection();
             obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
@@ -89,7 +94,7 @@ classdef simulation < handle
         function res = AnalyzeResponse(obj, X, des)
             res.StartValue = X(1);
             res.DesiredValue = des;
-            tol = 1e-5;
+            tol = 1e-3;
 
             % Calculate the overshoot
             [res.OvershootMagnitude, res.OvershootPercentage] = ...
@@ -97,7 +102,7 @@ classdef simulation < handle
             
             % Detect the type of the system (1=Underdamped, 2=Overdamped)
             [res.SystemType, res.SystemTypeName] = ...
-                detect_system_type(res.OvershootMagnitude, tol);
+                detect_system_type(res.OvershootMagnitude, des, X, tol);
             
             % Detect the rise time
             [res.RiseTime, res.RiseTimeLabel] = ...
@@ -112,7 +117,7 @@ classdef simulation < handle
                 fprintf('    Overshoot Magnitude : %0.3f\n', res.OvershootMagnitude);
                 fprintf('    Overshoot Percentage: %0.2f%%\n', res.OvershootPercentage * 100);
                 fprintf('    %s (0%%-100%%) : %0.3f (s)\n', res.RiseTimeLabel, res.RiseTime);
-            else
+            elseif res.SystemType == 2 % overdamped
                 fprintf('    %s (10%%-90%%) : %0.3f (s)\n', res.RiseTimeLabel, res.RiseTime);
             end
             
@@ -150,12 +155,19 @@ function [mag, perc] = calc_overshoot(start, des, X, tol)
     end
 end
 
-function [type, typename] = detect_system_type(overshoot, tol)
+function [type, typename] = detect_system_type(overshoot, des, X, tol)
     type = 1; % Underdamped
     typename = 'Underdamped';
     if overshoot < tol
         type = 2; % Overdamped
         typename = 'Overdamped';
+    end
+    
+    min_x = min(X);
+    max_x = max(X);
+    if max_x - min_x < tol || abs(des - X(1)) < tol
+        type = 0; % Undetermined
+        typename = 'Not Determined';
     end
 end
 

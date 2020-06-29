@@ -1,5 +1,6 @@
 classdef attitude_controller < handle
-    properties
+
+    properties(SetAccess=protected, GetAccess=public)
         P = eye(3);
         I = zeros(3);
         D = eye(3);
@@ -12,9 +13,9 @@ classdef attitude_controller < handle
     
     methods
         function SetPID(obj, p, i, d)
-            obj.P = p;
-            obj.I = i;
-            obj.D = d;
+            obj.P = check_gain(p);
+            obj.I = check_gain(i);
+            obj.D = check_gain(d);
         end
         
         function euler_accel = Control(obj, multirotor, rpy_des, dt)
@@ -45,3 +46,15 @@ classdef attitude_controller < handle
     end
 end
 
+%% Helper functions
+function A = check_gain(a)
+    if numel(a) == 1
+        A = a * eye(3);
+    elseif numel(a) == 3
+        A = diag(a);
+    elseif size(a, 1) == 3 && size(a, 2) == 3
+        A = a;
+    else
+        error('Input gain should be a scalar, a 3-D vector or a 3x3 matrix');
+    end
+end
