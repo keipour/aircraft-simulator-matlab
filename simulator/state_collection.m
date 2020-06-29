@@ -50,40 +50,84 @@ classdef state_collection < handle
             obj.Capacity = length(states);
         end
         
-        function pos = GetAccelerations(obj)
-            pos = cell2mat(cellfun(@(s)s.Acceleration', obj.States, 'uni', 0));
+        function res = GetAccelerations(obj)
+            res = cell2mat(cellfun(@(s)s.Acceleration', obj.States, 'uni', 0));
         end
 
-        function pos = GetEulerDerivatives(obj)
-            pos = cell2mat(cellfun(@(s)s.EulerDerivative', obj.States, 'uni', 0));
+        function res = GetEulerDerivatives(obj)
+            res = cell2mat(cellfun(@(s)s.EulerDerivative', obj.States, 'uni', 0));
         end
 
-        function pos = GetAngularAccelerations(obj)
-            pos = cell2mat(cellfun(@(s)s.AngularAcceleration', obj.States, 'uni', 0));
+        function res = GetAngularAccelerations(obj)
+            res = cell2mat(cellfun(@(s)s.AngularAcceleration', obj.States, 'uni', 0));
         end
 
-        function pos = GetPositions(obj)
-            pos = cell2mat(cellfun(@(s)s.Position', obj.States, 'uni', 0));
+        function res = GetPositions(obj)
+            res = cell2mat(cellfun(@(s)s.Position', obj.States, 'uni', 0));
         end
 
-        function pos = GetVelocities(obj)
-            pos = cell2mat(cellfun(@(s)s.Velocity', obj.States, 'uni', 0));
+        function res = GetVelocities(obj)
+            res = cell2mat(cellfun(@(s)s.Velocity', obj.States, 'uni', 0));
         end
 
-        function pos = GetRPYs(obj)
-            pos = cell2mat(cellfun(@(s)s.RPY', obj.States, 'uni', 0));
+        function res = GetRPYs(obj)
+            res = cell2mat(cellfun(@(s)s.RPY', obj.States, 'uni', 0));
         end
 
-        function pos = GetOmegas(obj)
-            pos = cell2mat(cellfun(@(s)s.Omega', obj.States, 'uni', 0));
+        function res = GetOmegas(obj)
+            res = cell2mat(cellfun(@(s)s.Omega', obj.States, 'uni', 0));
         end
 
-        function pos = GetForces(obj)
-            pos = cell2mat(cellfun(@(s)s.Force', obj.States, 'uni', 0));
+        function res = GetForces(obj)
+            res = cell2mat(cellfun(@(s)s.Force', obj.States, 'uni', 0));
         end
 
-        function pos = GetMoments(obj)
-            pos = cell2mat(cellfun(@(s)s.Moment', obj.States, 'uni', 0));
+        function res = GetMoments(obj)
+            res = cell2mat(cellfun(@(s)s.Moment', obj.States, 'uni', 0));
         end
+        
+        function res = GetRotorSpeeds(obj)
+            res = cell2mat(cellfun(@(s)s.RotorSpeeds', obj.States, 'uni', 0));
+        end
+        
+        function res = GetRotorSaturations(obj)
+            res = cell2mat(cellfun(@(s)s.RotorsSaturated', obj.States, 'uni', 0));
+        end
+        
+        function [res, labels] = GetField(obj, str)
+            str = lower(str);
+            
+%             obj.GetVelocities()
+%             obj.GetRPYs()
+%             obj.GetOmegas()
+%             obj.GetForces()
+%             obj.GetMoments()
+%             obj.GetRotorSpeeds()
+%             obj.GetRotorSaturations()
+% 
+            if contains(str, 'accel') && ~contains(str, 'ang') && ~contains(str, 'rot')
+                res = obj.GetAccelerations();
+                labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
+                
+            elseif (contains(str, 'euler') || contains(str, 'rpy') || contains(str, 'att') || contains(str, 'phi')) && ...
+                    (contains(str, 'deriv') || contains(str, 'dot') || contains(str, 'vel') || contains(str, 'speed'))
+                res = obj.GetEulerDerivatives();
+                labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Euler Derivative'};
+
+            elseif ((contains(str, 'ang') || contains(str, 'rot')) && contains(str, 'accel')) || ...
+                    ((contains(str, 'dot') || contains(str, 'deriv')) && contains(str, 'omega'))
+                res = obj.GetAngularAccelerations();
+                labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Acceleration'};
+
+            elseif contains(str, 'pos')
+                res = obj.GetPositions();
+                labels = {'x', 'y', 'z', 'Position'};
+
+            
+            else
+                error('Input string not recognized.');
+            end
+        end
+        
     end
 end
