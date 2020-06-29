@@ -123,7 +123,8 @@ classdef multirotor < handle
             obj.State.AngularAcceleration = omega_dot;
             
             for i = 1 : obj.NumOfRotors
-                [obj.State.RotorSpeeds(i), sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
+                [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
+                obj.State.RotorSpeeds(i) = sqrt(rs);
                 obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
             end
         end
