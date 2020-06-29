@@ -85,8 +85,8 @@ classdef simulation < handle
                 obj.PrintAnalysis(res{i});
                 
                 % Plot the analysis if required
-                h = figure;
                 if plot == true
+                    h = figure;
                     obj.PlotAnalysis(h, res{i});
                 end
             end
@@ -101,8 +101,42 @@ classdef simulation < handle
             obj.TimeStep = value;      % in secs
             obj.Reset();
         end
+        
+        function h = PlotSignals(obj, cols, signals)
+            if ~iscell(signals)
+                signals = {signals};
+            end
+            
+            n_sig = length(signals);
+            X = cell(n_sig, 1);
+            L = cell(n_sig, 1);
+            total_size = 0;
+            for i = 1 : n_sig
+                [X{i}, L{i}] = obj.StateHistory.GetField(signals{i});
+                total_size = total_size + size(X{i}, 2);
+            end
+            
+            t = obj.GetTimeSteps();
+            
+            h = figure;
+            rows = ceil(total_size / cols);
+            
+            curr_plot = 1;
+            for i = 1 : n_sig
+                for j = 1 : size(X{i}, 2)
+                    subplot(rows, cols, curr_plot);
+                    plot_signal(t, X{i}(:, j));
+                    title(L{i}(:, j));
+                    xlabel('Time (s)');
+                    ylabel(L{i}(:, j));
+                    fix_plot_limits({t}, {X{i}(:, j)});
+                    curr_plot = curr_plot + 1;
+                end
+            end
+        end
     end
     
+    %% Private methods
     methods(Access=protected)
         function res = AnalyzeResponse(obj, X, des, signal_name)
             res.SignalName = signal_name;
@@ -160,13 +194,13 @@ classdef simulation < handle
             t = obj.GetTimeSteps();
 
             % Plot the response
-            plot_signal(h, t, res.Values);
+            plot_signal(t, res.Values);
 
             % Plot the desired value
-            plot_signal(h, t, res.DesiredValue);
+            plot_signal(t, res.DesiredValue);
             
             if res.SystemType ~= 0
-                plot_signal(h, t, res.StartValue, '-')
+                plot_signal(t, res.StartValue, '-')
                 plot_delay(h, t, res);
                 plot_rise(h, t, res);
                 plot_settling_time(h, t, res);
@@ -180,7 +214,7 @@ classdef simulation < handle
             xlabel('Time (s)');
             ylabel(res.SignalName);
             legend([res.SignalName ' Response'], 'Desired Value');
-            fix_plot_limits(h, {t}, {res.Values, res.DesiredValue});
+            fix_plot_limits({t}, {res.Values, res.DesiredValue});
         end
         
     end
@@ -308,8 +342,7 @@ function [settling_time, settling_index] = calc_settling_time(des, X, t, sys_typ
     end
 end
 
-function plot_signal(h, t, Y, properties, line_width)
-    figure(h);
+function plot_signal(t, Y, properties, line_width)
     hold on
 
     % Check if our input is scalar
@@ -329,8 +362,7 @@ function plot_signal(h, t, Y, properties, line_width)
     hold off
 end
         
-function fix_plot_limits(h, Xs, Ys)
-    figure(h);
+function fix_plot_limits(Xs, Ys)
     max_x = -inf;
     min_x = inf;
     for i = 1 : length(Xs)
@@ -347,17 +379,17 @@ function fix_plot_limits(h, Xs, Ys)
     ylim([min_y - 0.5, max_y + 0.5]);
 end
 
-function plot_dotted_line(h, x, y)
-    plot_signal(h, x, y, 'm-.');
+function plot_dotted_line(x, y)
+    plot_signal(x, y, 'm-.');
 end
 
-function plot_mark(h, x, y)
-    plot_signal(h, x, y, 'kx', 3);
+function plot_mark(x, y)
+    plot_signal(x, y, 'kx', 3);
 end
 
 function add_annotation(h, x, y, label, center)
     figure(h);
-    plot_signal(h, x, y, 'k--', 1.5);
+    plot_signal(x, y, 'k--', 1.5);
     hold on
     if nargin < 5 || center == false
         text((x(1) + x(2)) / 2, (y(1) + y(2)) / 2, label);
@@ -383,13 +415,13 @@ function plot_delay(h, t, res)
     end
     dx = [t(index), t(index)];
     dy = [res.StartValue, res.Values(index)];
-    plot_dotted_line(h, dx, dy);
+    plot_dotted_line(dx, dy);
     
     dx = [t(1), t(index)];
     dy = [res.Values(index), res.Values(index)];
     add_annotation(h, dx, dy, {'', 'Delay'}, true);
     
-    plot_mark(h, t(index), res.Values(index))
+    plot_mark(t(index), res.Values(index))
 end
 
 function plot_rise(h, t, res)
@@ -403,11 +435,11 @@ function plot_rise(h, t, res)
     if start_ind > 1
         rx = [t(start_ind), t(start_ind)];
         ry = [res.StartValue, res.Values(end_ind)];
-        plot_dotted_line(h, rx, ry);
+        plot_dotted_line(rx, ry);
 
         rx = [t(1), t(start_ind)];
         ry = [res.Values(start_ind), res.Values(start_ind)];
-        plot_dotted_line(h, rx, ry);
+        plot_dotted_line(rx, ry);
 
         plot_mark(h, t(start_ind), res.Values(start_ind))
     end
@@ -418,12 +450,12 @@ function plot_rise(h, t, res)
     else
         rx = [t(1), t(start_ind)];
         ry = [res.Values(end_ind), res.Values(end_ind)];
-        plot_dotted_line(h, rx, ry);
+        plot_dotted_line(rx, ry);
     end
     rx = [t(end_ind), t(end_ind)];
     ry = [res.StartValue, end_value];
-    plot_dotted_line(h, rx, ry);
-    plot_mark(h, t(end_ind), res.Values(end_ind))
+    plot_dotted_line(rx, ry);
+    plot_mark(t(end_ind), res.Values(end_ind))
     
     rx = [t(start_ind), t(end_ind)];
     ry = [end_value, end_value];
@@ -437,11 +469,11 @@ function plot_settling_time(h, t, res)
     end
     sx = [t(index), t(index)];
     sy = [res.StartValue, res.Values(index)];
-    plot_dotted_line(h, sx, sy);
+    plot_dotted_line(sx, sy);
     
     sx = [t(1), t(index)];
     sy = [res.Values(index), res.Values(index)];
     add_annotation(h, sx, sy, {'', 'Settling Time'}, true);
     
-    plot_mark(h, t(index), res.Values(index))
+    plot_mark(t(index), res.Values(index))
 end
