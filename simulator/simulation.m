@@ -79,16 +79,18 @@ classdef simulation < handle
             % Analysis of the response
             rpys = obj.StateHistory.GetRPYs();
             signal_names = {'Roll', 'Pitch', 'Yaw'};
-            res = {};
+            res = cell(3, 1);
             for i = 1 : 3
                 res{i} = obj.AnalyzeResponse(rpys(:, i), rpy_des(i), signal_names{i});
-                obj.PrintAnalysis(res{i});
-                
-                % Plot the analysis if required
+
+                % Plot the analysis if asked
                 if plot == true
-                    h = figure;
-                    obj.PlotAnalysis(h, res{i});
+                    subplot(3, 1, i);
+                    obj.PlotAnalysis(res{i});
                 end
+                
+                % Print the analysis results
+                obj.PrintAnalysis(res{i});
             end
         end
         
@@ -102,7 +104,10 @@ classdef simulation < handle
             obj.Reset();
         end
         
-        function h = PlotSignals(obj, cols, signals)
+        function h = PlotSignalsByName(obj, cols, signals, gridon)
+            if nargin < 4
+                gridon = false;
+            end
             if ~iscell(signals)
                 signals = {signals};
             end
@@ -110,10 +115,29 @@ classdef simulation < handle
             n_sig = length(signals);
             X = cell(n_sig, 1);
             L = cell(n_sig, 1);
-            total_size = 0;
             for i = 1 : n_sig
                 [X{i}, L{i}] = obj.StateHistory.GetField(signals{i});
-                total_size = total_size + size(X{i}, 2);
+            end
+            
+            h = obj.PlotSignalsFromData(cols, X, L, gridon);
+        end
+        
+        function h = PlotSignalsFromData(obj, cols, data, labels, gridon)
+            if nargin < 5
+                gridon = false;
+            end
+            if nargin < 4
+                labels = {};
+            end
+            
+            if ~iscell(data)
+                data = {data};
+            end
+            
+            n_data = length(data);
+            total_size = 0;
+            for i = 1 : n_data
+                total_size = total_size + size(data{i}, 2);
             end
             
             t = obj.GetTimeSteps();
@@ -122,18 +146,26 @@ classdef simulation < handle
             rows = ceil(total_size / cols);
             
             curr_plot = 1;
-            for i = 1 : n_sig
-                for j = 1 : size(X{i}, 2)
+            for i = 1 : n_data
+                for j = 1 : size(data{i}, 2)
                     subplot(rows, cols, curr_plot);
-                    plot_signal(t, X{i}(:, j));
-                    title(L{i}(:, j));
+                    plot_signal(t, data{i}(:, j));
+                    lbl = {};
+                    if length(labels) >= i || length(labels{i}) >= j
+                        lbl = labels{i}(:, j);
+                    end
+                    title(lbl);
                     xlabel('Time (s)');
-                    ylabel(L{i}(:, j));
-                    fix_plot_limits({t}, {X{i}(:, j)});
+                    ylabel(lbl);
+                    if gridon
+                        grid on
+                    end
+                    fix_plot_limits({t}, {data{i}(:, j)});
                     curr_plot = curr_plot + 1;
                 end
             end
         end
+        
     end
     
     %% Private methods
@@ -189,8 +221,7 @@ classdef simulation < handle
             fprintf('\n');
         end
         
-        function PlotAnalysis(obj, h, res)
-            figure(h);
+        function PlotAnalysis(obj, res)
             t = obj.GetTimeSteps();
 
             % Plot the response
@@ -201,19 +232,20 @@ classdef simulation < handle
             
             if res.SystemType ~= 0
                 plot_signal(t, res.StartValue, '-')
-                plot_delay(h, t, res);
-                plot_rise(h, t, res);
-                plot_settling_time(h, t, res);
+                plot_delay(t, res);
+                plot_rise(t, res);
+                plot_settling_time(t, res);
             end
             
             if res.SystemType == 1
-                plot_overshoot(h, t, res);
+                plot_overshoot(t, res);
             end
             
             title([res.SignalName ' Response Analysis']);
             xlabel('Time (s)');
             ylabel(res.SignalName);
             legend([res.SignalName ' Response'], 'Desired Value');
+            grid on
             fix_plot_limits({t}, {res.Values, res.DesiredValue});
         end
         
@@ -328,7 +360,7 @@ function [settling_time, settling_index] = calc_settling_time(des, X, t, sys_typ
         return;
     end
     
-    delta = abs(des) * thresh;
+    delta = abs(des - X(1)) * thresh;
 
     indices = find(X > des + delta | X < des - delta);
     if isempty(indices)
@@ -351,9 +383,9 @@ function plot_signal(t, Y, properties, line_width)
     end
 
     % Plot the signal
-    if nargin < 4
+    if nargin < 3
         plot(t, Y, 'LineWidth', 2);
-    elseif nargin < 5
+    elseif nargin < 4
         plot(t, Y, properties);
     else
         plot(t, Y, properties, 'LineWidth', line_width);
@@ -387,11 +419,10 @@ function plot_mark(x, y)
     plot_signal(x, y, 'kx', 3);
 end
 
-function add_annotation(h, x, y, label, center)
-    figure(h);
+function add_annotation(x, y, label, center)
     plot_signal(x, y, 'k--', 1.5);
     hold on
-    if nargin < 5 || center == false
+    if nargin < 4 || center == false
         text((x(1) + x(2)) / 2, (y(1) + y(2)) / 2, label);
     else
         text((x(1) + x(2)) / 2, (y(1) + y(2)) / 2, label, 'HorizontalAlignment', 'center');
@@ -399,16 +430,16 @@ function add_annotation(h, x, y, label, center)
     hold off
 end
 
-function plot_overshoot(h, t, res)
+function plot_overshoot(t, res)
     if res.SystemType == 0
         return;
     end
     ox = [t(res.OvershootIndex), t(res.OvershootIndex)];
     oy = [res.Values(res.OvershootIndex), res.DesiredValue];
-    add_annotation(h, ox, oy, '\leftarrow Overshoot');
+    add_annotation(ox, oy, '\leftarrow Overshoot');
 end
 
-function plot_delay(h, t, res)
+function plot_delay(t, res)
     index = res.DelayTimeIndex;
     if index == 1 || res.SystemType == 0
         return;
@@ -419,12 +450,12 @@ function plot_delay(h, t, res)
     
     dx = [t(1), t(index)];
     dy = [res.Values(index), res.Values(index)];
-    add_annotation(h, dx, dy, {'', 'Delay'}, true);
+    add_annotation(dx, dy, {'', 'Delay'}, true);
     
     plot_mark(t(index), res.Values(index))
 end
 
-function plot_rise(h, t, res)
+function plot_rise(t, res)
     end_ind = res.RiseTimeEndIndex;
     if end_ind == 1 || res.SystemType == 0
         return;
@@ -441,7 +472,7 @@ function plot_rise(h, t, res)
         ry = [res.Values(start_ind), res.Values(start_ind)];
         plot_dotted_line(rx, ry);
 
-        plot_mark(h, t(start_ind), res.Values(start_ind))
+        plot_mark(t(start_ind), res.Values(start_ind))
     end
 
     end_value = res.Values(end_ind);
@@ -459,21 +490,34 @@ function plot_rise(h, t, res)
     
     rx = [t(start_ind), t(end_ind)];
     ry = [end_value, end_value];
-    add_annotation(h, rx, ry, {'', res.RiseTimeLabel}, true);
+    add_annotation(rx, ry, {'', res.RiseTimeLabel}, true);
 end
 
-function plot_settling_time(h, t, res)
+function plot_settling_time(t, res)
     index = res.SettlingTimeIndex;
     if index == 1 || res.SystemType == 0
         return;
     end
+
+    delta = abs(res.DesiredValue - res.StartValue) * 0.02;
+    val1 = res.DesiredValue + delta;
+    val2 = res.DesiredValue - delta;
+    
+    hold on
+    fill([t(index), t(end), t(end), t(index)], [val1, val1, val2, val2], ...
+        [0.5, 0.7, 1], 'FaceAlpha', 0.25, 'EdgeAlpha', 0.25);
+    hold off 
+    
+    % Draw the vertical dotted line
     sx = [t(index), t(index)];
     sy = [res.StartValue, res.Values(index)];
     plot_dotted_line(sx, sy);
     
+    % Draw the horizontal dotted line 
     sx = [t(1), t(index)];
-    sy = [res.Values(index), res.Values(index)];
-    add_annotation(h, sx, sy, {'', 'Settling Time'}, true);
+    midval = (res.Values(res.RiseTimeEndIndex) + res.Values(res.DelayTimeIndex)) / 2;
+    sy = [midval, midval];
+    add_annotation(sx, sy, {'', 'Settling Time'}, true);
     
     plot_mark(t(index), res.Values(index))
 end

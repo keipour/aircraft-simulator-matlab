@@ -97,37 +97,82 @@ classdef state_collection < handle
         function [res, labels] = GetField(obj, str)
             str = lower(str);
             
-%             obj.GetVelocities()
-%             obj.GetRPYs()
-%             obj.GetOmegas()
-%             obj.GetForces()
-%             obj.GetMoments()
-%             obj.GetRotorSpeeds()
-%             obj.GetRotorSaturations()
-% 
-            if contains(str, 'accel') && ~contains(str, 'ang') && ~contains(str, 'rot')
+            if contains(str, 'accel') && ~contains_or(str, {'ang', 'rot'})
                 res = obj.GetAccelerations();
                 labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
                 
-            elseif (contains(str, 'euler') || contains(str, 'rpy') || contains(str, 'att') || contains(str, 'phi')) && ...
-                    (contains(str, 'deriv') || contains(str, 'dot') || contains(str, 'vel') || contains(str, 'speed'))
+            elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
+                    contains_or(str, {'deriv', 'dot', 'vel', 'speed', 'rate'})
                 res = obj.GetEulerDerivatives();
-                labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Euler Derivative'};
+                labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Attitude Rate'};
 
-            elseif ((contains(str, 'ang') || contains(str, 'rot')) && contains(str, 'accel')) || ...
-                    ((contains(str, 'dot') || contains(str, 'deriv')) && contains(str, 'omega'))
+            elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
+                    (contains_or(str, {'dot', 'deriv'}) && contains(str, 'omega'))
                 res = obj.GetAngularAccelerations();
-                labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Acceleration'};
+                labels = {'$\dot{\omega}_x$', '$\dot{\omega}_y$', '$\dot{\omega}_z$', 'Angular Acceleration'};
 
+            elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'})
+                res = obj.GetRPYs();
+                labels = {'Roll', 'Pitch', 'Yaw', 'Attitude'};
+
+            elseif contains(str, 'rpm') || (contains_or(str, {'mot', 'rotor'}) && contains_or(str, {'vel', 'rate', 'speed'}))
+                res = obj.GetRotorSpeeds();
+                n_rotors = size(res, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Motor ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Motor Velocity';
+
+            elseif contains(str, 'omega') || (contains_or(str, {'ang', 'rot'}) && contains_or(str, {'vel', 'rate', 'speed'}))
+                res = obj.GetOmegas();
+                labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Velocity'};
+
+            elseif contains(str, 'forc')
+                res = obj.GetForces();
+                labels = {'F_x', 'F_y', 'F_z', 'Generated Force'};
+
+            elseif contains_or(str, {'momen', 'torq'})
+                res = obj.GetMoments();
+                labels = {'M_x', 'M_y', 'M_z', 'Generated Moment'};
+
+            elseif contains_or(str, {'vel', 'speed'})
+                res = obj.GetVelocities();
+                labels = {'V_x', 'V_y', 'V_z', 'Velocity'};
+            
             elseif contains(str, 'pos')
                 res = obj.GetPositions();
                 labels = {'x', 'y', 'z', 'Position'};
 
-            
+            elseif contains(str, 'sat')
+                res = obj.GetRotorSaturations();
+                labels = {'Motor Saturations', 'Motor Saturations'};
+
             else
                 error('Input string not recognized.');
             end
         end
         
+    end
+end
+
+%% Helper functions
+function res = contains_or(str, patterns)
+    res = false;
+    if ~iscell(patterns)
+        patterns = {patterns};
+    end
+    for i = 1 : length(patterns)
+        res = res || contains(str, patterns{i});
+    end
+end
+
+function res = contains_and(str, patterns)
+    res = true;
+    if ~iscell(patterns)
+        patterns = {patterns};
+    end
+    for i = 1 : length(patterns)
+        res = res && contains(str, patterns{i});
     end
 end
