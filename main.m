@@ -29,4 +29,4 @@ sim.SimulateAttitudeResponse([10; -10; 50], true);
 toc
 
 t = sim.GetTimeSteps();
-sim.PlotSignalsByName(3, {'pos', 'accel', 'rpy dot', 'rpm'}, true);
+graphics.PlotSignalsByName(sim, 3, {'pos', 'accel', 'rpy dot', 'rpm'}, true);
