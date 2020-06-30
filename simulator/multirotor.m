@@ -12,10 +12,7 @@ classdef multirotor < handle
         
         TotalSpeedLimit = 20;                       % in m/s
         VelocityLimits = [10; 10; 8];               % in m/s
-        TotalAccelerationLimit = 3;                 % in m/s^2
-        AccelerationLimits = [2; 2; 3];             % in m/s^2
-        EulerDerivativeLimits = [70; 70; 30];       % in deg/s
-        AngularAccelerationLimit = [pi/2; pi/2; pi];% in rad/s^2
+        EulerRateLimits = [70; 70; 30];       % in deg/s
     end
 
     properties(SetAccess=protected, GetAccess=public)
@@ -107,7 +104,7 @@ classdef multirotor < handle
             % Calculate the equations of motion
             p_dotdot = obj.GetLinearAcceleration(obj.State.Force);
             omega_dot = obj.GetAngularAcceleration(obj.State.Moment);
-            phi_dot = obj.GetEulerDerivative();
+            phi_dot = obj.GetEulerRate();
             
             % Update the rest of the state
             obj.State.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
@@ -117,9 +114,9 @@ classdef multirotor < handle
             obj.State.Velocity = check_limits(obj.State.Velocity, obj.TotalSpeedLimit);
             obj.State.Acceleration = p_dotdot;
 
-            obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerDerivative * dt);
+            obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
             obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
-            obj.State.EulerDerivative = phi_dot;
+            obj.State.EulerRate = phi_dot;
             obj.State.AngularAcceleration = omega_dot;
             
             for i = 1 : obj.NumOfRotors
@@ -257,17 +254,14 @@ classdef multirotor < handle
         
         function p_dotdot = GetLinearAcceleration(obj, force)
             p_dotdot = force / obj.Mass;
-            p_dotdot = check_limits(p_dotdot, obj.AccelerationLimits);
-            p_dotdot = check_limits(p_dotdot, obj.TotalAccelerationLimit);
         end
         
         function omega_dot = GetAngularAcceleration(obj, moment)
             omega_dot = obj.I_inv * (moment - cross(obj.State.Omega, obj.I * obj.State.Omega));
-            omega_dot = check_limits(omega_dot, obj.AngularAccelerationLimit);
         end
         
-        function phi_dot = GetEulerDerivative(obj)
-        % Returns the euler derivatives in degrees   
+        function phi_dot = GetEulerRate(obj)
+        % Returns the euler rates in degrees   
             
             sphi = sind(obj.State.RPY(1));
             cphi = cosd(obj.State.RPY(1));
@@ -277,7 +271,7 @@ classdef multirotor < handle
                    0, cphi, -sphi;
                    0, sphi / ctheta, cphi / ctheta];
             phi_dot = rad2deg(eta * obj.State.Omega);
-            phi_dot = check_limits(phi_dot, obj.EulerDerivativeLimits);
+            phi_dot = check_limits(phi_dot, obj.EulerRateLimits);
         end
     end
 end

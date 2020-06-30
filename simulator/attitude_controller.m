@@ -20,7 +20,7 @@ classdef attitude_controller < handle
         
         function euler_accel = Control(obj, multirotor, rpy_des, dt)
             rpy_err = deg2rad(rpy_des - multirotor.State.RPY);
-            rpy_dot_err = deg2rad(multirotor.State.EulerDerivative);
+            rpy_dot_err = deg2rad(multirotor.State.EulerRate);
             if (nargin > 3)
                 obj.UpdateErrorIntegral(rpy_err, dt);
             end

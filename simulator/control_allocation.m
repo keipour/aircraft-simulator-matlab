@@ -82,8 +82,8 @@ classdef control_allocation < handle
             % Calculate eta_dot
             phi = deg2rad(multirotor.State.RPY(1));
             theta = deg2rad(multirotor.State.RPY(2));
-            phi_dot = deg2rad(multirotor.State.EulerDerivative(1));
-            theta_dot = deg2rad(multirotor.State.EulerDerivative(2));
+            phi_dot = deg2rad(multirotor.State.EulerRate(1));
+            theta_dot = deg2rad(multirotor.State.EulerRate(2));
             eta_dot = calc_eta_dot(phi, theta, phi_dot, theta_dot);
             
             % Calculate eta

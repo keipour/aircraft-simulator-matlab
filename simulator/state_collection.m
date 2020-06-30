@@ -54,8 +54,8 @@ classdef state_collection < handle
             res = cell2mat(cellfun(@(s)s.Acceleration', obj.States, 'uni', 0));
         end
 
-        function res = GetEulerDerivatives(obj)
-            res = cell2mat(cellfun(@(s)s.EulerDerivative', obj.States, 'uni', 0));
+        function res = GetEulerRates(obj)
+            res = cell2mat(cellfun(@(s)s.EulerRate', obj.States, 'uni', 0));
         end
 
         function res = GetAngularAccelerations(obj)
@@ -103,7 +103,7 @@ classdef state_collection < handle
                 
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
                     contains_or(str, {'deriv', 'dot', 'vel', 'speed', 'rate'})
-                res = obj.GetEulerDerivatives();
+                res = obj.GetEulerRates();
                 labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Attitude Rate'};
 
             elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
