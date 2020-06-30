@@ -1,9 +1,11 @@
 classdef attitude_controller < handle
 
     properties(SetAccess=protected, GetAccess=public)
-        P = eye(3);
-        I = zeros(3);
-        D = eye(3);
+        P = eye(3);             % Proportional gain
+        I = zeros(3);           % Integral gain
+        D = eye(3);             % Derivative gain
+        Omega_np = ones(3);     % The desired natural frequency
+        Zeta_p = 0.5 * ones(3); % The desired damping coefficient
     end
     
     properties(SetAccess=protected, GetAccess=protected)
@@ -16,6 +18,18 @@ classdef attitude_controller < handle
             obj.P = check_gain(p);
             obj.I = check_gain(i);
             obj.D = check_gain(d);
+            
+            obj.Omega_np = sqrt(diag(obj.P));
+            obj.Zeta_p = 0.5 * diag(obj.D) ./ obj.Omega_np;
+        end
+        
+        function SetFrequencyAndDamping(obj, omega_np, zeta_p)
+            obj.Omega_np = diag(check_gain(omega_np));
+            obj.Zeta_p = diag(check_gain(zeta_p));
+            
+            obj.P = diag(obj.Omega_np.^2);
+            obj.I = zeros(3);
+            obj.D = diag(2 * obj.Omega_np .* obj.Zeta_p);
         end
         
         function euler_accel = Control(obj, multirotor, rpy_des, dt)
