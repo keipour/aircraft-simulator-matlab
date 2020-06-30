@@ -1,12 +1,6 @@
 classdef graphics
-    %GRAPHICS Summary of this class goes here
-    %   Detailed explanation goes here
-    
-    properties
-        Property1
-    end
-    
-   methods(Static)
+
+    methods(Static)
         function PlotAnalysis(response)
             t = response.TimeSteps;
 
