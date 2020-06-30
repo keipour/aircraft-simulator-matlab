@@ -477,14 +477,14 @@ function plot_rise(t, res)
 
     end_value = res.Values(end_ind);
     if res.SystemType == 1
-        end_value = 0.7 * end_value + 0.3 * res.Values(res.OvershootIndex);
+        end_value = 0.9 * end_value + 0.1 * res.StartValue;
     else
         rx = [t(1), t(start_ind)];
         ry = [res.Values(end_ind), res.Values(end_ind)];
         plot_dotted_line(rx, ry);
     end
     rx = [t(end_ind), t(end_ind)];
-    ry = [res.StartValue, end_value];
+    ry = [res.StartValue, res.Values(end_ind)];
     plot_dotted_line(rx, ry);
     plot_mark(t(end_ind), res.Values(end_ind))
     
@@ -517,7 +517,7 @@ function plot_settling_time(t, res)
     sx = [t(1), t(index)];
     midval = (res.Values(res.RiseTimeEndIndex) + res.Values(res.DelayTimeIndex)) / 2;
     sy = [midval, midval];
-    add_annotation(sx, sy, {'', 'Settling Time'}, true);
+    add_annotation(sx, sy, {'', 'Settling Time (2%)'}, true);
     
     plot_mark(t(index), res.Values(index))
 end

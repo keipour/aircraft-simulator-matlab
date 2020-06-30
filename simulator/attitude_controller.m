@@ -4,13 +4,14 @@ classdef attitude_controller < handle
         P = eye(3);             % Proportional gain
         I = zeros(3);           % Integral gain
         D = eye(3);             % Derivative gain
-        Omega_np = ones(3);     % The desired natural frequency
+        Omega_np = ones(3);     % The desired natural frequency (rad/s)
         Zeta_p = 0.5 * ones(3); % The desired damping coefficient
     end
     
     properties(SetAccess=protected, GetAccess=protected)
         ErrorIntegral = zeros(3, 1);
-        WindupMax = [10; 10; 10];
+        WindupMax = [2; 2; 2];
+        RateLimits = [70; 70; 30];
     end
     
     methods
@@ -40,6 +41,13 @@ classdef attitude_controller < handle
             end
             euler_accel = obj.P * rpy_err - ...
                 obj.D * rpy_dot_err + obj.I * obj.ErrorIntegral;
+            
+            rpy_dot_err_max = deg2rad(obj.RateLimits - multirotor.State.EulerRate);
+            euler_accel_lim = obj.D * rpy_dot_err_max;
+            
+            lim_check = check_rate_limits(obj.P, obj.D, deg2rad(obj.RateLimits), rpy_err);
+            
+            euler_accel = euler_accel .* lim_check + euler_accel_lim .* (1 - lim_check);
         end
         
         function Reset(obj)
@@ -70,5 +78,16 @@ function A = check_gain(a)
         A = a;
     else
         error('Input gain should be a scalar, a 3-D vector or a 3x3 matrix');
+    end
+end
+
+function res = check_rate_limits(P, D, Lim, Err)
+% Returns a 3-D vector with 1 if element within rate limits and zero if not
+    tol = 1e-5;
+    res = ones(3, 1);
+    for i = 1 : 3
+        if abs(D(i, i)) > tol && abs(P(i, i) / D(i, i) * Err(i)) > Lim(i)
+            res(i) = 0;
+        end
     end
 end

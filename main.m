@@ -22,7 +22,7 @@ tic
 sim = simulation(m, c);
 
 
-sim.Controller.AttitudeController.SetPID(1, 0, 1);
+sim.Controller.AttitudeController.SetPID(10, 0, 5);
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 sim.TotalTime = 10;
 sim.SimulateAttitudeResponse([10; -10; 50], true);
