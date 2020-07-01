@@ -25,7 +25,8 @@ sim = simulation(m, c);
 sim.Controller.AttitudeController.SetPID(5, 0, 5);
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 sim.TotalTime = 10;
-sim.SimulateAttitudeResponse([10; -10; 50], true);
+%sim.SimulateAttitudeResponse([10; -10; 50], true);
+sim.SimulatePositionResponse([1; 1; 1], 10, true);
 toc
 
 t = sim.GetTimeSteps();

@@ -73,10 +73,16 @@ classdef simulation < handle
             obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
         end
         
-        function rotor_speeds_squared = NextAttitudeCommand(obj, rpy, lin_accel)
-        % Calculate the attitude command for the next time step
+        function rotor_speeds_squared = NextAttitudeCommand(obj, rpy_des, lin_accel)
+        % Calculate the multirotor command for a desired attitude
         
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy, lin_accel, obj.TimeStep);
+            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, obj.TimeStep);
+        end
+        
+        function rotor_speeds_squared = NextPositionCommand(obj, pos_des, yaw_des)
+        % Calculate the multirotor command for a desired position and yaw
+
+            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, obj.TimeStep);
         end
         
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
@@ -98,6 +104,25 @@ classdef simulation < handle
                 obj.StateHistory.GetRPYs(), rpy_des, signal_names, plot);
         end
         
+        function res = SimulatePositionResponse(obj, pos_des, yaw_des, plot)
+        % Simulate the response to a desired attitude input
+            
+            obj.Reset();
+            while true
+                u = obj.NextPositionCommand(pos_des, yaw_des);
+                obj.NextStepPlant(u);
+                if obj.IsLastStep()
+                    break;
+                end
+            end
+            
+            % Analysis of the response
+            signal_names = {'X', 'Y', 'Z', 'Yaw'};
+            pos_res = obj.StateHistory.GetPositions();
+            rpy_res = obj.StateHistory.GetRPYs();
+            res = analysis.AnalyzeAndOutputResponse(obj.GetTimeSteps(), ...
+                [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
+        end
     end
     
 end
