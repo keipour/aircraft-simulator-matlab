@@ -22,11 +22,11 @@ tic
 sim = simulation(m, c);
 
 
-sim.Controller.AttitudeController.SetPID(10, 0, 5);
+sim.Controller.AttitudeController.SetPID(5, 0, 5);
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 sim.TotalTime = 10;
 sim.SimulateAttitudeResponse([10; -10; 50], true);
 toc
 
 t = sim.GetTimeSteps();
-graphics.PlotSignalsByName(sim, 3, {'pos', 'accel', 'rpy dot', 'rpm'}, true);
+graphics.PlotSignalsByName(sim, 3, {'pos', 'accel', 'rpy', 'rpy dot', 'rpm'}, true);
