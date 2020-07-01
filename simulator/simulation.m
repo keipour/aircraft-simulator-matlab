@@ -49,8 +49,8 @@ classdef simulation < handle
             obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
         end
         
-        function rotor_speeds_squared = ControlAttitude(obj, rpy)
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy, obj.TimeStep);
+        function rotor_speeds_squared = ControlAttitude(obj, rpy, lin_accel)
+            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy, lin_accel, obj.TimeStep);
         end
         
         function flag = IsLastStep(obj)
@@ -68,8 +68,9 @@ classdef simulation < handle
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
             % Simulate the response
             obj.Reset();
+            lin_accel = zeros(3, 1);
             while true
-                u = obj.ControlAttitude(rpy_des);
+                u = obj.ControlAttitude(rpy_des, lin_accel);
                 obj.NextStepPlant(u);
                 if obj.IsLastStep()
                     break;

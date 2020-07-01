@@ -23,17 +23,17 @@ classdef (Abstract) pid_controller < handle
     
     methods
         function SetPID(obj, p, i, d)
-            obj.P = check_gain(p);
-            obj.I = check_gain(i);
-            obj.D = check_gain(d);
+            obj.P = pid_controller.CheckGain(p);
+            obj.I = pid_controller.CheckGain(i);
+            obj.D = pid_controller.CheckGain(d);
             
             obj.Omega_np = sqrt(diag(obj.P));
             obj.Zeta_p = 0.5 * diag(obj.D) ./ obj.Omega_np;
         end
         
         function SetFrequencyAndDamping(obj, omega_np, zeta_p)
-            obj.Omega_np = diag(check_gain(omega_np));
-            obj.Zeta_p = diag(check_gain(zeta_p));
+            obj.Omega_np = diag(pid_controller.CheckGain(omega_np));
+            obj.Zeta_p = diag(pid_controller.CheckGain(zeta_p));
             
             obj.P = diag(obj.Omega_np.^2);
             obj.I = zeros(3);
@@ -58,18 +58,54 @@ classdef (Abstract) pid_controller < handle
         end
     end
 
-end
+    methods(Static, Access=protected)
+        function A = CheckGain(a)
+        % Check if the gain is a diagonal matrix
+        
+            % Make sure the gain is non-negative
+            mustBeNonnegative(a)
+            
+            if numel(a) == 1
+                A = a * eye(3);
+            elseif numel(a) == 3
+                A = diag(a);
+            elseif size(a, 1) == 3 && size(a, 2) == 3
+                A = a;
+            else
+                error('Input gain should be a scalar, a 3-D vector or a 3x3 matrix');
+            end
+        end
+        
+        function res = CheckRateLimits(P, D, Lim, Err)
+        % Returns a 3-D vector with 1 if element within rate limits and zero if not
+        
+            tol = 1e-5;
+            res = ones(3, 1);
+            for i = 1 : 3
+                if abs(D(i, i)) > tol && abs(P(i, i) / D(i, i) * Err(i)) > Lim(i)
+                    res(i) = 0;
+                end
+            end
+        end
 
-%% Helper functions
-
-function A = check_gain(a)
-    if numel(a) == 1
-        A = a * eye(3);
-    elseif numel(a) == 3
-        A = diag(a);
-    elseif size(a, 1) == 3 && size(a, 2) == 3
-        A = a;
-    else
-        error('Input gain should be a scalar, a 3-D vector or a 3x3 matrix');
+        function res = ApplyRateLimits(P, D, err, rate, accel, rate_limits, is_angular)
+            
+            % Calculate the result for the case when the rate has reached 
+            % the limits (we basically convert the PID to a P controller 
+            % on velocity to reach the maximum velocity in this case)
+            rate_err_max = rate_limits - rate;
+            if is_angular
+                rate_err_max = wrapToPi(rate_err_max);
+            end
+            accel_lim = D * rate_err_max;
+            
+            % Check if we are actually going to reach the maximum velocity
+            lim_check = pid_controller.CheckRateLimits(P, D, rate_limits, err);
+            
+            % Chose between the PID response and the maximum velocity
+            % response based on if we are hitting the limit or not
+            res = accel .* lim_check + accel_lim .* (1 - lim_check);
+        end
+        
     end
 end
