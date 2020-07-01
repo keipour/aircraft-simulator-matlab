@@ -6,7 +6,6 @@ classdef multirotor < handle
         % Fixed Properties
         Rotors
         Mass = 3.0;                 % in Kg
-        Gravity = [0; 0; 9.80665];  % in m/s^2
         I                           % Inertia
         PayloadRadius = 0.15;       % in meters
         
@@ -180,7 +179,6 @@ classdef multirotor < handle
         function CopyFrom(obj, mult)
             obj.Rotors = mult.Rotors;
             obj.Mass = mult.Mass;
-            obj.Gravity = mult.Gravity;
             obj.I = mult.I;
             obj.PayloadRadius = mult.PayloadRadius;
             obj.NumOfRotors = mult.NumOfRotors;
@@ -213,7 +211,7 @@ classdef multirotor < handle
         end
 
         function F = GetGravityForce(obj)
-            F = obj.Gravity * obj.Mass;
+            F = environment.Gravity * obj.Mass;
         end
         
         function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared)
@@ -228,9 +226,9 @@ classdef multirotor < handle
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                G_motorI = obj.Rotors{i}.MotorMass * obj.Gravity;
+                G_motorI = obj.Rotors{i}.MotorMass * environment.Gravity;
                 G_motorB = Rot_BI * G_motorI;
-                G_armI = obj.Rotors{i}.ArmMass * obj.Gravity;
+                G_armI = obj.Rotors{i}.ArmMass * environment.Gravity;
                 G_armB = Rot_BI * G_armI;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
             end
