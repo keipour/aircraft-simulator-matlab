@@ -43,14 +43,14 @@ classdef simulation < handle
             obj.StateHistory.PushBack(obj.Multirotor.State);
         end
         
-        function NextStepPlant(obj, rotor_speeds_squared)
-            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.TimeStep);
-            obj.StateHistory.PushBack(obj.Multirotor.State);
-            obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
+        function set.TotalTime(obj, value)
+            obj.TotalTime = value;      % in secs
+            obj.Reset();
         end
-        
-        function rotor_speeds_squared = ControlAttitude(obj, rpy, lin_accel)
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy, lin_accel, obj.TimeStep);
+
+        function set.TimeStep(obj, value)
+            obj.TimeStep = value;      % in secs
+            obj.Reset();
         end
         
         function flag = IsLastStep(obj)
@@ -65,12 +65,27 @@ classdef simulation < handle
             traj = obj.StateHistory;
         end
         
+        function NextStepPlant(obj, rotor_speeds_squared)
+        % Update the plant state for the next time step and advance time
+        
+            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.TimeStep);
+            obj.StateHistory.PushBack(obj.Multirotor.State);
+            obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
+        end
+        
+        function rotor_speeds_squared = NextAttitudeCommand(obj, rpy, lin_accel)
+        % Calculate the attitude command for the next time step
+        
+            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy, lin_accel, obj.TimeStep);
+        end
+        
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
-            % Simulate the response
+        % Simulate the response to a desired attitude input
+            
             obj.Reset();
             lin_accel = zeros(3, 1);
             while true
-                u = obj.ControlAttitude(rpy_des, lin_accel);
+                u = obj.NextAttitudeCommand(rpy_des, lin_accel);
                 obj.NextStepPlant(u);
                 if obj.IsLastStep()
                     break;
@@ -78,33 +93,12 @@ classdef simulation < handle
             end
             
             % Analysis of the response
-            rpys = obj.StateHistory.GetRPYs();
             signal_names = {'Roll', 'Pitch', 'Yaw'};
-            res = cell(3, 1);
-            for i = 1 : 3
-                res{i} = analysis.AnalyzeResponse(obj.GetTimeSteps(), rpys(:, i), rpy_des(i), signal_names{i});
-
-                % Plot the analysis if asked
-                if plot == true
-                    subplot(3, 1, i);
-                    graphics.PlotAnalysis(res{i});
-                end
-                
-                % Print the analysis results
-                graphics.PrintAnalysis(res{i});
-            end
-        end
-        
-        function set.TotalTime(obj, value)
-            obj.TotalTime = value;      % in secs
-            obj.Reset();
-        end
-
-        function set.TimeStep(obj, value)
-            obj.TimeStep = value;      % in secs
-            obj.Reset();
+            res = analysis.AnalyzeAndOutputResponse(obj.GetTimeSteps(), ...
+                obj.StateHistory.GetRPYs(), rpy_des, signal_names, plot);
         end
         
     end
+    
 end
 

@@ -3,6 +3,8 @@ classdef analysis
     methods(Static)
         
         function response = AnalyzeResponse(t, X, des, signal_name)
+        % Analyses the response of a single signal    
+            
             response.SignalName = signal_name;
             response.Values = X;
             response.TotalTime = t(end);
@@ -32,7 +34,27 @@ classdef analysis
             [response.SettlingTime, response.SettlingTimeIndex] = calc_settling_time(des, X, t, response.SystemType, 0.02);
         end
 
-        
+        function res = AnalyzeAndOutputResponse(t, X, des_val, signal_names, plot)
+        % Analyze the response then print and plot the results
+        % Accepts the N-D trajectory, analyzes, prints and plots the result
+            
+            % Analysis of the response
+            N = size(X, 2);
+            res = cell(N, 1);
+            for i = 1 : N
+                res{i} = analysis.AnalyzeResponse(t, X(:, i), des_val(i), signal_names{i});
+
+                % Plot the analysis if asked
+                if plot == true
+                    subplot(N, 1, i);
+                    graphics.PlotAnalysis(res{i});
+                end
+                
+                % Print the analysis results
+                graphics.PrintAnalysis(res{i});
+            end
+        end
+
     end
 end
 
