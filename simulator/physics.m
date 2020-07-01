@@ -1,5 +1,9 @@
 classdef physics
-
+    
+    properties(Constant)
+        Gravity = [0; 0; 9.80665];  % in m/s^2
+    end
+    
     methods(Static)
         % Estimate the inertia tensor of the multirotor
         function inertia_tensor = EstimateInertia(multirotor)

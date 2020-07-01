@@ -175,7 +175,7 @@ classdef multirotor < handle
         end
 
         function F = GetGravityForce(obj)
-            F = environment.Gravity * obj.Mass;
+            F = physics.Gravity * obj.Mass;
         end
         
         function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared)
@@ -190,9 +190,9 @@ classdef multirotor < handle
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                G_motorI = obj.Rotors{i}.MotorMass * environment.Gravity;
+                G_motorI = obj.Rotors{i}.MotorMass * physics.Gravity;
                 G_motorB = Rot_BI * G_motorI;
-                G_armI = obj.Rotors{i}.ArmMass * environment.Gravity;
+                G_armI = obj.Rotors{i}.ArmMass * physics.Gravity;
                 G_armB = Rot_BI * G_armI;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
             end

@@ -95,16 +95,16 @@ classdef control_allocation < handle
             NDI_M_Grav = zeros(3, 1);
             for i = 1 : multirotor.NumOfRotors
                 r = multirotor.Rotors{i}.Position;
-                G_motor = multirotor.Rotors{i}.MotorMass * environment.Gravity;
+                G_motor = multirotor.Rotors{i}.MotorMass * physics.Gravity;
                 G_motorB = RBI * G_motor;
-                G_arm = multirotor.Rotors{i}.ArmMass * environment.Gravity;
+                G_arm = multirotor.Rotors{i}.ArmMass * physics.Gravity;
                 G_armB = RBI * G_arm;
                 NDI_M_Grav = NDI_M_Grav + cross(r, G_motorB) + cross(r/2, G_armB);
             end
             
             A_moment = eta_dot * multirotor.State.Omega + eta * multirotor.I_inv * ...
                 (NDI_M_Grav - cross(multirotor.State.Omega, multirotor.I * multirotor.State.Omega));
-            A = [environment.Gravity; A_moment];
+            A = [physics.Gravity; A_moment];
             
             % Calculate the B matrix
             B_force = RBI' * obj.NDI_L / multirotor.Mass;
