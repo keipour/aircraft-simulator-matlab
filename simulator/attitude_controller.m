@@ -6,7 +6,7 @@ classdef attitude_controller < pid_controller
     
     methods
 
-        function euler_accel = Control(obj, multirotor, rpy_des, dt)
+        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, dt)
         % Calculates PID response using this formula:
         % P * err + D * -velocity + I * error_integral
             

@@ -18,7 +18,7 @@ classdef (Abstract) pid_controller < handle
     end
 
     methods(Abstract)
-        output_command = Control(obj, multirotor, desired, dt)
+        output_command = CalculateControlCommand(obj, multirotor, desired, dt)
     end
     
     methods

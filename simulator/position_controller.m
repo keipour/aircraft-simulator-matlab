@@ -6,7 +6,7 @@ classdef position_controller < pid_controller
     
     methods
 
-        function lin_accel = Control(obj, multirotor, pos_des, dt)
+        function lin_accel = CalculateControlCommand(obj, multirotor, pos_des, dt)
         % Calculates PID response using this formula:
         % P * err + D * velocity + I * error_integral
             
@@ -28,7 +28,14 @@ classdef position_controller < pid_controller
             % Apply the velocity limits
             lin_accel = pid_controller.ApplyRateLimits(obj.P, obj.D, pos_err, ...
                 multirotor.State.Velocity, lin_accel, obj.RateLimits, false);
+        end
 
+    end
+    
+    methods(Static)
+
+        function rpy_des = CalculateAttitude(multirotor, acc_des, yaw_des, dt)
+            %z_axis = norm(acc_des + multirotor.Gr
         end
         
     end
