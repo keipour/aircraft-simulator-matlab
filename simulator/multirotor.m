@@ -232,7 +232,7 @@ classdef multirotor < handle
             eta = [1,   sphi*ttheta, cphi*ttheta;
                    0, cphi, -sphi;
                    0, sphi / ctheta, cphi / ctheta];
-            phi_dot = rad2deg(eta * obj.State.Omega);
+            phi_dot = wrapTo180(rad2deg(eta * obj.State.Omega));
             phi_dot = check_limits(phi_dot, obj.EulerRateLimits);
         end
     end
