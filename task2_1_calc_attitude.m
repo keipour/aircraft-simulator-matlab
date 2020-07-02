@@ -1,4 +1,4 @@
-function rpy_des = task2_calc_attitude(acc_cmd, yaw_des)
+function rpy_des = task2_1_calc_attitude(acc_cmd, yaw_des)
 % This function calculates the desired attitude from the acceleration
 % command and the desired yaw.
 %   Inputs:
@@ -14,10 +14,10 @@ rpy_des = [0; 0; yaw_des];
 %% Modify the code below:
 
 % Find the thrust vector
-thrust = acc_cmd + gravity;
+thrust = acc_cmd - gravity;
 
 % Find the desired Z axis
-z_axis = thrust / norm(thrust);
+z_axis = -thrust / norm(thrust);
 
 % Find the desired X axis
 y_c = cross([-sind(yaw_des); cosd(yaw_des); 0], z_axis);
