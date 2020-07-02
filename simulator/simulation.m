@@ -123,7 +123,7 @@ classdef simulation < handle
             res = analysis.AnalyzeAndOutputResponse(obj.GetTimeSteps(), ...
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
+        
     end
-    
 end
 
