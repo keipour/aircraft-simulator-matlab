@@ -10,11 +10,11 @@ classdef (Abstract) pid_controller < handle
     
     properties(SetAccess=protected, GetAccess=protected)
         ErrorIntegral = zeros(3, 1);
-        WindupMax = [2; 2; 2];
     end
 
     properties(Abstract, SetAccess=protected, GetAccess=protected)
         RateLimits
+        OutputMax
     end
 
     methods(Abstract)
@@ -47,12 +47,26 @@ classdef (Abstract) pid_controller < handle
     end
 
     methods(Access=protected)
-        function UpdateErrorIntegral(obj, err, dt)
-            obj.ErrorIntegral = obj.ErrorIntegral + err * dt;
-
+        function LimitErrorIntegral(obj, output, err, err_dot)
+            if obj.I == 0
+                return;
+            end
+            
             for i = 1 : 3
-                if obj.ErrorIntegral(i) > obj.WindupMax(i)
-                    obj.ErrorIntegral(i) = obj.WindupMax(i);
+                if output(i) > 1.2 * obj.OutputMax(i)
+                     obj.ErrorIntegral(i) = (1.2 * obj.OutputMax(i) - obj.P * err - obj.D * err_dot) / obj.I;
+                elseif output(i) < -1.2 * obj.OutputMax(i)
+                     obj.ErrorIntegral(i) = (-1.2 * obj.OutputMax(i) - obj.P * err - obj.D * err_dot) / obj.I;
+                end
+            end
+        end
+        
+        function output = LimitOutput(obj, output)
+            for i = 1 : 3
+                if output(i) > obj.OutputMax(i)
+                     output(i) = obj.OutputMax(i);
+                elseif output(i) < -obj.OutputMax(i)
+                     output(i) = -obj.OutputMax(i);
                 end
             end
         end

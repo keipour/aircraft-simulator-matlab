@@ -1,7 +1,12 @@
 classdef position_controller < pid_controller
 
+    properties
+        AttitudeType attitude_types = attitude_types.Full;
+    end
+    
     properties(SetAccess=protected, GetAccess=protected)
         RateLimits = [7; 7; 9]; % in m/s
+        OutputMax = [1; 1; 100]; % in m/s^2
     end
     
     methods
@@ -16,10 +21,8 @@ classdef position_controller < pid_controller
             % Calculate the velocity error
             vel_err = 0 - multirotor.State.Velocity;
             
-            % Use I term only if the time step is provided for integration
-            if (nargin > 3)
-                obj.UpdateErrorIntegral(pos_err, dt);
-            end
+            % Update the error integral
+            obj.ErrorIntegral = obj.ErrorIntegral + pos_err * dt;
             
             % Calculate the PID result
             lin_accel = obj.P * pos_err + ...
@@ -29,20 +32,33 @@ classdef position_controller < pid_controller
             lin_accel = pid_controller.ApplyRateLimits(obj.P, obj.D, pos_err, ...
                 multirotor.State.Velocity, lin_accel, obj.RateLimits, false);
 
+            % Limit the error integral (anti-windup)
+            obj.LimitErrorIntegral(lin_accel, pos_err, vel_err);
+            
+            % Limit the output
+            lin_accel = obj.LimitOutput(lin_accel);
+
 %             [lin_accel, obj.ErrorIntegral] = task2_calc_acceleration...
 %                 (obj.P, obj.I, obj.D, multirotor.State.Position, ...
 %                 multirotor.State.Velocity, pos_des, obj.ErrorIntegral, dt);
+        end
+
+        function rpy_des = CalculateAttitude(obj, acc_cmd, yaw_des)
+        % Calculate the desired attitude to achieve the input acceleration
+        % The desired attitude aligns the required force direction
+        % (acceleration - gravity) with the Z axis. FRD frame is used here.
+            if obj.AttitudeType == attitude_types.Full
+                rpy_des = position_controller.CalculateFullAttitude(acc_cmd, yaw_des);
+            elseif obj.AttitudeType == attitude_types.ZeroTilt
+                rpy_des = position_controller.CalculateZeroTiltAttitude(acc_cmd, yaw_des);
+            end
         end
 
     end
     
     methods(Static)
 
-        function rpy_des = CalculateAttitude(acc_cmd, yaw_des)
-        % Calculate the desired attitude to achieve the input acceleration
-        % The desired attitude aligns the required force direction
-        % (acceleration + gravity) with the Z axis. FRD frame is used here.
-        
+        function rpy_des = CalculateFullAttitude(acc_cmd, yaw_des)
             %rpy_des = task2_calc_attitude(acc_cmd, yaw_des);
             
             % Initialize the output
@@ -64,6 +80,9 @@ classdef position_controller < pid_controller
             rpy_des(2) = -asind(x_axis(3));
         end
         
+        function rpy_des = CalculateZeroTiltAttitude(acc_cmd, yaw_des)
+            rpy_des = [0; 0; yaw_des];
+        end
     end
 end
 

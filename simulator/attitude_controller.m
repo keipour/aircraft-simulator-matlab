@@ -2,6 +2,7 @@ classdef attitude_controller < pid_controller
 
     properties(SetAccess=protected, GetAccess=protected)
         RateLimits = [70; 70; 30]; % in deg/s
+        OutputMax = [100; 100; 100]; % in rad/s^2
     end
     
     methods
@@ -16,10 +17,8 @@ classdef attitude_controller < pid_controller
             % Calculate the rate in radians
             rpy_dot_err =  wrapToPi(deg2rad(0 - multirotor.State.EulerRate));
             
-            % Use I term only if the time step is provided for integration
-            if (nargin > 3)
-                obj.UpdateErrorIntegral(rpy_err, dt);
-            end
+            % Update the error integral
+            obj.ErrorIntegral = obj.ErrorIntegral + rpy_err * dt;
             
             % Calculate the PID result
             euler_accel = obj.P * rpy_err + ...
@@ -28,6 +27,12 @@ classdef attitude_controller < pid_controller
             % Apply the euler rate limits
             euler_accel = pid_controller.ApplyRateLimits(obj.P, obj.D, rpy_err, ...
                 deg2rad(multirotor.State.EulerRate), euler_accel, deg2rad(obj.RateLimits), true);
+            
+            % Limit the error integral (anti-windup)
+            obj.LimitErrorIntegral(euler_accel, rpy_err, rpy_dot_err)
+            
+            % Limit the output
+            euler_accel = obj.LimitOutput(euler_accel);
         end
         
     end
