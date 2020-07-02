@@ -21,21 +21,20 @@ rpy_des = [0; 0; yaw_des];
 
 %% Modify the code below:
 
-% Find the thrust vector
-thrust = acc_cmd - gravity;
+% Modify to calculate the correct thrust vector
+thrust = zeros(3, 1);
 
-% Find the desired Z axis
-z_axis = -thrust / norm(thrust);
+% Modify to calculate the correct desired Z axis
+z_axis = [0; 0; 1];
 
-% Find the desired X axis
-y_c = cross([-sind(yaw_des); cosd(yaw_des); 0], z_axis);
-x_axis = y_c / norm(y_c);
+% Modify to calculate the correct desired X axis
+x_axis = [1; 0; 0];
 
-% Find the desired Y axis
-y_axis = cross(z_axis, x_axis);
+% Modify to calculate the correct desired Y axis
+y_axis = [0; 1; 0];
 
-% Calculate the roll and pitch
-rpy_des(1) = atan2d(y_axis(3), z_axis(3));
-rpy_des(2) = -asind(x_axis(3));
+% Calculate the roll and pitch from the axes
+rpy_des(1) = 0;
+rpy_des(2) = 0;
 
 end
