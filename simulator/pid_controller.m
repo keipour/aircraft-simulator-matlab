@@ -12,7 +12,7 @@ classdef (Abstract) pid_controller < handle
         ErrorIntegral = zeros(3, 1);
     end
 
-    properties(Abstract, SetAccess=protected, GetAccess=protected)
+    properties(Abstract)
         RateLimits
         OutputMax
     end

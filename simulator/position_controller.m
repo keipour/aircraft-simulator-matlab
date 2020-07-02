@@ -2,11 +2,8 @@ classdef position_controller < pid_controller
 
     properties
         AttitudeType attitude_types = attitude_types.Full;
-    end
-    
-    properties(SetAccess=protected, GetAccess=protected)
         RateLimits = [7; 7; 9]; % in m/s
-        OutputMax = [1; 1; 100]; % in m/s^2
+        OutputMax = [1; 1; 40]; % in m/s^2
     end
     
     methods

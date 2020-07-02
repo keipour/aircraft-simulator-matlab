@@ -1,8 +1,8 @@
 classdef attitude_controller < pid_controller
 
-    properties(SetAccess=protected, GetAccess=protected)
+    properties
         RateLimits = [70; 70; 30]; % in deg/s
-        OutputMax = [100; 100; 100]; % in rad/s^2
+        OutputMax = [20; 20; 20]; % in rad/s^2
     end
     
     methods
