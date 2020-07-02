@@ -43,25 +43,25 @@ classdef position_controller < pid_controller
         % The desired attitude aligns the required force direction
         % (acceleration + gravity) with the Z axis. FRD frame is used here.
         
-            rpy_des = task2_calc_attitude(acc_cmd, yaw_des);
+            %rpy_des = task2_calc_attitude(acc_cmd, yaw_des);
             
-%             % Initialize the output
-%             rpy_des = [0; 0; yaw_des];
-%             
-%             % Find the desired Z axis
-%             force = acc_cmd + physics.Gravity;
-%             z_axis = force / norm(force);
-%             
-%             % Find the desired X axis
-%             x_c = cross([-sind(yaw_des); cosd(yaw_des); 0], z_axis);
-%             x_axis = x_c / norm(x_c);
-%             
-%             % Find the desired Y axis
-%             y_axis = cross(z_axis, x_axis);
-%             
-%             % Calculate the roll and pitch
-%             rpy_des(1) = atan2d(y_axis(3), z_axis(3));
-%             rpy_des(2) = -asind(x_axis(3));
+            % Initialize the output
+            rpy_des = [0; 0; yaw_des];
+            
+            % Find the desired Z axis
+            force = acc_cmd - physics.Gravity;
+            z_axis = -force / norm(force);
+            
+            % Find the desired X axis
+            x_c = cross([-sind(yaw_des); cosd(yaw_des); 0], z_axis);
+            x_axis = x_c / norm(x_c);
+            
+            % Find the desired Y axis
+            y_axis = cross(z_axis, x_axis);
+            
+            % Calculate the roll and pitch
+            rpy_des(1) = atan2d(y_axis(3), z_axis(3));
+            rpy_des(2) = -asind(x_axis(3));
         end
         
     end
