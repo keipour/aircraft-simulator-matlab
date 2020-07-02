@@ -1,3 +1,11 @@
+%% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+% Copyright (c) 2020 Carnegie Mellon University
+% This tool has been developed for educational purposes only as a 
+% control tutorial in Air Lab Summer School 2020 (https://theairlab.org). 
+% Azarakhsh Keipour (keipour [at] cmu.edu)
+% Please contact us for any questions or issues.
+%% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+
 function [lin_accel, err_int] = task2_2_calc_acceleration(p, i, d, curr_pos, curr_vel, pos_des, err_int, dt)
 % This function calculates the PID output of the given position.
 %   Inputs:
