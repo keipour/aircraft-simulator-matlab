@@ -13,10 +13,13 @@ function rpy_des = task2_1_calc_attitude(acc_cmd, yaw_des)
 %       acc_cmd: 3x1 acceleration vector in inertial frame
 %       yaw_des: Scalar desired yaw in degrees
 %   Output:
-%       rpy_des: 3x1 calculated attitude (roll, pitch, yaw) in degrees
+%       rpy_des: 3x1 calculated orientation (roll, pitch, yaw) in degrees
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
+% The gravity acceleration vector (in NED frame)
 gravity = physics.Gravity;
+
+% Initializing the desired roll/pitch/yaw vector
 rpy_des = [0; 0; yaw_des];
 
 %% Modify the code below:

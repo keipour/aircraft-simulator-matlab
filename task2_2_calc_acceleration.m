@@ -23,17 +23,18 @@ function [lin_accel, err_int] = task2_2_calc_acceleration(p, i, d, curr_pos, cur
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
 
     %% Modify the code below:
-    
+
     % Modify to calculate the position error
     pos_err = 0;
 
-    % Modify to calculate the velocity error
+    % Modify to calculate the velocity error (we assume that the desired
+    % velocity is zero)
     vel_err = 0;
 
     % Modify to update the error integtal term
     err_int = err_int + 0;
 
-    % Calculate the acceleration using this formula:
-    % P * pos_err + D * -velocity + I * error_integral
+    % Calculate the linear acceleration using this formula:
+    % (P * error) + (D * error derivative) + (I * error integral)
     lin_accel = zeros(3, 1);
 end
