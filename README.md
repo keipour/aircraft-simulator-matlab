@@ -23,7 +23,7 @@ Please clone this repo. The code should work right out of the box. There are thr
 ## Contact
 Azarakhsh Keipour (keipout [at] cmu.edu)
 
-Please contact us for comments, questions, issues and suggestions. For more tutorials and information about the Air Lab, please visit [our lab's website](https://theairlab.org/)
+Please contact us for comments, questions, issues and suggestions. For more tutorials and information about the Air Lab, please visit [our lab's website](https://theairlab.org/).
 
 ## License
 [This software is BSD licensed.](http://opensource.org/licenses/BSD-3-Clause)
