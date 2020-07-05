@@ -125,6 +125,11 @@ classdef multirotor < handle
             end
         end
         
+        function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared)
+            accel = (obj.GetGravityForce() + ...
+                obj.GetThrustForce(eye(3), RotorSpeedsSquared)) / obj.Mass;
+        end
+        
         function set.I(obj, value)
             obj.I = value;
             obj.UpdateI_inv();
@@ -153,6 +158,10 @@ classdef multirotor < handle
         
         function Visualize(obj)
             graphics.VisualizeMultirotor(obj);
+        end
+        
+        function AnalyzeAccelerationManipulability(obj, n_steps)
+            analysis.AnalyzeAccelerationDynamicManipulability(obj, n_steps);
         end
         
         function R = GetRotationMatrix(obj)

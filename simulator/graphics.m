@@ -120,6 +120,15 @@ classdef graphics
             visualize_multirotor(multirotor);
         end
         
+        function DrawConvexHull(X, labels)
+            k = convhull(X(:, 1), X(:, 2), X(:, 3));
+            figure;
+            trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
+            xlabel('a_x');
+            ylabel('a_y');
+            zlabel('a_z');
+            axis equal
+        end
     end
 end
 
