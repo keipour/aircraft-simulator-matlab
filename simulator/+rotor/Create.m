@@ -12,9 +12,9 @@ function rot = Create()
     rot.MotorMass = 0.10;       % in Kilograms
     rot.ArmMass = 0.150;        % in Kilograms
     rot.RotationDirection = 1;  % -1 for CW, 1 for CCW around Z
-                                  % Remember that Z is downward
+                                % Remember that Z is downward
                                
-    rot.R = eye(3);             % Rotation matrix RRB
+    rot.R_BR = eye(3);          % Rotation matrix R_BR
     rot.Position = zeros(3, 1); % Position of the rotor in B
     rot.MaxrotorSpeedSquared = 0;
     
