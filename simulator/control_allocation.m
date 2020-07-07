@@ -23,20 +23,27 @@ classdef control_allocation < handle
             end
         end
         
-        function rotor_speeds_squared = CalcRotorSpeeds(obj, multirotor, lin_accel, ang_accel)
+        function [rotor_speeds_squared, saturated] = CalcRotorSpeeds(obj, multirotor, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
             if obj.Method == control_allocation_types.NDI
                 rotor_speeds_squared = obj.NDIRotorSpeeds(multirotor, lin_accel, ang_accel);
             end
 
-            for i = length(rotor_speeds_squared)
+            saturation_flag = false;
+            for i = 1 : length(rotor_speeds_squared)
                 if rotor_speeds_squared(i) > multirotor.Rotors{i}.MaxrotorSpeedSquared
                     rotor_speeds_squared(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
+                    saturation_flag = true;
                 end
                 if rotor_speeds_squared(i) < 0
                     rotor_speeds_squared(i) = 0;
+                    saturation_flag = true;
                 end
+            end
+            
+            if nargin > 1
+                saturated = saturation_flag;
             end
         end
     end
