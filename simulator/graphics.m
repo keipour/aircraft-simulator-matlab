@@ -120,14 +120,22 @@ classdef graphics
             visualize_multirotor(multirotor);
         end
         
-        function DrawConvexHull(X, labels)
-            k = convhull(X(:, 1), X(:, 2), X(:, 3));
+        function DrawConvexHull(X, plot_title, label)
             figure;
-            trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
-            xlabel('a_x');
-            ylabel('a_y');
-            zlabel('a_z');
+            r = rank(X);
+            if r == 3
+                k = convhull(X(:, 1), X(:, 2), X(:, 3));
+                trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
+            elseif r == 2
+                error('Wow, I have never seen this case. Please send this structure to me, pleaaasseee!');
+            elseif r == 1
+                plot3(X(:, 1), X(:, 2), X(:, 3), 'c');
+            end
+            xlabel([label '_x']);
+            ylabel([label '_y']);
+            zlabel([label '_z']);
             axis equal
+            title(plot_title);
         end
     end
 end
