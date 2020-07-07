@@ -127,7 +127,8 @@ classdef graphics
                 k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
                 trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
             elseif r == 2
-                k = convhull(X(:, 1), X(:, 3), 'Simplify', true);
+                X_xy = rotate_3d_plane_to_xy(X);
+                k = convhull(X_xy(:, 1), X_xy(:, 2), 'Simplify', true);
                 fill3(X(k, 1), X(k, 2), X(k, 3), 'c');
             elseif r == 1
                 plot3(X(:, 1), X(:, 2), X(:, 3), 'c');
@@ -142,6 +143,16 @@ classdef graphics
 end
 
 %% Helper functions
+function X_xy = rotate_3d_plane_to_xy(X)
+    x_mean = mean(X);
+    [~, ~, W] = svd(X - x_mean, 0);
+    normal = W(:,end);
+    axis_angle_rot = vrrotvec(normal, [0; 0; 1]);
+    rot_mat = vrrotvec2mat(axis_angle_rot);
+    X_plane = (rot_mat * (X - x_mean)')';
+    X_xy = [X_plane(:, 1), X_plane(:, 2)];
+end
+
 
 function plot_signal(t, Y, properties, line_width)
     hold on
