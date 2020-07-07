@@ -304,7 +304,7 @@ function visualize_multirotor(m, plot_axes_only)
     axis_arrow_size = 0.3; % in meters
     plot_title = 'Your Cool Multirotor';
     arm_labels_on = true;
-    motor_size = 0.05; % in meters -- set to zero if don't want motors
+    motor_size = 0.02; % in meters -- set to zero if don't want motors
     lighting_on = true; % turn on the special lighting
     rotor_diameter = 12; % in inches
 
@@ -327,7 +327,7 @@ function visualize_multirotor(m, plot_axes_only)
     % Draw the arms
     for i = 1 : num_of_rotors
         hold on
-        plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], i, arm_labels_on, motor_size);
+        plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_size);
     end
 
     % Draw the rotors
@@ -353,16 +353,6 @@ function visualize_multirotor(m, plot_axes_only)
 
     % Equalize the axes scales
     axis equal;
-
-    % Make the 3D plot a sqaure box
-    % xl = xlim;
-    % yl = ylim;
-    % zl = zlim;
-    % min_limit = min([xl(1), yl(1), zl(1)]);
-    % max_limit = max([xl(2), yl(2), zl(2)]);
-    % xlim([min_limit max_limit]);
-    % ylim([min_limit max_limit]);
-    % zlim([min_limit max_limit]);
 
     % Add title and axis labels
     xlabel('X');
@@ -394,10 +384,15 @@ function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size
     end
 end
 
-function plotArm(position, num, arm_labels_on, motor_size)
+function plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_size)
     plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', 3);
     if arm_labels_on
-        text(position(1), position(2), position(3) + .05 + motor_size, num2str(num), 'Interpreter', 'none');
+        label_dist = 0.02;
+        dp = -(motor_size + label_dist) * z_axis;
+        if plot_axes_only
+            dp = -dp;
+        end
+        text(position(1) + dp(1), position(2) + dp(2), position(3) + dp(3), num2str(num), 'Interpreter', 'none');
     end
 end
 
@@ -408,9 +403,11 @@ function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diam
         rotor_color = [0.4, 1, 0.4];
     end
     motor_color = 'black';
-    plot3([position(1), position(1)], [position(2), position(2)], [position(3) - motor_size, position(3) + motor_size], 'Color', motor_color, 'LineWidth', 10);
-    position(3) = position(3) - motor_size;
-    circlePlane3D(position, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
+    dmot = motor_size * axis;
+    pos_m1 = position - dmot;
+    pos_m2 = position + dmot;
+    plot3([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], 'Color', motor_color, 'LineWidth', 10);
+    circlePlane3D(pos_m2, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
 end
 
 function plotAxes(position, Rotation, arrow_size)
@@ -419,7 +416,6 @@ function plotAxes(position, Rotation, arrow_size)
         end_pos = position + arrow_size*Rotation(:, i);
         arrow3d([position(1) end_pos(1)], [position(2) end_pos(2)], [position(3) end_pos(3)], 0.8, 0.005, 0.01, colors{i});
     end
-    %circlePlane3D(position, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
 end
 
 %% Draw a 3-D circle
