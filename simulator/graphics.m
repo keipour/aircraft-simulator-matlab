@@ -116,18 +116,19 @@ classdef graphics
             fprintf('\n');
         end
 
-        function VisualizeMultirotor(multirotor)
-            visualize_multirotor(multirotor);
+        function VisualizeMultirotor(multirotor, axes_only)
+            visualize_multirotor(multirotor, axes_only);
         end
         
         function DrawConvexHull(X, plot_title, label)
             figure;
             r = rank(X);
             if r == 3
-                k = convhull(X(:, 1), X(:, 2), X(:, 3));
+                k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
                 trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
             elseif r == 2
-                error('Wow, I have never seen this case. Please send this structure to me, pleaaasseee!');
+                k = convhull(X(:, 1), X(:, 3), 'Simplify', true);
+                fill3(X(k, 1), X(k, 2), X(k, 3), 'c');
             elseif r == 1
                 plot3(X(:, 1), X(:, 2), X(:, 3), 'c');
             end
@@ -294,8 +295,7 @@ end
 % This file visualizes the multirotor geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
 % Last updated: June 22, 2020
-function visualize_multirotor(m)
-
+function visualize_multirotor(m, plot_axes_only)
     % Create the new figure
     figure;
 
@@ -333,8 +333,12 @@ function visualize_multirotor(m)
     % Draw the rotors
     for i = 1 : num_of_rotors
         hold on
-        plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R * [0;0;-1], ...
-            m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
+        if plot_axes_only == false
+            plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R * [0;0;-1], ...
+                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
+        else
+            plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R,  axis_arrow_size / 2);
+        end
     end
 
     % Draw the central payload box
@@ -407,6 +411,15 @@ function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diam
     plot3([position(1), position(1)], [position(2), position(2)], [position(3) - motor_size, position(3) + motor_size], 'Color', motor_color, 'LineWidth', 10);
     position(3) = position(3) - motor_size;
     circlePlane3D(position, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
+end
+
+function plotAxes(position, Rotation, arrow_size)
+    colors = {'green', 'blue', 'red'};
+    for i = 1 : 3
+        end_pos = position + arrow_size*Rotation(:, i);
+        arrow3d([position(1) end_pos(1)], [position(2) end_pos(2)], [position(3) end_pos(3)], 0.8, 0.005, 0.01, colors{i});
+    end
+    %circlePlane3D(position, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
 end
 
 %% Draw a 3-D circle
