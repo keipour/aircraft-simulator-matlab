@@ -61,45 +61,56 @@ classdef analysis
             accel = zeros(n_total, 3);
             mins = zeros(n_rotors, 1);
             maxs = zeros(n_rotors, 1);
-            rotor_speeds_squared = zeros(n_rotors, 1);
             for i = 1 : n_rotors
                 maxs(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
             end
             
             steps = (maxs - mins) ./ (n_steps - 1);
 
-            tic
             for i = 1 : n_total
                 nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
                 rotor_speeds_squared = nextnum' .* steps;
                 accel(i, :) = multirotor.CalculateAccelerationManipulability(rotor_speeds_squared);
             end
-            toc
-            k = convhull(accel(:, 1), accel(:, 2), accel(:, 3));
-            figure;
-            trisurf(k, accel(:, 1), accel(:, 2), accel(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
-            xlabel('a_x');
-            ylabel('a_y');
-            zlabel('a_z');
-            axis equal
+            
+            graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
 
-            figure;
-            Zq = linspace(min(accel(:, 3)), 0, 9);
-            accel_xy = accel(:, 1:2);
-            xylimits = [min(accel_xy(:)), max(accel_xy(:))];
-            for i = 1 : 9
-                subplot(3, 3, i);
-                [xc, yc] = CrossSection(accel(:, 1), accel(:, 2), accel(:, 3), Zq(i));
-                plot(xc, yc);
-                xlabel('a_x');
-                ylabel('a_y');
-                title(['a_z = ', num2str(Zq(i))]);
-                xlim(xylimits);
-                ylim(xylimits);
-                axis equal
-            end
-            %figure; 
-            %plot(ax, ay, 'o')
+%             tic
+%             figure;
+%             Zq = linspace(min(accel(:, 3)), 0, 9);
+%             accel_xy = accel(:, 1:2);
+%             xylimits = [min(accel_xy(:)), max(accel_xy(:))];
+%             for i = 1 : 9
+%                 subplot(3, 3, i);
+%                 [xc, yc] = CrossSection(accel(:, 1), accel(:, 2), accel(:, 3), Zq(i));
+%                 plot(xc, yc);
+%                 xlabel('a_x');
+%                 ylabel('a_y');
+%                 title(['a_z = ', num2str(Zq(i))]);
+%                 xlim(xylimits);
+%                 ylim(xylimits);
+%                 axis equal
+%             end
+%             toc
+            
+%            tic
+%            ca = control_allocation(multirotor);
+%            figure;
+%            Zq = linspace(min(accel(:, 3)), 0, 9);
+%            accel_xy = accel(:, 1:2);
+%            xylimits = [min(accel_xy(:)), max(accel_xy(:))];
+%            for i = 1 : 9
+%                subplot(3, 3, i);
+%                [xc, yc] = CrossSection2(accel(:, 1), accel(:, 2), Zq(i), ca, multirotor);
+%                plot(xc, yc);
+%                xlabel('a_x');
+%                ylabel('a_y');
+%                title(['a_z = ', num2str(Zq(i))]);
+%                xlim(xylimits);
+%                ylim(xylimits);
+%                axis equal
+%            end
+%            toc
         end
         
     end
@@ -228,7 +239,7 @@ function [settling_time, settling_index] = calc_settling_time(des, X, t, sys_typ
 end
 
 function [x, y] = CrossSection(X, Y, Z, z)
-    Nq = 1e6;
+    Nq = 1e5;
     minx = min(X);
     miny = min(Y);
     maxx = max(X);
@@ -241,6 +252,24 @@ function [x, y] = CrossSection(X, Y, Z, z)
     x = Xq(in1);
     y = Yq(in1);
 end 
+
+function [x, y] = CrossSection2(X, Y, z, ca, m)
+    Nq = 1e4;
+    minx = min(X);
+    miny = min(Y);
+    maxx = max(X);
+    maxy = max(Y);
+    
+    Xq = rand(Nq, 1) * (maxx - minx) + minx;
+    Yq = rand(Nq, 1) * (maxy - miny) + miny;
+    
+    out1 = false(Nq, 1);
+    for i = 1 : Nq
+        [~, out1(i)] = ca.CalcRotorSpeeds(m, [Xq(i); Yq(i); z], zeros(3, 1));
+    end
+    x = Xq(~out1);
+    y = Yq(~out1);
+end
 
 %% InHull Function
 
