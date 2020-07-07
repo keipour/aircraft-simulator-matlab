@@ -157,7 +157,11 @@ classdef multirotor < handle
         end
         
         function Visualize(obj)
-            graphics.VisualizeMultirotor(obj);
+            graphics.VisualizeMultirotor(obj, false);
+        end
+        
+        function VisualizeAxes(obj)
+            graphics.VisualizeMultirotor(obj, true);
         end
         
         function AnalyzeAccelerationManipulability(obj, n_steps)
