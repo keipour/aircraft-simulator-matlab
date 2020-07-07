@@ -133,6 +133,12 @@ classdef multirotor < handle
                 obj.GetThrustForce(eye(3), RotorSpeedsSquared, get_maximum)) / obj.Mass;
         end
         
+        function omega_dot = CalculateAngularAccelerationManipulability(obj, RotorSpeedsSquared)
+            moment = obj.GetGravityMoment(eye(3)) + obj.GetThrustMoment(RotorSpeedsSquared) + ...
+                obj.GetReactionMoment(RotorSpeedsSquared);
+            omega_dot = obj.GetAngularAcceleration(moment);
+        end
+        
         function set.I(obj, value)
             obj.I = value;
             obj.UpdateI_inv();
@@ -167,8 +173,8 @@ classdef multirotor < handle
             graphics.VisualizeMultirotor(obj, true);
         end
         
-        function AnalyzeAccelerationManipulability(obj, n_steps)
-            analysis.AnalyzeAccelerationDynamicManipulability(obj, n_steps);
+        function AnalyzeDynamicManipulability(obj, lin_steps, ang_steps)
+            analysis.AnalyzeDynamicManipulability(obj, lin_steps, ang_steps);
         end
         
         function R = GetRotationMatrix(obj)

@@ -122,9 +122,14 @@ classdef graphics
         
         function PrintDynamicManipulabilityAnalysis(res)
             fprintf('Analysis for the multirotor structure:\n');
-            fprintf('    Translation Actuation Type     : %s\n', res.TranslationType);
-            fprintf('    Vertical Thrust Efficiency     : %0.2f %%\n', res.VerticalThrustEfficiency * 100);
-            fprintf('    Vertical Translation Efficiency: %0.2f %%\n', res.VerticalTranslationEfficiency * 100);
+            fprintf('    Translation Actuation Type           : %s\n', res.TranslationType);
+            fprintf('    Vertical Thrust Efficiency           : %0.2f %%\n', res.VerticalThrustEfficiency * 100);
+            fprintf('    Vertical Translation Efficiency      : %0.2f %%\n', res.VerticalTranslationEfficiency * 100);
+            fprintf('    Maximum Vertical Acceleration        : %0.2f m/s^2\n', res.MaximumVerticalAcceleration);
+            fprintf('    Maximum Horizontal Acceleration      : %0.2f m/s^2\n', res.MaximumHorizontalAcceleration);
+            fprintf('    Maximum Angular Acceleration Around X: %0.2f rad/s^2\n', res.MaximumAngularAccelerationX);
+            fprintf('    Maximum Angular Acceleration Around Y: %0.2f rad/s^2\n', res.MaximumAngularAccelerationY);
+            fprintf('    Maximum Angular Acceleration Around Z: %0.2f rad/s^2\n', res.MaximumAngularAccelerationZ);
         end
         
         function DrawConvexHull(X, plot_title, label)
@@ -140,9 +145,9 @@ classdef graphics
             elseif r == 1
                 plot3(X(:, 1), X(:, 2), X(:, 3), 'c');
             end
-            xlabel([label '_x']);
-            ylabel([label '_y']);
-            zlabel([label '_z']);
+            xlabel(['$' label '_x$'], 'Interpreter', 'latex');
+            ylabel(['$' label '_y$'], 'Interpreter', 'latex');
+            zlabel(['$' label '_z$'], 'Interpreter', 'latex');
             axis equal
             title(plot_title);
         end
@@ -151,45 +156,75 @@ classdef graphics
             if rank(X) < 3
                 return;
             end
-            figure;
-            title(plot_title);
-            Zq = linspace(min(X(:, 3)), 0, 9);
-            X_xy = X(:, 1:2);
-            xylimits = [min(X_xy(:)), max(X_xy(:))];
-            for i = 1 : 9
-                subplot(3, 3, i);
-                [xc, yc] = CrossSection(X(:, 1), X(:, 2), X(:, 3), Zq(i));
-                plot(xc, yc);
-                xlabel([label '_x']);
-                ylabel([label '_y']);
-                title([label, '_z = ', num2str(Zq(i))]);
-                xlim(xylimits);
-                ylim(xylimits);
-                axis equal
-            end
-            % % Another method based on dynamic inversion - Kept just in case
+            plot_cross_section(X, plot_title, label, 'x');
+            plot_cross_section(X, plot_title, label, 'y');
+            plot_cross_section(X, plot_title, label, 'z');
+
+            % % Another method based on dynamic inversion - Kept just for
+            % % double proof when needed
+            %
             % ca = control_allocation(multirotor);
             % figure;
+            % sgtitle(plot_title);
             % Zq = linspace(min(X(:, 3)), 0, 9);
             % X_xy = X(:, 1:2);
             % xylimits = [min(X_xy(:)), max(X_xy(:))];
             % for i = 1 : 9
-            %    subplot(3, 3, i);
-            %    [xc, yc] = CrossSection_DynInv(X(:, 1), X(:, 2), Zq(i), ca, multirotor);
-            %    plot(xc, yc);
-            %    xlabel([label '_x']);
-            %    ylabel([label '_y']);
-            %    title([label, '_z = ', num2str(Zq(i))]);
-            %    xlim(xylimits);
-            %    ylim(xylimits);
-            %    axis equal
+            %     subplot(3, 3, i);
+            %     is_angular = true;
+            %     [xc, yc] = get_cross_section_from_dynamic_inversion ...
+            %         (X(:, 1), X(:, 2), Zq(i), ca, multirotor, is_angular);
+            %     plot(xc, yc);
+            %     xlabel(['$' label '_x$'], 'Interpreter', 'latex');
+            %     ylabel(['$' label '_y$'], 'Interpreter', 'latex');
+            %     title(['$' label '_z = ' num2str(Zq(i), '%0.2f') '$'], 'Interpreter', 'latex');
+            %     xlim(xylimits);
+            %     ylim(xylimits);
+            %     axis equal
             % end
         end
     end
 end
 
 %% Helper functions
-function [x, y] = CrossSection(X, Y, Z, z)
+function plot_cross_section(X, plot_title, label, pivot_axis)
+    if lower(pivot_axis) == 'z'
+        axis_labels = {'x', 'y', 'z'};
+        Pivot_q = linspace(min(X(:, 3)), 0, 9);
+        axis1 = X(:, 1);
+        axis2 = X(:, 2);
+        axis3 = X(:, 3);
+    elseif lower(pivot_axis) == 'y'
+        axis_labels = {'x', 'z', 'y'};
+        Pivot_q = linspace(min(X(:, 2)), max(X(:, 2)), 9);
+        axis1 = X(:, 1);
+        axis2 = X(:, 3);
+        axis3 = X(:, 2);
+    elseif lower(pivot_axis) == 'x'
+        axis_labels = {'y', 'z', 'x'};
+        Pivot_q = linspace(min(X(:, 1)), max(X(:, 1)), 9);
+        axis1 = X(:, 2);
+        axis2 = X(:, 3);
+        axis3 = X(:, 1);
+    end
+    figure;
+    sgtitle([plot_title ' (' upper(axis_labels{3}) ' axis)']);
+    X_xy = [axis1 axis2];
+    xylimits = [min(X_xy(:)), max(X_xy(:))];
+    for i = 1 : 9
+        subplot(3, 3, i);
+        [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
+        plot(xc, yc);
+        xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
+        ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
+        title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
+        xlim(xylimits);
+        ylim(xylimits);
+        axis equal
+    end
+end
+
+function [x, y] = get_cross_section(X, Y, Z, z)
     Nq = 1e5;
     minx = min(X);
     miny = min(Y);
@@ -204,8 +239,11 @@ function [x, y] = CrossSection(X, Y, Z, z)
     y = Yq(in1);
 end 
 
-function [x, y] = CrossSection_DynInv(X, Y, z, ca, m)
-    Nq = 1e3;
+function [x, y] = get_cross_section_from_dynamic_inversion(X, Y, z, ca, m, is_angluar)
+    if nargin < 6
+        is_angluar = false;
+    end
+    Nq = 5*1e3;
     minx = min(X);
     miny = min(Y);
     maxx = max(X);
@@ -216,7 +254,11 @@ function [x, y] = CrossSection_DynInv(X, Y, z, ca, m)
     
     out1 = false(Nq, 1);
     for i = 1 : Nq
-        [~, out1(i)] = ca.CalcRotorSpeeds(m, [Xq(i); Yq(i); z], zeros(3, 1));
+        if is_angluar
+            [~, out1(i)] = ca.CalcRotorSpeeds(m, zeros(3, 1), [Xq(i); Yq(i); z]);
+        else
+            [~, out1(i)] = ca.CalcRotorSpeeds(m, [Xq(i); Yq(i); z], zeros(3, 1));
+        end
     end
     x = Xq(~out1);
     y = Yq(~out1);
