@@ -343,7 +343,17 @@ function visualize_multirotor(m, plot_axes_only)
 
     % Draw the central payload box
     hold on
-    plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, payload_size, box_height);
+    if plot_axes_only == false
+        plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, payload_size, box_height);
+    else
+        [sx, sy, sz] = sphere;
+        sphere_size = axis_arrow_size / 10;
+        sx = sx * sphere_size;
+        sy = sy * sphere_size;
+        sz = sz * sphere_size;
+        surf(sx, sy, sz);
+        plotAxes(zeros(3, 1), eye(3),  axis_arrow_size / 2);
+    end
 
     % Make the plot more presentable
 
@@ -385,7 +395,11 @@ function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size
 end
 
 function plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_size)
-    plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', 3);
+    line_width = 3;
+    if plot_axes_only
+        line_width = 1;
+    end
+    plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', line_width);
     if arm_labels_on
         label_dist = 0.02;
         dp = -(motor_size + label_dist) * z_axis;
@@ -412,9 +426,13 @@ end
 
 function plotAxes(position, Rotation, arrow_size)
     colors = {'green', 'blue', 'red'};
+    labels = {'$\hat{x}$', '$\hat{y}$', '$\hat{z}$'};
+    label_dist = 0.02;
     for i = 1 : 3
         end_pos = position + arrow_size*Rotation(:, i);
+        label_pos = end_pos + label_dist * Rotation(:, i);
         arrow3d([position(1) end_pos(1)], [position(2) end_pos(2)], [position(3) end_pos(3)], 0.8, 0.005, 0.01, colors{i});
+        text(label_pos(1), label_pos(2), label_pos(3), labels{i}, 'Interpreter', 'latex');
     end
 end
 
