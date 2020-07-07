@@ -334,10 +334,10 @@ function visualize_multirotor(m, plot_axes_only)
     for i = 1 : num_of_rotors
         hold on
         if plot_axes_only == false
-            plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R * [0;0;-1], ...
+            plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
                 m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
         else
-            plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R,  axis_arrow_size / 2);
+            plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2);
         end
     end
 
