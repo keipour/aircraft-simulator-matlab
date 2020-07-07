@@ -1,7 +1,7 @@
 classdef graphics
 
     methods(Static)
-        function PlotAnalysis(response)
+        function PlotResponseAnalysis(response)
             t = response.TimeSteps;
 
             % Plot the response
@@ -92,7 +92,7 @@ classdef graphics
             end
         end
         
-        function PrintAnalysis(res)
+        function PrintResponseAnalysis(res)
             fprintf('Analysis for response of %s going from %0.2f to %0.2f:\n', ...
                 res.SignalName, res.StartValue, res.DesiredValue);
             fprintf('    Total Simulation Time: %0.3f (s)\n', res.TotalTime);
@@ -118,6 +118,13 @@ classdef graphics
 
         function VisualizeMultirotor(multirotor, axes_only)
             visualize_multirotor(multirotor, axes_only);
+        end
+        
+        function PrintDynamicManipulabilityAnalysis(res)
+            fprintf('Analysis for the multirotor structure:\n');
+            fprintf('    Translation Actuation Type     : %s\n', res.TranslationType);
+            fprintf('    Vertical Thrust Efficiency     : %0.2f %%\n', res.VerticalThrustEfficiency * 100);
+            fprintf('    Vertical Translation Efficiency: %0.2f %%\n', res.VerticalTranslationEfficiency * 100);
         end
         
         function DrawConvexHull(X, plot_title, label)

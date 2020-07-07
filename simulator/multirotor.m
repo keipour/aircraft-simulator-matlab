@@ -5,7 +5,7 @@ classdef multirotor < handle
     properties
         % Fixed Properties
         Rotors
-        Mass = 3.0;                 % in Kg
+        Mass = 7.427;                 % in Kg
         I                           % Inertia
         PayloadRadius = 0.15;       % in meters
         
@@ -125,9 +125,12 @@ classdef multirotor < handle
             end
         end
         
-        function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared)
+        function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared, get_maximum)
+            if nargin < 3
+                get_maximum = false;
+            end
             accel = (obj.GetGravityForce() + ...
-                obj.GetThrustForce(eye(3), RotorSpeedsSquared)) / obj.Mass;
+                obj.GetThrustForce(eye(3), RotorSpeedsSquared, get_maximum)) / obj.Mass;
         end
         
         function set.I(obj, value)
@@ -191,10 +194,15 @@ classdef multirotor < handle
             F = physics.Gravity * obj.Mass;
         end
         
-        function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared)
+        function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared, get_maximum)
             FB = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               FB = FB + rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
+                if nargin < 4 || get_maximum == false
+                    FB = FB + rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
+                else
+                    max_thrust = [0; 0; -norm(rotor.GetThrustForce(obj.Rotors{i}, obj.Rotors{i}.MaxrotorSpeedSquared))];
+                    FB = FB + max_thrust;
+                end
             end
             F = Rot_IB * FB;
         end

@@ -47,11 +47,11 @@ classdef analysis
                 % Plot the analysis if asked
                 if plot == true
                     subplot(N, 1, i);
-                    graphics.PlotAnalysis(res{i});
+                    graphics.PlotResponseAnalysis(res{i});
                 end
                 
                 % Print the analysis results
-                graphics.PrintAnalysis(res{i});
+                graphics.PrintResponseAnalysis(res{i});
             end
         end
 
@@ -59,7 +59,8 @@ classdef analysis
             accel = analyze_accelerations(multirotor, n_steps);
             graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a');
-           % res = analyze_plant_structure(multirotor, n_steps);
+            res = analyze_plant_structure(multirotor, accel);
+            graphics.PrintDynamicManipulabilityAnalysis(res);
         end
         
     end
@@ -85,8 +86,28 @@ function accel = analyze_accelerations(multirotor, n_steps)
     end
 end
 
-function result = analyze_plant_structure(multirotor)
+function result = analyze_plant_structure(multirotor, accel)
+    result = [];
+    result.TranslationType = detect_dynamic_manipulability_type(accel);
 
+    max_z_accel = -min(accel(:, 3));
+    total_accel = norm(multirotor.CalculateAccelerationManipulability(0, true));
+    result.VerticalThrustEfficiency = (max_z_accel + physics.Gravity(3)) / (total_accel + physics.Gravity(3));
+    result.VerticalTranslationEfficiency = max_z_accel / total_accel;
+end
+
+
+function type = detect_dynamic_manipulability_type(X)
+    x_rank = rank(X);
+    if x_rank == 3
+        type = 'Fully-Actuated in 3-D';
+    elseif x_rank == 2
+        type = 'Underactuated in 2-D';
+    elseif x_rank == 1
+        type = 'Underactuated in 1-D';
+    else
+        error('Error in dynamic manipulability analysis: translation type not recognized');
+    end
 end
 
 function [mag, perc, ind] = calc_overshoot(start, des, X, tol)
