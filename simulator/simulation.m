@@ -1,13 +1,11 @@
 classdef simulation < handle
     properties
-        TotalTime = 5;      % in secs
-        TimeStep = 1e-3;    % in secs
         Multirotor multirotor
         Controller controller
     end
     
-    properties(SetAccess=protected, GetAccess=public)
-        CurrentTime = 0;    % in secs
+    properties(Constant)
+        Timer = simulation_support.timer;       % in secs
     end
     
     properties(SetAccess=protected, GetAccess=protected)
@@ -25,7 +23,7 @@ classdef simulation < handle
         end
         
         function t = GetTimeSteps(obj)
-            t = 0 : obj.TimeStep : obj.TotalTime;
+            t = 0 : obj.Timer.TimeStep : obj.Timer.TotalTime;
         end
         
         function Reset(obj)
@@ -36,24 +34,24 @@ classdef simulation < handle
             obj.Multirotor.CopyFrom(obj.InitialMultirotor);
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
-            obj.CurrentTime = 0;
+            obj.Timer.CurrentTime = 0;
             obj.StateHistory = state_collection(obj.Multirotor.NumOfRotors);
             obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
             obj.StateHistory.PushBack(obj.Multirotor.State);
         end
         
-        function set.TotalTime(obj, value)
-            obj.TotalTime = value;      % in secs
+        function SetTotalTime(obj, value)
+            obj.Timer.TotalTime = value;      % in secs
             obj.Reset();
         end
 
-        function set.TimeStep(obj, value)
-            obj.TimeStep = value;      % in secs
+        function SetTimeStep(obj, value)
+            obj.Timer.TimeStep = value;      % in secs
             obj.Reset();
         end
         
         function flag = IsLastStep(obj)
-            if obj.CurrentTime + obj.TimeStep > obj.TotalTime + 1e-6
+            if obj.Timer.CurrentTime + obj.Timer.TimeStep > obj.Timer.TotalTime + 1e-6
                 flag = true;
             else
                 flag = false;
@@ -67,21 +65,21 @@ classdef simulation < handle
         function NextStepPlant(obj, rotor_speeds_squared)
         % Update the plant state for the next time step and advance time
         
-            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.TimeStep);
+            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.Timer.TimeStep);
             obj.StateHistory.PushBack(obj.Multirotor.State);
-            obj.CurrentTime = obj.CurrentTime + obj.TimeStep;
+            obj.Timer.CurrentTime = obj.Timer.CurrentTime + obj.Timer.TimeStep;
         end
         
         function rotor_speeds_squared = NextAttitudeCommand(obj, rpy_des, lin_accel)
         % Calculate the multirotor command for a desired attitude
         
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, obj.TimeStep);
+            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, obj.Timer.TimeStep);
         end
         
         function rotor_speeds_squared = NextPositionCommand(obj, pos_des, yaw_des)
         % Calculate the multirotor command for a desired position and yaw
 
-            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, obj.TimeStep);
+            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, obj.Timer.TimeStep);
         end
         
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
