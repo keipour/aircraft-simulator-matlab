@@ -54,9 +54,11 @@ classdef (Abstract) pid_controller < handle
             
             for i = 1 : 3
                 if output(i) > 1.2 * obj.OutputMax(i)
-                     obj.ErrorIntegral(i) = (1.2 * obj.OutputMax(i) - obj.P * err - obj.D * err_dot) / obj.I;
+                     obj.ErrorIntegral(i) = (1.2 * obj.OutputMax(i) - ...
+                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ./ obj.I(i, i);
                 elseif output(i) < -1.2 * obj.OutputMax(i)
-                     obj.ErrorIntegral(i) = (-1.2 * obj.OutputMax(i) - obj.P * err - obj.D * err_dot) / obj.I;
+                     obj.ErrorIntegral(i) = (-1.2 * obj.OutputMax(i) - ...
+                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ./ obj.I(i, i);
                 end
             end
         end
