@@ -15,7 +15,7 @@ classdef attitude_controller < pid_controller
             rpy_err = wrapToPi(deg2rad(rpy_des - multirotor.State.RPY));
             
             % Calculate the rate in radians
-            rpy_dot_err =  wrapToPi(deg2rad(0 - multirotor.State.EulerRate));
+            rpy_dot_err = deg2rad(0 - multirotor.State.EulerRate);
             
             % Update the error integral
             obj.ErrorIntegral = obj.ErrorIntegral + rpy_err * dt;
