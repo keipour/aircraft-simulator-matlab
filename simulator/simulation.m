@@ -38,6 +38,8 @@ classdef simulation < handle
             obj.StateHistory = state_collection(obj.Multirotor.NumOfRotors);
             obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
             obj.StateHistory.PushBack(obj.Multirotor.State);
+            logger.Reset();
+            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
         function SetTotalTime(obj, value)
@@ -67,6 +69,7 @@ classdef simulation < handle
         
             obj.Multirotor.UpdateState(rotor_speeds_squared, obj.Timer.TimeStep);
             obj.StateHistory.PushBack(obj.Multirotor.State);
+            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
             obj.Timer.CurrentTime = obj.Timer.CurrentTime + obj.Timer.TimeStep;
         end
         

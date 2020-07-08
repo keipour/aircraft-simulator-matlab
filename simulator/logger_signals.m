@@ -1,6 +1,6 @@
 classdef logger_signals < uint32
     enumeration
-        Measured(1);
+        MeasuredStates(1);
 
         % Set it to the largest number
         Max(1);
