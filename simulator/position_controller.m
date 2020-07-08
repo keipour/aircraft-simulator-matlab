@@ -3,7 +3,7 @@ classdef position_controller < pid_controller
     properties
         AttitudeType attitude_types = attitude_types.Full;
         RateLimits = [7; 7; 9]; % in m/s
-        OutputMax = [1; 1; 40]; % in m/s^2
+        OutputMax = [2; 2; 6]; % in m/s^2
     end
     
     methods
@@ -34,10 +34,6 @@ classdef position_controller < pid_controller
             
             % Limit the output
             lin_accel = obj.LimitOutput(lin_accel);
-
-%             [lin_accel, obj.ErrorIntegral] = task2_calc_acceleration...
-%                 (obj.P, obj.I, obj.D, multirotor.State.Position, ...
-%                 multirotor.State.Velocity, pos_des, obj.ErrorIntegral, dt);
         end
 
         function rpy_des = CalculateAttitude(obj, acc_cmd, yaw_des)
