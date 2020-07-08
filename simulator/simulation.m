@@ -5,7 +5,7 @@ classdef simulation < handle
     end
     
     properties(Constant)
-        Timer = simulation_support.timer;       % in secs
+        Timer = support_files.timer;       % in secs
     end
     
     properties(SetAccess=protected, GetAccess=protected)
