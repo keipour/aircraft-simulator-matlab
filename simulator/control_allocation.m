@@ -31,15 +31,15 @@ classdef control_allocation < handle
             end
 
             saturation_flag = false;
-            for i = 1 : length(rotor_speeds_squared)
-                if rotor_speeds_squared(i) > multirotor.Rotors{i}.MaxrotorSpeedSquared
-                    rotor_speeds_squared(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
-                    saturation_flag = true;
-                end
-                if rotor_speeds_squared(i) < 0
-                    rotor_speeds_squared(i) = 0;
-                    saturation_flag = true;
-                end
+            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxrotorSpeedSquared, multirotor.Rotors, 'uni', 0));
+            if any(rotor_speeds_squared > max_rotor_speeds)
+                mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
+                rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;
+                saturation_flag = true;
+            end
+            if any(rotor_speeds_squared < 0)
+                rotor_speeds_squared(rotor_speeds_squared < 0) = 0;
+                saturation_flag = true;
             end
             
             if nargin > 1
