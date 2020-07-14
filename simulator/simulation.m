@@ -39,13 +39,13 @@ classdef simulation < handle
             obj.Reset();
         end
 
-        function SetTimeStep(obj, value)
-            obj.Timer.TimeStep = value;      % in secs
+        function SetPlantRate(obj, value)
+            obj.Timer.PlantRate = value;      % in secs
             obj.Reset();
         end
         
         function flag = IsLastStep(obj)
-            if obj.Timer.CurrentTime + obj.Timer.TimeStep > obj.Timer.TotalTime + 1e-6
+            if obj.Timer.CurrentTime + 1 / obj.Timer.PlantRate > obj.Timer.TotalTime + 1e-6
                 flag = true;
             else
                 flag = false;
@@ -55,21 +55,21 @@ classdef simulation < handle
         function NextStepPlant(obj, rotor_speeds_squared)
         % Update the plant state for the next time step and advance time
         
-            obj.Timer.CurrentTime = obj.Timer.CurrentTime + obj.Timer.TimeStep;
-            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.Timer.TimeStep);
+            obj.Timer.CurrentTime = obj.Timer.CurrentTime + 1 / obj.Timer.PlantRate;
+            obj.Multirotor.UpdateState(rotor_speeds_squared, 1 / obj.Timer.PlantRate);
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
         function rotor_speeds_squared = NextAttitudeCommand(obj, rpy_des, lin_accel)
         % Calculate the multirotor command for a desired attitude
         
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, obj.Timer.TimeStep);
+            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, 1 / obj.Timer.PlantRate);
         end
         
         function rotor_speeds_squared = NextPositionCommand(obj, pos_des, yaw_des)
         % Calculate the multirotor command for a desired position and yaw
 
-            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, obj.Timer.TimeStep);
+            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, 1 / obj.Timer.PlantRate);
         end
         
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
