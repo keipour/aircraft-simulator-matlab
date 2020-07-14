@@ -29,7 +29,6 @@ classdef simulation < handle
             obj.Multirotor.CopyFrom(obj.InitialMultirotor);
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
-            obj.Timer.CurrentTime = 0;
             logger.Reset();
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
@@ -39,11 +38,6 @@ classdef simulation < handle
             obj.Reset();
         end
 
-        function SetPlantRate(obj, value)
-            obj.Timer.PlantRate = value;      % in secs
-            obj.Reset();
-        end
-        
         function flag = IsLastStep(obj)
             if obj.Timer.CurrentTime + 1 / obj.Timer.PlantRate > obj.Timer.TotalTime + 1e-6
                 flag = true;

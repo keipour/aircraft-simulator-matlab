@@ -4,18 +4,85 @@ classdef timer < handle
         PlantRate = 2000;               % in Hertz
         AttitudeControllerRate = 450;   % in Hertz
         PositionControllerRate = 55;    % in Hertz
+    end
+    
+    properties (SetAccess = public, GetAccess = public)
         CurrentTime = 0;                % in secs
+    end
+
+    properties (SetAccess = protected, GetAccess = protected)
+        TimeStepsTimes
+        TimeStepsModules
+        CurrentTimeIndex
+    end
+    
+    properties (Constant)
+        PosControllerIndex = 1;
+        AttControllerIndex = 2;
+        PlantIndex = 3;
     end
     
     methods
+        function obj = timer()
+            obj.Update();
+        end
+        
+        function Update(obj)
+            [times, modules] = obj.CreateTimeSteps();
+            obj.TimeStepsTimes = [0; times];
+            obj.TimeStepsModules = [0; modules];
+            obj.CurrentTimeIndex = 1;
+        end
+        
+        function flag = IsFinished(obj)
+            flag = obj.CurrentTimeIndex > length(obj.TimeStepsTimes);
+        end
+        
+        function set.TotalTime(obj, value)
+            mustBePositive(value);
+            obj.TotalTime = value;
+            obj.Update();
+        end
+        
+        function set.PlantRate(obj, value)
+            mustBePositive(value);
+            obj.PlantRate = value;
+            obj.Update();
+        end
+        
+        function set.AttitudeControllerRate(obj, value)
+            mustBePositive(value);
+            obj.AttitudeControllerRate = value;
+            obj.Update();
+        end
+    
+        function set.PositionControllerRate(obj, value)
+            mustBePositive(value);
+            obj.PositionControllerRate = value;
+            obj.Update();
+        end
+        
+        %function [time, module] = 
+        
+%         function value = get.CurrentTime(obj)
+%             ind = obj.CurrentTimeIndex;
+%             if ind > length(obj.TimeStepsTimes)
+%                 ind = length(obj.TimeStepsTimes);
+%             end
+%             value = obj.TimeStepsTimes(ind);
+%         end
+    end
+    
+    methods(Access = protected)
         function [times, modules] = CreateTimeSteps(obj)
             T = cell(3, 1);
-            T{1} = 1 / obj.PositionControllerRate : 1 / obj.PositionControllerRate : obj.TotalTime;
-            T{2} = 1 / obj.AttitudeControllerRate : 1 / obj.AttitudeControllerRate : obj.TotalTime;
-            T{3} = 1 / obj.PlantRate : 1 / obj.PlantRate : obj.TotalTime;
+            T{obj.PosControllerIndex} = 1 / obj.PositionControllerRate : 1 / obj.PositionControllerRate : obj.TotalTime;
+            T{obj.AttControllerIndex} = 1 / obj.AttitudeControllerRate : 1 / obj.AttitudeControllerRate : obj.TotalTime;
+            T{obj.PlantIndex} = 1 / obj.PlantRate : 1 / obj.PlantRate : obj.TotalTime;
             [times, modules] = merge_times(T);
         end
     end
+    
 end
 
 %% Helper function
