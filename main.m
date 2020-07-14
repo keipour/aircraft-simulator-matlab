@@ -36,8 +36,8 @@ sim.SetTotalTime(10);
 sim.SimulateAttitudeResponse([-10; 0; 30], true);
 
 sim.Controller.PositionController.SetPID(5, 0.3, 5);
-% figure; 
-% sim.SimulatePositionResponse([100; 100; -100], 100, true);
+figure; 
+sim.SimulatePositionResponse([100; 100; -100], 100, true);
 
-graphics.PlotSignalsByName(sim, 3, {'pos', 'accel', 'rpy', 'rpy dot', 'sat'}, true);
+graphics.PlotSignalsByName(3, {'pos', 'accel', 'rpy', 'rpy dot', 'sat'}, true);
 

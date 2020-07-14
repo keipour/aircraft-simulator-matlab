@@ -37,8 +37,8 @@ classdef queue < handle
         
         function [data, times] = Get(obj, row)
             row = uint32(row);
-            data = obj.Data{row};
-            times = obj.Times(row, :);
+            data = obj.Data{row}';
+            times = obj.Times(row, :)';
         end
     end
 end

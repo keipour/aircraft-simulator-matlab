@@ -29,7 +29,7 @@ classdef graphics
             fix_plot_limits({t}, {response.Values, response.DesiredValue});
         end
         
-        function h = PlotSignalsByName(simulation, cols, signals, gridon)
+        function h = PlotSignalsByName(cols, signals, gridon)
             if nargin < 4
                 gridon = false;
             end
@@ -39,13 +39,11 @@ classdef graphics
             
             n_sig = length(signals);
             X = cell(n_sig, 1);
+            T = cell(n_sig, 1);
             L = cell(n_sig, 1);
-            states = simulation.GetStateTrajectory();
             for i = 1 : n_sig
-                [X{i}, L{i}] = states.GetField(signals{i});
+                [X{i}, T{i}, L{i}] = logger.GetField(signals{i});
             end
-            
-            T = simulation.GetTimeSteps();
             
             h = graphics.PlotSignalsFromData(cols, X, T, L, gridon);
         end
@@ -75,7 +73,7 @@ classdef graphics
             for i = 1 : n_data
                 for j = 1 : size(data{i}, 2)
                     subplot(rows, cols, curr_plot);
-                    plot_signal(times, data{i}(:, j));
+                    plot_signal(times{i}, data{i}(:, j));
                     lbl = {};
                     if length(labels) >= i || length(labels{i}) >= j
                         lbl = labels{i}(:, j);
@@ -86,7 +84,7 @@ classdef graphics
                     if gridon
                         grid on
                     end
-                    fix_plot_limits({times}, {data{i}(:, j)});
+                    fix_plot_limits({times{1}}, {data{i}(:, j)});
                     curr_plot = curr_plot + 1;
                 end
             end

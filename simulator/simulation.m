@@ -10,7 +10,6 @@ classdef simulation < handle
     
     properties(SetAccess=protected, GetAccess=protected)
         InitialMultirotor multirotor
-        StateHistory state_collection
     end
     
     %% Methods
@@ -21,11 +20,7 @@ classdef simulation < handle
             obj.Multirotor = multirotor(0, 1);
             obj.Reset();
         end
-        
-        function t = GetTimeSteps(obj)
-            t = 0 : obj.Timer.TimeStep : obj.Timer.TotalTime;
-        end
-        
+
         function Reset(obj)
             obj.Controller.Reset();
             
@@ -35,9 +30,6 @@ classdef simulation < handle
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
             obj.Timer.CurrentTime = 0;
-            obj.StateHistory = state_collection(obj.Multirotor.NumOfRotors);
-            obj.StateHistory.SetCapacity(length(obj.GetTimeSteps()));
-            obj.StateHistory.PushBack(obj.Multirotor.State);
             logger.Reset();
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
@@ -60,17 +52,12 @@ classdef simulation < handle
             end
         end
         
-        function traj = GetStateTrajectory(obj)
-            traj = obj.StateHistory;
-        end
-        
         function NextStepPlant(obj, rotor_speeds_squared)
         % Update the plant state for the next time step and advance time
         
-            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.Timer.TimeStep);
-            obj.StateHistory.PushBack(obj.Multirotor.State);
-            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
             obj.Timer.CurrentTime = obj.Timer.CurrentTime + obj.Timer.TimeStep;
+            obj.Multirotor.UpdateState(rotor_speeds_squared, obj.Timer.TimeStep);
+            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
         function rotor_speeds_squared = NextAttitudeCommand(obj, rpy_des, lin_accel)
@@ -100,8 +87,9 @@ classdef simulation < handle
             
             % Analysis of the response
             signal_names = {'Roll', 'Pitch', 'Yaw'};
-            res = analysis.AnalyzeAndOutputResponse(obj.GetTimeSteps(), ...
-                obj.StateHistory.GetRPYs(), rpy_des, signal_names, plot);
+            [rpys, rpy_times] = logger.GetMeasuredRPYs();
+            res = analysis.AnalyzeAndOutputResponse(rpy_times, rpys, ...
+                rpy_des, signal_names, plot);
         end
         
         function res = SimulatePositionResponse(obj, pos_des, yaw_des, plot)
@@ -118,9 +106,9 @@ classdef simulation < handle
             
             % Analysis of the response
             signal_names = {'X', 'Y', 'Z', 'Yaw'};
-            pos_res = obj.StateHistory.GetPositions();
-            rpy_res = obj.StateHistory.GetRPYs();
-            res = analysis.AnalyzeAndOutputResponse(obj.GetTimeSteps(), ...
+            [pos_res, pos_times] = logger.GetMeasuredPositions();
+            [rpy_res, ~] = logger.GetMeasuredRPYs();
+            res = analysis.AnalyzeAndOutputResponse(pos_times, ...
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
         

@@ -16,5 +16,147 @@ classdef logger < handle
         function [data, times] = GetData(signal)
             [data, times] = logger.Data.Get(signal);
         end
+
+        %% Functions for getting the data
+        
+        function [data, times] = GetMeasuredStates()
+            [data, times] = logger.GetData(logger_signals.MeasuredStates);
+        end
+        
+        function [data, times] = GetMeasuredAccelerations()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Acceleration', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetMeasuredEulerRates()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.EulerRate', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredAngularAccelerations()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.AngularAcceleration', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredPositions()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Position', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredVelocities()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Velocity', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredRPYs()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.RPY', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredOmegas()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Omega', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredForces()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Force', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMeasuredMoments()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.Moment', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetMeasuredRotorSpeeds()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.RotorSpeeds', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetMeasuredRotorSaturations()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.RotorsSaturated', measured_data, 'uni', 0));
+        end
+        
+        function [data, times, labels] = GetField(str)
+            str = lower(str);
+            
+            if contains(str, 'accel') && ~contains_or(str, {'ang', 'rot'})
+                [data, times] = logger.GetMeasuredAccelerations();
+                labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
+                
+            elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
+                    contains_or(str, {'deriv', 'dot', 'vel', 'speed', 'rate'})
+                [data, times] = logger.GetMeasuredEulerRates();
+                labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Attitude Rate'};
+
+            elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
+                    (contains_or(str, {'dot', 'deriv'}) && contains(str, 'omega'))
+                [data, times] = logger.GetMeasuredAngularAccelerations();
+                labels = {'$\dot{\omega}_x$', '$\dot{\omega}_y$', '$\dot{\omega}_z$', 'Angular Acceleration'};
+
+            elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'})
+                [data, times] = logger.GetMeasuredRPYs();
+                labels = {'Roll', 'Pitch', 'Yaw', 'Attitude'};
+
+            elseif contains(str, 'rpm') || (contains_or(str, {'mot', 'rotor'}) && contains_or(str, {'vel', 'rate', 'speed'}))
+                [data, times] = logger.GetMeasuredRotorSpeeds();
+                n_rotors = size(data, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Motor ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Motor Velocity';
+
+            elseif contains(str, 'omega') || (contains_or(str, {'ang', 'rot'}) && contains_or(str, {'vel', 'rate', 'speed'}))
+                [data, times] = logger.GetMeasuredOmegas();
+                labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Velocity'};
+
+            elseif contains(str, 'forc')
+                [data, times] = logger.GetMeasuredForces();
+                labels = {'F_x', 'F_y', 'F_z', 'Generated Force'};
+
+            elseif contains_or(str, {'momen', 'torq'})
+                [data, times] = logger.GetMeasuredMoments();
+                labels = {'M_x', 'M_y', 'M_z', 'Generated Moment'};
+
+            elseif contains_or(str, {'vel', 'speed'})
+                [data, times] = logger.GetMeasuredVelocities();
+                labels = {'V_x', 'V_y', 'V_z', 'Velocity'};
+            
+            elseif contains(str, 'pos')
+                [data, times] = logger.GetMeasuredPositions();
+                labels = {'x', 'y', 'z', 'Position'};
+
+            elseif contains(str, 'sat')
+                [data, times] = logger.GetMeasuredRotorSaturations();
+                labels = {'Motor Saturations', 'Motor Saturations'};
+
+            else
+                error('Input string not recognized.');
+            end
+        end
+        
+    end
+end
+
+%% Helper functions
+function res = contains_or(str, patterns)
+    res = false;
+    if ~iscell(patterns)
+        patterns = {patterns};
+    end
+    for i = 1 : length(patterns)
+        res = res || contains(str, patterns{i});
+    end
+end
+
+function res = contains_and(str, patterns)
+    res = true;
+    if ~iscell(patterns)
+        patterns = {patterns};
+    end
+    for i = 1 : length(patterns)
+        res = res && contains(str, patterns{i});
     end
 end
