@@ -5,7 +5,7 @@ classdef simulation < handle
     end
     
     properties(Constant)
-        Timer = support_files.timer;       % in secs
+        Timer support_files.timer = support_files.timer;       % in secs
     end
     
     properties(SetAccess=protected, GetAccess=protected)
@@ -23,6 +23,7 @@ classdef simulation < handle
 
         function Reset(obj)
             obj.Controller.Reset();
+            obj.Timer.Reset();
             
             % Keep some state fields
             istate = obj.Multirotor.InitialState;
@@ -30,7 +31,7 @@ classdef simulation < handle
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
             logger.Reset();
-            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
+            %logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
         function SetTotalTime(obj, value)
@@ -46,37 +47,71 @@ classdef simulation < handle
             end
         end
         
-        function NextStepPlant(obj, rotor_speeds_squared)
+        function NextStepPlant(obj, time)
         % Update the plant state for the next time step and advance time
-        
-            obj.Timer.CurrentTime = obj.Timer.CurrentTime + 1 / obj.Timer.PlantRate;
+            rotor_speeds_squared = last_commands.RotorSpeedsSquaredCommand.Data;
+            if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
+                rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
+            end
             obj.Multirotor.UpdateState(rotor_speeds_squared, 1 / obj.Timer.PlantRate);
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
-        function rotor_speeds_squared = NextAttitudeCommand(obj, rpy_des, lin_accel)
-        % Calculate the multirotor command for a desired attitude
-        
-            rotor_speeds_squared = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, lin_accel, 1 / obj.Timer.PlantRate);
+        function NextStepControlAllocation(obj, time)
+            if ~last_commands.DesiredEulerAcceleration.IsInitialized() || ...
+                    ~last_commands.DesiredLinearAcceleration.IsInitialized()
+                return;
+            end
+            lin_acc_des = last_commands.DesiredLinearAcceleration.Data;
+            euler_acc_des = last_commands.DesiredEulerAcceleration.Data;
+            rotor_speeds_squared = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
+            last_commands.RotorSpeedsSquaredCommand.Set(rotor_speeds_squared, time);
         end
         
-        function rotor_speeds_squared = NextPositionCommand(obj, pos_des, yaw_des)
+        function NextStepAttitudeController(obj, time)
+        % Calculate the multirotor command for a desired attitude
+            if ~last_commands.DesiredRPY.IsInitialized()
+                return;
+            end
+            rpy_des = last_commands.DesiredRPY.Data;
+            euler_accel = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, 1 / obj.Timer.PlantRate);
+            last_commands.DesiredEulerAcceleration.Set(euler_accel, time);
+        end
+        
+        function NextStepPositionController(obj, time)
         % Calculate the multirotor command for a desired position and yaw
-
-            rotor_speeds_squared = obj.Controller.ControlPosition(obj.Multirotor, pos_des, yaw_des, 1 / obj.Timer.PlantRate);
+            if ~last_commands.DesiredPositionYaw.IsInitialized()
+                return;
+            end
+            pos_yaw_des = last_commands.DesiredPositionYaw.Data;
+            [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, pos_yaw_des(1 : 3), pos_yaw_des(4), 1 / obj.Timer.PlantRate);
+            last_commands.DesiredRPY.Set(rpy_des, time);
+            last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
+        end
+        
+        function NextSimulationStep(obj)
+            [time, module] = obj.Timer.NextTimeStep();
+            if module == obj.Timer.PlantIndex
+                if last_commands.DesiredEulerAcceleration.IsInitialized() && ...
+                        last_commands.DesiredLinearAcceleration.IsInitialized()
+                    obj.NextStepControlAllocation(time);
+                end
+                obj.NextStepPlant(time);
+            elseif module == obj.Timer.PosControllerIndex && last_commands.DesiredPositionYaw.IsInitialized()
+                obj.NextStepPositionController(time);
+            elseif module == obj.Timer.AttControllerIndex && last_commands.DesiredRPY.IsInitialized()
+                obj.NextStepAttitudeController(time);
+            end
         end
         
         function res = SimulateAttitudeResponse(obj, rpy_des, plot)
         % Simulate the response to a desired attitude input
             
             obj.Reset();
-            lin_accel = zeros(3, 1);
-            while true
-                u = obj.NextAttitudeCommand(rpy_des, lin_accel);
-                obj.NextStepPlant(u);
-                if obj.IsLastStep()
-                    break;
-                end
+            last_commands.DesiredLinearAcceleration.Set(zeros(3, 1), 0);
+            last_commands.DesiredRPY.Set(rpy_des, 0);
+            while ~obj.Timer.IsFinished()
+                obj.NextSimulationStep();
             end
             
             % Analysis of the response
@@ -90,12 +125,9 @@ classdef simulation < handle
         % Simulate the response to a desired attitude input
             
             obj.Reset();
-            while true
-                u = obj.NextPositionCommand(pos_des, yaw_des);
-                obj.NextStepPlant(u);
-                if obj.IsLastStep()
-                    break;
-                end
+            last_commands.DesiredPositionYaw.Set([pos_des; yaw_des], 0);
+            while ~obj.Timer.IsFinished()
+                obj.NextSimulationStep();
             end
             
             % Analysis of the response

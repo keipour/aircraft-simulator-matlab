@@ -1,9 +1,21 @@
 classdef last_commands < handle
 
     properties(Constant)
-        AttitudeController support_files.attitude_controller_command = support_files.attitude_controller_command;
-        PositionController support_files.position_controller_command = support_files.position_controller_command;
-        ControlAllocation support_files.control_allocation_command = support_files.control_allocation_command;
+        DesiredEulerAcceleration support_files.data_field = support_files.data_field;
+        DesiredLinearAcceleration support_files.data_field = support_files.data_field;
+        DesiredRPY support_files.data_field = support_files.data_field;
+        DesiredPositionYaw support_files.data_field = support_files.data_field;
+        RotorSpeedsSquaredCommand support_files.data_field = support_files.data_field;
+    end
+    
+    methods(Static)
+        function Reset(obj)
+            obj.DesiredEulerAcceleration.Reset();
+            obj.DesiredLinearAcceleration.Reset();
+            obj.DesiredRPY.Reset();
+            obj.DesiredPosition.Reset();
+            obj.RotorSpeedsSquaredCommand.Reset();
+        end
     end
     
 end
