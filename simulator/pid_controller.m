@@ -10,6 +10,7 @@ classdef (Abstract) pid_controller < handle
     
     properties(SetAccess=protected, GetAccess=protected)
         ErrorIntegral = zeros(3, 1);
+        LastTime = 0;
     end
 
     properties(Abstract)
@@ -42,6 +43,7 @@ classdef (Abstract) pid_controller < handle
     
         function Reset(obj)
             obj.ErrorIntegral = zeros(3, 1);
+            obj.LastTime = 0;
         end
 
     end

@@ -7,10 +7,13 @@ classdef attitude_controller < pid_controller
     
     methods
 
-        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, dt)
+        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, time)
         % Calculates PID response using this formula:
         % P * err + D * -velocity + I * error_integral
             
+            % Calculate time step
+            dt = time - obj.LastTime;
+        
             % Calculate the error in radians
             rpy_err = wrapToPi(deg2rad(rpy_des - multirotor.State.RPY));
             
@@ -33,6 +36,10 @@ classdef attitude_controller < pid_controller
             
             % Limit the output
             euler_accel = obj.LimitOutput(euler_accel);
+            
+            % Update the time of the last call
+            obj.LastTime = time;
+
         end
         
     end
