@@ -78,11 +78,44 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.RotorsSaturated', measured_data, 'uni', 0));
         end
         
+        function [data, times] = GetDesiredEulerAcceleration()
+            [data, times] = logger.GetData(logger_signals.DesiredEulerAcceleration);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
+        function [data, times] = GetDesiredLinearAcceleration()
+            [data, times] = logger.GetData(logger_signals.DesiredLinearAcceleration);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
+        function [data, times] = GetDesiredRPY()
+            [data, times] = logger.GetData(logger_signals.DesiredRPY);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
+        function [data, times] = GetDesiredPositionYaw()
+            [data, times] = logger.GetData(logger_signals.DesiredPositionYaw);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
+        function [data, times] = GetRotorSpeedsSquaredCommand()
+            [data, times] = logger.GetData(logger_signals.RotorSpeedsSquaredCommand);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
         function [data, times, labels] = GetField(str)
             str = lower(str);
             
             if contains(str, 'accel') && ~contains_or(str, {'ang', 'rot'})
-                [data, times] = logger.GetMeasuredAccelerations();
+                [data_meas, times_meas] = logger.GetMeasuredAccelerations();
+                [data_des, times_des] = logger.GetDesiredLinearAcceleration();
+                if ~isempty(data_des)
+                    data = {data_meas; data_des};
+                    times = {times_meas, times_des};
+                else
+                    data = data_meas;
+                    times = times_meas;
+                end
                 labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
                 
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
@@ -92,11 +125,27 @@ classdef logger < handle
 
             elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
                     (contains_or(str, {'dot', 'deriv'}) && contains(str, 'omega'))
-                [data, times] = logger.GetMeasuredAngularAccelerations();
+                [data_meas, times_meas] = logger.GetMeasuredAngularAccelerations();
+                [data_des, times_des] = logger.GetDesiredEulerAcceleration();
+                if ~isempty(data_des)
+                    data = {data_meas; data_des};
+                    times = {times_meas, times_des};
+                else
+                    data = data_meas;
+                    times = times_meas;
+                end
                 labels = {'$\dot{\omega}_x$', '$\dot{\omega}_y$', '$\dot{\omega}_z$', 'Angular Acceleration'};
 
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'})
-                [data, times] = logger.GetMeasuredRPYs();
+                [data_meas, times_meas] = logger.GetMeasuredRPYs();
+                [data_des, times_des] = logger.GetDesiredRPY();
+                if ~isempty(data_des)
+                    data = {data_meas; data_des};
+                    times = {times_meas, times_des};
+                else
+                    data = data_meas;
+                    times = times_meas;
+                end
                 labels = {'Roll', 'Pitch', 'Yaw', 'Attitude'};
 
             elseif contains(str, 'rpm') || (contains_or(str, {'mot', 'rotor'}) && contains_or(str, {'vel', 'rate', 'speed'}))
@@ -125,7 +174,15 @@ classdef logger < handle
                 labels = {'V_x', 'V_y', 'V_z', 'Velocity'};
             
             elseif contains(str, 'pos')
-                [data, times] = logger.GetMeasuredPositions();
+                [data_meas, times_meas] = logger.GetMeasuredPositions();
+                [data_des, times_des] = logger.GetDesiredPositionYaw();
+                if ~isempty(data_des)
+                    data = {data_meas; data_des(:, 1:3)};
+                    times = {times_meas, times_des};
+                else
+                    data = data_meas;
+                    times = times_meas;
+                end
                 labels = {'x', 'y', 'z', 'Position'};
 
             elseif contains(str, 'sat')

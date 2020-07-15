@@ -63,7 +63,11 @@ classdef graphics
             n_data = length(data);
             total_size = 0;
             for i = 1 : n_data
-                total_size = total_size + size(data{i}, 2);
+                if iscell(data{i})
+                    total_size = total_size + size(data{i}{1}, 2);
+                else
+                    total_size = total_size + size(data{i}, 2);
+                end
             end
             
             h = figure;
@@ -71,9 +75,19 @@ classdef graphics
             
             curr_plot = 1;
             for i = 1 : n_data
-                for j = 1 : size(data{i}, 2)
+                n_datacols = size(data{i}, 2);
+                if iscell(data{i})
+                    n_datacols = size(data{i}{1}, 2);
+                end
+                for j = 1 : n_datacols
                     subplot(rows, cols, curr_plot);
-                    plot_signal(times{i}, data{i}(:, j));
+                    if iscell(data{i})
+                        plot_signal(times{i}{1}, data{i}{1}(:, j));
+                        plot_signal(times{i}{2}, data{i}{2}(:, j));
+                        legend('Measured', 'Commanded');
+                    else
+                        plot_signal(times{i}, data{i}(:, j));
+                    end
                     lbl = {};
                     if length(labels) >= i || length(labels{i}) >= j
                         lbl = labels{i}(:, j);
@@ -84,7 +98,11 @@ classdef graphics
                     if gridon
                         grid on
                     end
-                    fix_plot_limits({times{1}}, {data{i}(:, j)});
+                    if iscell(data{i})
+                        fix_plot_limits(times{i}, {data{i}{1}(:, j), data{i}{2}(:, j)});
+                    else
+                        fix_plot_limits({times{i}}, {data{i}(:, j)});
+                    end
                     curr_plot = curr_plot + 1;
                 end
             end

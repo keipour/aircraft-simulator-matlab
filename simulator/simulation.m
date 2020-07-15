@@ -31,7 +31,6 @@ classdef simulation < handle
             obj.Multirotor.SetInitialState(istate.Position, istate.Velocity, istate.RPY, istate.Omega);
             
             logger.Reset();
-            %logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
         function SetTotalTime(obj, value)
@@ -66,6 +65,7 @@ classdef simulation < handle
             euler_acc_des = last_commands.DesiredEulerAcceleration.Data;
             rotor_speeds_squared = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
             last_commands.RotorSpeedsSquaredCommand.Set(rotor_speeds_squared, time);
+            logger.Add(logger_signals.RotorSpeedsSquaredCommand, rotor_speeds_squared);
         end
         
         function NextStepAttitudeController(obj, time)
@@ -76,6 +76,7 @@ classdef simulation < handle
             rpy_des = last_commands.DesiredRPY.Data;
             euler_accel = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, time);
             last_commands.DesiredEulerAcceleration.Set(euler_accel, time);
+            logger.Add(logger_signals.DesiredEulerAcceleration, euler_accel);
         end
         
         function NextStepPositionController(obj, time)
@@ -87,6 +88,8 @@ classdef simulation < handle
             [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, pos_yaw_des(1 : 3), pos_yaw_des(4), time);
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
+            logger.Add(logger_signals.DesiredRPY, rpy_des);
+            logger.Add(logger_signals.DesiredLinearAcceleration, lin_accel);
         end
         
         function NextSimulationStep(obj)

@@ -1,7 +1,7 @@
 classdef queue < handle
     properties(SetAccess = protected, GetAccess = public)
         Data = {};
-        Times = [];
+        Times = {};
     end
     
     properties(SetAccess = protected, GetAccess = protected)
@@ -20,10 +20,11 @@ classdef queue < handle
             end
             rows = uint32(rows);
             obj.Data = cell(rows, 1);
-            obj.Times = zeros(rows, 1);
+            obj.Times = cell(rows, 1);
             obj.Lengths = zeros(rows, 1);
             for i = 1 : rows
                 obj.Data{i} = {};
+                obj.Times{i} = [];
             end
         end
         
@@ -32,13 +33,13 @@ classdef queue < handle
             len = obj.Lengths(row, 1) + 1;
             obj.Lengths(row, 1) = len;
             obj.Data{row}{len} = data;
-            obj.Times(row, len) = time;
+            obj.Times{row}(len) = time;
         end
         
         function [data, times] = Get(obj, row)
             row = uint32(row);
             data = obj.Data{row}';
-            times = obj.Times(row, :)';
+            times = obj.Times{row}';
         end
     end
 end

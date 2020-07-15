@@ -24,6 +24,7 @@ m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 
 c = controller(m);
 sim = simulation(m, c);
+sim.SetTotalTime(2);
 
 sim.Controller.AttitudeController.SetPID(10, 0.3, 10);
 
@@ -32,11 +33,10 @@ vel = [0; 0; 0];
 rpy = [10; 20; 0];
 omega = [0; 0; 0];
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
-sim.SetTotalTime(10);
 sim.SimulateAttitudeResponse([-10; 0; 30], true);
 
-sim.Controller.PositionController.SetPID(5, 0.3, 5);
-figure; 
+%sim.Controller.PositionController.SetPID(5, 0.3, 5);
+%figure; 
 sim.SimulatePositionResponse([100; 100; -100], 100, true);
 
 graphics.PlotSignalsByName(3, {'pos', 'accel', 'rpy', 'rpy dot', 'sat'}, true);
