@@ -53,7 +53,7 @@ classdef simulation < handle
             if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
                 rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
             end
-            obj.Multirotor.UpdateState(rotor_speeds_squared, 1 / obj.Timer.PlantRate);
+            obj.Multirotor.UpdateState(rotor_speeds_squared, time);
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         

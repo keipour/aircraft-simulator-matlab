@@ -1,7 +1,4 @@
 classdef multirotor < handle
-    %PLANT Summary of this class goes here
-    %   Detailed explanation goes here
-    
     properties
         % Fixed Properties
         Rotors
@@ -19,6 +16,10 @@ classdef multirotor < handle
         InitialState                % Initial state
         State                       % The current state
         I_inv                       % Inversion of I
+    end
+    
+    properties(SetAccess=protected, GetAccess=protected)
+        LastTime = 0;               % Last update time
     end
     
     %% Public methods
@@ -61,6 +62,8 @@ classdef multirotor < handle
             obj.State.Velocity = vel;
             obj.State.RPY = rpy;
             obj.State.Omega = omega;
+            
+            obj.LastTime = 0;
         end
         
         function SetRotorAngles(obj, RotorInwardAngles, RotorSidewardAngles, RotorDihedralAngles)
@@ -89,7 +92,10 @@ classdef multirotor < handle
             obj.UpdateStructure();
         end
         
-        function UpdateState(obj, RotorSpeedsSquared, dt)
+        function UpdateState(obj, RotorSpeedsSquared, time)
+            % Calculate the time step
+            dt = time - obj.LastTime;
+            
             % Calculate the current rotation matrix
             RBI = obj.GetRotationMatrix();
             
@@ -123,6 +129,8 @@ classdef multirotor < handle
                 obj.State.RotorSpeeds(i) = sqrt(rs);
                 obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
             end
+            
+            obj.LastTime = time;
         end
         
         function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared, get_maximum)
@@ -147,6 +155,7 @@ classdef multirotor < handle
         function UpdateStructure(obj)
             obj.I = obj.EstimateInertia();
             obj.UpdateNumOfRotors();
+            obj.LastTime = 0;
         end
         
         function inertia_tensor = EstimateInertia(obj)
@@ -163,6 +172,7 @@ classdef multirotor < handle
             obj.InitialState = mult.InitialState;
             obj.State = mult.State;
             obj.I_inv = mult.I_inv;
+            obj.LastTime = 0;
         end
         
         function Visualize(obj)

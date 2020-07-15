@@ -6,7 +6,7 @@ classdef timer < handle
         PositionControllerRate = 55;    % in Hertz
     end
     
-    properties (SetAccess = public, GetAccess = public)
+    properties (SetAccess = protected, GetAccess = public)
         CurrentTime = 0;                % in secs
     end
 
