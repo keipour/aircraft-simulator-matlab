@@ -134,7 +134,7 @@ classdef logger < handle
                     data = data_meas;
                     times = times_meas;
                 end
-                labels = {'$\dot{\omega}_x$', '$\dot{\omega}_y$', '$\dot{\omega}_z$', 'Angular Acceleration'};
+                labels = {'\alpha_x', '\alpha_y', '\alpha_z', 'Angular Acceleration'};
 
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'})
                 [data_meas, times_meas] = logger.GetMeasuredRPYs();
