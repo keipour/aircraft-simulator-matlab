@@ -50,17 +50,18 @@ classdef (Abstract) pid_controller < handle
 
     methods(Access=protected)
         function LimitErrorIntegral(obj, output, err, err_dot)
-            if obj.I == 0
-                return;
-            end
-            
             for i = 1 : 3
+                if obj.I(i, i) == 0
+                    continue;
+                end
                 if output(i) > 1.2 * obj.OutputMax(i)
                      obj.ErrorIntegral(i) = (1.2 * obj.OutputMax(i) - ...
-                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ./ obj.I(i, i);
+                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ...
+                         ./ obj.I(i, i);
                 elseif output(i) < -1.2 * obj.OutputMax(i)
                      obj.ErrorIntegral(i) = (-1.2 * obj.OutputMax(i) - ...
-                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ./ obj.I(i, i);
+                         obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ...
+                         ./ obj.I(i, i);
                 end
             end
         end
