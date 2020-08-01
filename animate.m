@@ -39,8 +39,9 @@ function animate(multirotor, zoom_level, speed)
     % set up first frame
     close all; 
     fig = figure('KeyPressFcn',@Key_Down);
-    %fig = figure;%('visible','off');
     graphics.PlotMultirotor(multirotor);
+    
+    view(3);
     
     dataObjs = findobj(fig,'-property','XData');
     myplot = cell(length(dataObjs), 3);
@@ -81,7 +82,6 @@ function animate(multirotor, zoom_level, speed)
             end
         end
         
-        
 %    dir_pos = [multirotor.Rotors{1}.ArmLength * cosd(multirotor.Rotors{1}.DihedralAngle) / 2; 0; 0];
 %         figure(fig);
 %         draw_hex([x(ind), y(ind), z(ind)], [yaw(ind), pitch(ind), roll(ind)], ...
@@ -89,19 +89,19 @@ function animate(multirotor, zoom_level, speed)
 
         % Convert the coordinates to NED
         set(fig.CurrentAxes, 'ydir', 'reverse');
-    %    set(gca, 'zdir', 'reverse');
+        set(gca, 'zdir', 'reverse');
 
         xlabel('N');     ylabel('E');     zlabel('D');
         
-        xlimits = calc_axis_limits(num_of_zoom_levels, zoom_level, x(ind), min(x) - 2, max(x) + 2, min_zoom);
-        ylimits = calc_axis_limits(num_of_zoom_levels, zoom_level, y(ind), min(y) - 2, max(y) + 2, min_zoom);
-        zlimits = calc_axis_limits(num_of_zoom_levels, zoom_level, z(ind), min(z) - 2, max(z) + 2, min_zoom);
+        [xlimits, ylimits, zlimits] = calc_all_axis_limits...
+            (num_of_zoom_levels, zoom_level, [x(ind); y(ind); z(ind)],...
+            x, y, z, min_zoom);
         xlim(xlimits);
         ylim(ylimits);
         zlim(zlimits);
-
-        strtitle = sprintf('T: %4.1f  XYZ: (%4.1f, %4.1f, %4.1f)  RPY: (%4.1f, %4.1f, %4.1f)  ZM: %d  SPD: %4.2f', ...
-            t(ind), x(ind), y(ind), z(ind), rad2deg(roll(ind)), rad2deg(pitch(ind)), rad2deg(yaw(ind)), zoom_level, speed); 
+        
+        strtitle = sprintf('Time: %4.1f  Zoom: %d  Speed: %4.2fx\nXYZ: (%4.1f, %4.1f, %4.1f)  RPY: (%4.1f, %4.1f, %4.1f)', ...
+            t(ind), zoom_level, speed, x(ind), y(ind), z(ind), rad2deg(roll(ind)), rad2deg(pitch(ind)), rad2deg(yaw(ind))); 
 
         title(strtitle);
 
@@ -122,7 +122,7 @@ function animate(multirotor, zoom_level, speed)
     end
     
     function Key_Down(src,event)
-        key_code = int8(event.Character)
+        key_code = int8(event.Character);
         if key_code == 32 % space key
             is_paused = ~is_paused;
         elseif key_code == 43 || key_code == 61 % + key
@@ -133,6 +133,14 @@ function animate(multirotor, zoom_level, speed)
             speed = speed * 2;
         elseif key_code == 31 % down key
             speed = speed / 2;
+        elseif key_code == 28 % left arrow key
+            while ind > 1 && current_time - 2 <= t(ind)
+                ind = ind - 1;
+            end
+        elseif key_code == 29 % right arrow key
+            while ind < length(t) && current_time + 2 >= t(ind)
+                ind = ind + 1;
+            end
         end
     end
 end
@@ -162,12 +170,14 @@ function draw_hex(pos, eul, rotor_pos, dir_pos)
     end
 end
 
-
-function lim = calc_axis_limits(n_levels, level, r_x, minx, maxx, min_lim)
+function step = calc_single_axis_size(n_levels, level, minx, maxx, min_lim)
     step = (maxx - minx) * (1 - level / n_levels);
     if step < min_lim
         step = min_lim;
     end
+end
+
+function lim = calc_single_axis_limits(r_x, minx, maxx, step)
     lim = [r_x - step / 2, r_x + step / 2];
     if lim(1) < minx
         lim = [minx, minx + step];
@@ -175,4 +185,22 @@ function lim = calc_axis_limits(n_levels, level, r_x, minx, maxx, min_lim)
     if lim(2) > maxx
         lim = [maxx - step, maxx];
     end
+end
+
+function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, x, y, z, min_lim)
+    expand = 2;
+    
+    minx = min(x) - expand; maxx = max(x) + expand;
+    miny = min(y) - expand; maxy = max(y) + expand;
+    minz = min(z) - expand; maxz = max(z) + expand;
+    
+    stepx = calc_single_axis_size(n_levels, level, minx, maxx, min_lim);
+    stepy = calc_single_axis_size(n_levels, level, miny, maxy, min_lim);
+    stepz = calc_single_axis_size(n_levels, level, minz, maxz, min_lim);
+    
+    step = max([stepx, stepy, stepz]);
+    
+    limx = calc_single_axis_limits(pos(1), minx, maxx, step);
+    limy = calc_single_axis_limits(pos(2), miny, maxy, step);
+    limz = calc_single_axis_limits(pos(3), minz, maxz, step);
 end

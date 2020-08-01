@@ -463,10 +463,6 @@ function visualize_multirotor(m, plot_axes_only, plot_only)
     lighting_on = ~plot_only; % turn on the special lighting
     rotor_diameter = 12; % in inches
 
-    if plot_only
-        rotor_diameter = 4;
-    end
-    
     % Initialization
     num_of_rotors = m.NumOfRotors;
 
