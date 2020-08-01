@@ -133,7 +133,12 @@ classdef graphics
         end
 
         function VisualizeMultirotor(multirotor, axes_only)
-            visualize_multirotor(multirotor, axes_only);
+            figure;
+            visualize_multirotor(multirotor, axes_only, false);
+        end
+        
+        function PlotMultirotor(multirotor)
+            visualize_multirotor(multirotor, false, true);
         end
         
         function PrintDynamicManipulabilityAnalysis(res)
@@ -443,19 +448,25 @@ end
 % This file visualizes the multirotor geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
 % Last updated: June 22, 2020
-function visualize_multirotor(m, plot_axes_only)
-    % Create the new figure
-    figure;
+function visualize_multirotor(m, plot_axes_only, plot_only)
+    
+    if nargin < 3
+        plot_only = false;
+    end
 
     % Visualization settings
     box_height = 0.1; % in meters
     axis_arrow_size = 0.3; % in meters
     plot_title = 'Your Cool Multirotor';
-    arm_labels_on = true;
+    arm_labels_on = ~plot_only;
     motor_size = 0.02; % in meters -- set to zero if don't want motors
-    lighting_on = true; % turn on the special lighting
+    lighting_on = ~plot_only; % turn on the special lighting
     rotor_diameter = 12; % in inches
 
+    if plot_only
+        rotor_diameter = 4;
+    end
+    
     % Initialization
     num_of_rotors = m.NumOfRotors;
 
@@ -483,7 +494,7 @@ function visualize_multirotor(m, plot_axes_only)
         hold on
         if plot_axes_only == false
             plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
-                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter);
+                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter, plot_only);
         else
             plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2);
         end
@@ -505,25 +516,28 @@ function visualize_multirotor(m, plot_axes_only)
 
     % Make the plot more presentable
 
-    % Rotate the axes for better visualization
-    set(gca, 'Xdir', 'reverse')
-    set(gca, 'Zdir', 'reverse')
+    if plot_only == false
+        % Rotate the axes for better visualization
+        set(gca, 'Xdir', 'reverse')
+        set(gca, 'Zdir', 'reverse')
 
-    % Equalize the axes scales
-    axis equal;
+        % Equalize the axes scales
+        axis equal;
 
-    % Add title and axis labels
-    xlabel('X');
-    ylabel('Y');
-    zlabel('Z');
-    title(plot_title);
-
+        % Add title and axis labels
+        xlabel('X');
+        ylabel('Y');
+        zlabel('Z');
+        title(plot_title);
+    end
 
     % Change lighting
     if lighting_on
         camlight
         lighting gouraud %phong
     end
+    
+    hold off
 end
 
 function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size, box_height)
@@ -558,7 +572,7 @@ function plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_siz
     end
 end
 
-function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diameter)
+function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diameter, no_axes)
     rotor_size = rotor_diameter * 0.0254 / 2; 
     rotor_color = [0.4, 0.4, 1]; % CW
     if direction == 1
@@ -569,7 +583,7 @@ function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diam
     pos_m1 = position - dmot;
     pos_m2 = position + dmot;
     plot3([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], 'Color', motor_color, 'LineWidth', 10);
-    circlePlane3D(pos_m2, axis, rotor_size, 0.005, 1, rotor_color, arrow_size, direction);
+    circlePlane3D(pos_m2, axis, rotor_size, 0.005, ~no_axes, rotor_color, arrow_size, direction, no_axes);
 end
 
 function plotAxes(position, Rotation, arrow_size)
@@ -587,7 +601,7 @@ end
 %% Draw a 3-D circle
 % Downloaded from https://www.mathworks.com/matlabcentral/fileexchange/37879-circle-plane-in-3d
 % With some modifications and bug fixes
-function H = circlePlane3D( center, normal, radious, theintv, normalon, color, arrow_size, direction)
+function H = circlePlane3D( center, normal, radious, theintv, normalon, color, arrow_size, direction, no_axes)
     %CIRCLEPLANE3D Summary of this function goes here
     %--------------------------------------------------------------------------
     %Generate a circle plane in 3D with the given center and radious
@@ -638,19 +652,21 @@ function H = circlePlane3D( center, normal, radious, theintv, normalon, color, a
     end
     
     % draw the rotations with arrows
-    raise_amount = 0.1;
-    arc_length = 0.75; % * 2pi
-    n_points = floor(length(t) * arc_length);
-    X = (fx(1 : n_points) + center(1)) / 2 + raise_amount * normal(1);
-    Y = (fy(1 : n_points) + center(2)) / 2 + raise_amount * normal(2);
-    Z = (fz(1 : n_points) + center(3)) / 2 + raise_amount * normal(3);
-    line(X,Y,Z, 'LineWidth', 2, 'Color', 'magenta');
-    if direction == 1
-        arrow3d([X(end-50) X(end)], [Y(end-50) Y(end)], [Z(end-50) Z(end)], 0, 0.005, 0.01, 'red');
-        %quiver3(X(end-1), Y(end-1), Z(end-1), X(end)-X(end-1), Y(end)-Y(end-1), Z(end)-Z(end-1),1, 'LineWidth', 10, 'Color', 'magenta');
-    else
-        arrow3d([X(50) X(1)], [Y(50) Y(1)], [Z(50) Z(1)], 0, 0.005, 0.01, 'red');
-        %quiver3(X(2), Y(2), Z(2), X(1)-X(2), Y(1)-Y(2), Z(1)-Z(2), 1, 'LineWidth', 10, 'Color', 'magenta');
+    if no_axes == false
+        raise_amount = 0.1;
+        arc_length = 0.75; % * 2pi
+        n_points = floor(length(t) * arc_length);
+        X = (fx(1 : n_points) + center(1)) / 2 + raise_amount * normal(1);
+        Y = (fy(1 : n_points) + center(2)) / 2 + raise_amount * normal(2);
+        Z = (fz(1 : n_points) + center(3)) / 2 + raise_amount * normal(3);
+        line(X,Y,Z, 'LineWidth', 2, 'Color', 'magenta');
+        if direction == 1
+            arrow3d([X(end-50) X(end)], [Y(end-50) Y(end)], [Z(end-50) Z(end)], 0, 0.005, 0.01, 'red');
+            %quiver3(X(end-1), Y(end-1), Z(end-1), X(end)-X(end-1), Y(end)-Y(end-1), Z(end)-Z(end-1),1, 'LineWidth', 10, 'Color', 'magenta');
+        else
+            arrow3d([X(50) X(1)], [Y(50) Y(1)], [Z(50) Z(1)], 0, 0.005, 0.01, 'red');
+            %quiver3(X(2), Y(2), Z(2), X(1)-X(2), Y(1)-Y(2), Z(1)-Z(2), 1, 'LineWidth', 10, 'Color', 'magenta');
+        end
     end
 end
 
