@@ -41,15 +41,15 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Attitude response
 sim.SetTotalTime(20);
-sim.Controller.AttitudeController.SetPID(20, 1, 20);
+sim.Controller.AttitudeController.SetPID(60, 0, 20);
 %figure; 
 %sim.SimulateAttitudeResponse([-10; 0; 30], true);
 
 % Position response
-sim.SetTotalTime(30);
-sim.Controller.PositionController.SetPID(10, 1, 10);
+sim.SetTotalTime(20);
+sim.Controller.PositionController.SetPID(3, 0, 7);
 figure;
 sim.SimulatePositionResponse([100; 100; -100], 100, true);
 
 % Additional plots
-graphics.PlotSignalsByName(3, {'pos', 'accel', 'rpy', 'ang accel'}, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'ang accel'}, true);
