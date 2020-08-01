@@ -2,7 +2,7 @@ classdef attitude_controller < pid_controller
 
     properties
         RateLimits = [70; 70; 30]; % in deg/s
-        OutputMax = [20; 20; 20]; % in rad/s^2
+        OutputMax = [8; 8; 8]; % in rad/s^2
     end
     
     methods
