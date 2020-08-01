@@ -8,7 +8,7 @@ classdef multirotor < handle
         
         TotalSpeedLimit = 20;                       % in m/s
         VelocityLimits = [10; 10; 8];               % in m/s
-        EulerRateLimits = [70; 70; 30];       % in deg/s
+        OmegaLimits = deg2rad([70; 70; 30]);       % in deg/s
     end
 
     properties(SetAccess=protected, GetAccess=public)
@@ -121,6 +121,8 @@ classdef multirotor < handle
 
             obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
             obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
+            obj.State.Omega = check_limits(obj.State.Omega, obj.OmegaLimits);
+
             obj.State.EulerRate = phi_dot;
             obj.State.AngularAcceleration = omega_dot;
             
@@ -269,8 +271,7 @@ classdef multirotor < handle
             eta = [1,   sphi*ttheta, cphi*ttheta;
                    0, cphi, -sphi;
                    0, sphi / ctheta, cphi / ctheta];
-            phi_dot = wrapTo180(rad2deg(eta * obj.State.Omega));
-            phi_dot = check_limits(phi_dot, obj.EulerRateLimits);
+            phi_dot = rad2deg(eta * obj.State.Omega);
         end
     end
 end
