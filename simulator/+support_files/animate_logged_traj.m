@@ -1,4 +1,4 @@
-function animate(multirotor, zoom_level, speed)
+function animate_logged_traj(multirotor, zoom_level, speed)
     if nargin < 2
         zoom_level = 0;
     end
