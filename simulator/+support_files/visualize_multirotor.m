@@ -108,7 +108,7 @@ function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size
     
     % Draw the forward triangle
     tri_xs = [box_size / 2; -box_size / 3; -box_size / 3];
-    tri_ys = [0; -box_size / 3; box_size / 3];
+    tri_ys = [0; -box_size / 6; box_size / 6];
     tri_zs = ones(3, 1) * (min(box_zs) - box_height / 2 - 0.001);
     fill3(tri_xs, tri_ys, tri_zs, 'red');
 end

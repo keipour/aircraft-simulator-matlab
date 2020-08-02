@@ -1,6 +1,6 @@
 function animate(multirotor, zoom_level, speed)
     if nargin < 2
-        zoom_level = 2;
+        zoom_level = 0;
     end
     if nargin < 3
         speed = 1;
@@ -38,7 +38,7 @@ function animate(multirotor, zoom_level, speed)
 
     % set up first frame
     close all; 
-    fig = figure('KeyPressFcn',@Key_Down);
+    fig = figure('WindowKeyPressFcn',@Key_Down);
     graphics.PlotMultirotor(multirotor);
     
     view(3);
@@ -141,6 +141,10 @@ function animate(multirotor, zoom_level, speed)
             while ind < length(t) && current_time + 2 >= t(ind)
                 ind = ind + 1;
             end
+        elseif key_code == 42 || key_code == 46 % . or *
+            speed = 1;
+        elseif key_code >= 48 && key_code <= 48 + num_of_zoom_levels % numbers
+            zoom_level = double(key_code) - 48;
         end
     end
 end
