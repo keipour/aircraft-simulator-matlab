@@ -27,10 +27,11 @@ classdef graphics
             legend([response.SignalName ' Response'], 'Desired Value');
             grid on
             fix_plot_limits({t}, {response.Values, response.DesiredValue});
+            drawnow;
         end
         
         function h = PlotSignalsByName(cols, signals, gridon)
-            if nargin < 4
+            if nargin < 3
                 gridon = false;
             end
             if ~iscell(signals)
@@ -174,6 +175,7 @@ classdef graphics
             zlabel(['$' label '_z$'], 'Interpreter', 'latex');
             axis equal
             title(plot_title);
+            drawnow;
         end
         
         function PlotCrossSections(X, plot_title, label)
@@ -206,6 +208,7 @@ classdef graphics
             %     ylim(xylimits);
             %     axis equal
             % end
+            drawnow;
         end
     end
 end
