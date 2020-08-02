@@ -37,19 +37,23 @@ rpy = [0; 0; 0];
 omega = [0; 0; 0];
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
+sim.SetTotalTime(20);
+
+%% Prepare the controller
+
+sim.Controller.AttitudeController.SetPID(60, 0, 20);
+sim.Controller.PositionController.SetPID(3, 0, 7);
+sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
+
 %% Get the controller response(s)
 
 % Attitude response
-sim.SetTotalTime(20);
-sim.Controller.AttitudeController.SetPID(20, 1, 20);
 %figure; 
-%sim.SimulateAttitudeResponse([-10; 0; 30], true);
+%sim.SimulateAttitudeResponse([0; 0; -90], true);
 
 % Position response
-sim.SetTotalTime(30);
-sim.Controller.PositionController.SetPID(10, 1, 10);
 figure;
-sim.SimulatePositionResponse([100; 100; -100], 100, true);
+sim.SimulatePositionResponse([20; 0; 0], 90, true);
 
 % Additional plots
-graphics.PlotSignalsByName(3, {'pos', 'accel', 'rpy', 'ang accel'}, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);
