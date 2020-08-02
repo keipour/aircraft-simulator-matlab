@@ -53,13 +53,8 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     
     ind = 1;
     is_paused = false;
-    while ind <= length(t)
+    while true
 
-        if is_paused == true
-            pause(0.05);
-            continue;
-        end
-        
         tic;
         
         % Exit the animation if the window is closed
@@ -109,6 +104,11 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         drawnow;
         exec_time = toc;
 
+        if is_paused == true
+            pause(0.05);
+            continue;
+        end
+        
         current_time = t(ind);
         while ind < length(t) && current_time + exec_time * speed >= t(ind)
             ind = ind + 1;
@@ -116,9 +116,6 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         end
 
         pause(t(ind) - current_time - exec_time * speed);
-        if ind == length(t)
-            break;
-        end
     end
     
     function Key_Down(src,event)
@@ -130,9 +127,9 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         elseif key_code == 45 % - key
             zoom_level = max(zoom_level - 1, 0);
         elseif key_code == 30 % up key
-            speed = speed * 2;
+            speed = min(speed * 2, 16);
         elseif key_code == 31 % down key
-            speed = speed / 2;
+            speed = max(speed / 2, 1/16);
         elseif key_code == 28 % left arrow key
             while ind > 1 && current_time - 2 <= t(ind)
                 ind = ind - 1;
@@ -145,6 +142,8 @@ function animate_logged_traj(multirotor, zoom_level, speed)
             speed = 1;
         elseif key_code >= 48 && key_code <= 48 + num_of_zoom_levels % numbers
             zoom_level = double(key_code) - 48;
+        elseif key_code == 27 % ESC key
+            delete(gcbf);
         end
     end
 end
