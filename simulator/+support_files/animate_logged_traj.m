@@ -37,10 +37,10 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     end
 
     % set up first frame
-    close all; 
+    uif = uifigure('Position', [0 0 300 300]);
+    horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
     fig = figure('WindowKeyPressFcn',@Key_Down);
     graphics.PlotMultirotor(multirotor);
-    
     view(3);
     
     dataObjs = findobj(fig,'-property','XData');
@@ -76,6 +76,9 @@ function animate_logged_traj(multirotor, zoom_level, speed)
                 set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
             end
         end
+        
+        horizon.Roll = rad2deg(roll(ind));
+        horizon.Pitch = rad2deg(pitch(ind));
         
 %    dir_pos = [multirotor.Rotors{1}.ArmLength * cosd(multirotor.Rotors{1}.DihedralAngle) / 2; 0; 0];
 %         figure(fig);
@@ -116,6 +119,11 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         end
 
         pause(t(ind) - current_time - exec_time * speed);
+    end
+    
+    try
+        delete(uif);
+    catch
     end
     
     function Key_Down(src,event)
