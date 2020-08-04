@@ -1,7 +1,7 @@
 classdef arm < handle
     properties
         % Fixed Properties
-        Length = 0.6;               % in m
+        Length = 0.8;               % in m
         ArmMass = 0.8;              % in Kg
         EndEffectorMass = 0.3       % in Kg
         Direction = [1; 0; 0];      % direction of the arm in body frame
