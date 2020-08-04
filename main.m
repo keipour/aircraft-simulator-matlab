@@ -21,6 +21,8 @@ RotorInwardAngle = 0;
 
 m = multirotor(RotorPlacementAngles, RotorRotationDirections);
 m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
+m.AddEndEffector(arm);
+
 %m.Visualize();
 %m.VisualizeAxes();
 %m.AnalyzeDynamicManipulability(2, 2);

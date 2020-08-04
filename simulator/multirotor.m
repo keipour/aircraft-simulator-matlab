@@ -8,7 +8,7 @@ classdef multirotor < handle
         
         TotalSpeedLimit = 20;                       % in m/s
         VelocityLimits = [10; 10; 8];               % in m/s
-        OmegaLimits = deg2rad([70; 70; 30]);       % in deg/s
+        OmegaLimits = deg2rad([70; 70; 30]);        % in deg/s
     end
 
     properties(SetAccess=protected, GetAccess=public)
@@ -16,10 +16,12 @@ classdef multirotor < handle
         InitialState                % Initial state
         State                       % The current state
         I_inv                       % Inversion of I
+        EndEffector arm
     end
     
     properties(SetAccess=protected, GetAccess=protected)
         LastTime = 0;               % Last update time
+        HasArm = false;
     end
     
     %% Public methods
@@ -50,6 +52,32 @@ classdef multirotor < handle
         function set.Rotors(obj, value)
             obj.Rotors = value;
             obj.UpdateNumOfRotors();
+        end
+        
+        function AddEndEffector(obj, end_effector)
+            if nargin < 1
+                obj.HasArm = false;
+                return;
+            end
+            obj.EndEffector = end_effector;
+            obj.HasArm = true;
+            obj.UpdateStructure();
+        end
+        
+        function has_end_effector = HasEndEffector(obj)
+            has_end_effector = obj.HasArm;
+        end
+        
+        function e_pos = GetEndEffectorPosition(obj)
+            obj.CheckEndEffector();
+            RBI = obj.GetRotationMatrix();
+            e_pos = state.Position + RBI' * obj.EndEffector.EndEffectorPosition;
+        end
+        
+        function e_rot = GetEndEffectorRotation(obj)
+            obj.CheckEndEffector();
+            RBI = obj.GetRotationMatrix();
+            e_rot = RBI' * obj.EndEffector.R_BR;
         end
         
         function SetInitialState(obj, pos, vel, rpy, omega)
@@ -272,6 +300,12 @@ classdef multirotor < handle
                    0, cphi, -sphi;
                    0, sphi / ctheta, cphi / ctheta];
             phi_dot = rad2deg(eta * obj.State.Omega);
+        end
+        
+        function CheckEndEffector(obj)
+            if ~obj.HasArm
+                error('End-effector is not defined for this multirotor.');
+            end
         end
     end
 end

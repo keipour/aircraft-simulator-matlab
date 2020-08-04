@@ -37,13 +37,27 @@ classdef physics
             for i = 1 : num_rotors
                 arm_tensor{i} = rod_inertia(mass_arms(i), 0, 0, 0, X_rotors(i), Y_rotors(i), Z_rotors(i));
             end
-
+            
             % Calculate the overall tensor as the sum of all the tensors
             inertia_tensor = payload_tensor;
             for i = 1 : num_rotors
                 inertia_tensor = inertia_tensor + rotor_tensor{i} + arm_tensor{i};
             end
+            
+            % Calculate and add the manipulator arm tensor
+            % it is modeled as a rod with a point mass at the end-effector
+            if ~multirotor.HasEndEffector()
+                return;
+            end
+            mass_ee_arm = multirotor.EndEffector.ArmMass;
+            mass_ee_end = multirotor.EndEffector.EndEffectorMass;
+            base_pos = multirotor.EndEffector.BasePosition;
+            ee_pos = multirotor.EndEffector.EndEffectorPosition;
+            arm_rod_tensor = rod_inertia(mass_ee_arm, base_pos(1), ...
+                base_pos(2), base_pos(3), ee_pos(1), ee_pos(2), ee_pos(3));
+            ee_tensor = point_mass_inertia(mass_ee_end, ee_pos(1), ee_pos(2), ee_pos(3));
 
+            inertia_tensor = inertia_tensor + arm_rod_tensor + ee_tensor;
         end
     end
 end
