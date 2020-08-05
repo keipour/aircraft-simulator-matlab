@@ -10,7 +10,7 @@ classdef arm < handle
 
     properties(SetAccess=protected, GetAccess=public)
         EndEffectorPosition     % Position for end-effector in body frame
-        R_BR                    % Rotation matrix for end-effector
+        R_BE                    % Rotation matrix for end-effector
     end
     
     %% Public methods
@@ -43,7 +43,7 @@ classdef arm < handle
             end
             x_axis = x_axis / norm(x_axis);
             y_axis = cross(z_axis, x_axis); % y axis is to the up of end-effector
-            obj.R_BR = [x_axis, y_axis, z_axis];
+            obj.R_BE = [x_axis, y_axis, z_axis];
         end
         
     end

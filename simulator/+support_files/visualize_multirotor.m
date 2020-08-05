@@ -64,11 +64,14 @@ function visualize_multirotor(m, plot_axes_only, plot_only)
         plotAxes(zeros(3, 1), eye(3),  axis_arrow_size / 2);
     end
 
+    % Draw the end effector
     if m.HasEndEffector()
         plotEndEffectorArm(m.EndEffector.BasePosition, ...
             m.EndEffector.EndEffectorPosition, ...
-            -m.EndEffector.Direction, ...
-            plot_axes_only, 0.05);
+            -m.EndEffector.Direction, plot_axes_only, 0.05, arm_labels_on);
+        if plot_axes_only == true
+            plotAxes(m.EndEffector.EndEffectorPosition, m.EndEffector.R_BE, axis_arrow_size / 2);
+        end
     end
     
     % Make the plot more presentable
@@ -122,15 +125,23 @@ function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size
     fill3(tri_xs, tri_ys, tri_zs, 'red');
 end
 
-function plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_size)
+function plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_size, arm_labels_on)
     ee_color = [0.4940, 0.1840, 0.5560];
     line_width = 6;
     if plot_axes_only
         line_width = 1;
     end
     plot3([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], 'Color', ee_color, 'LineWidth', line_width);
+
+    if arm_labels_on && plot_axes_only
+        label_dist = 0.04;
+        dp = -label_dist * z_axis;
+        text(end_pos(1) + dp(1), end_pos(2) + dp(2), end_pos(3) + dp(3), 'E', 'Interpreter', 'none');
+    end
     
-    circlePlane3D(end_pos, z_axis, ee_size, 0.005, false, ee_color, 0, 0, true);    
+    if plot_axes_only == false
+        circlePlane3D(end_pos, z_axis, ee_size, 0.005, false, ee_color, 0, 0, true);
+    end
 end
 
 function plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_size)

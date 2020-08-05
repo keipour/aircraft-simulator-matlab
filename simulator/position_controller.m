@@ -3,7 +3,7 @@ classdef position_controller < pid_controller
     properties
         AttitudeType attitude_types = attitude_types.Full;
         RateLimits = [7; 7; 9]; % in m/s
-        OutputMax = [2; 2; 6]; % in m/s^2
+        OutputMax = [1; 1; 6]; % in m/s^2
     end
     
     methods
