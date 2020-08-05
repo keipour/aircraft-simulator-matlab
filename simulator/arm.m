@@ -2,7 +2,7 @@ classdef arm < handle
     properties
         % Fixed Properties
         Length = 0.8;               % in m
-        ArmMass = 0.8;              % in Kg
+        ArmMass = 0.1;              % in Kg
         EndEffectorMass = 0.3       % in Kg
         Direction = [1; 0; 0];      % direction of the arm in body frame
         BasePosition = zeros(3, 1); % Base position in body frame
@@ -11,6 +11,7 @@ classdef arm < handle
     properties(SetAccess=protected, GetAccess=public)
         EndEffectorPosition     % Position for end-effector in body frame
         R_BE                    % Rotation matrix for end-effector
+        TotalMass               % Total mass in Kg
     end
     
     %% Public methods
@@ -34,6 +35,16 @@ classdef arm < handle
             obj.UpdateStructure();
         end
         
+        function set.ArmMass(obj, value)
+            obj.ArmMass = value;
+            obj.UpdateStructure();
+        end
+        
+        function set.EndEffectorMass(obj, value)
+            obj.EndEffectorMass = value;
+            obj.UpdateStructure();
+        end
+        
         function UpdateStructure(obj)
             obj.EndEffectorPosition = obj.BasePosition + obj.Length * obj.Direction;
             z_axis = -obj.Direction / norm(obj.Direction); % z axis is into the arm
@@ -44,7 +55,18 @@ classdef arm < handle
             x_axis = x_axis / norm(x_axis);
             y_axis = cross(z_axis, x_axis); % y axis is to the up of end-effector
             obj.R_BE = [x_axis, y_axis, z_axis];
+            
+            obj.TotalMass = obj.ArmMass + obj.EndEffectorMass;
         end
         
+        function CopyFrom(obj, ee)
+            obj.Length = ee.Length;
+            obj.ArmMass = ee.ArmMass;
+            obj.EndEffectorMass = ee.EndEffectorMass;
+            obj.Direction = ee.Direction;
+            obj.BasePosition = ee.BasePosition;
+            obj.EndEffectorPosition = ee.EndEffectorPosition;
+            obj.R_BE = ee.EndEffectorPosition;
+        end
     end
 end

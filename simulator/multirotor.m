@@ -55,7 +55,7 @@ classdef multirotor < handle
         end
         
         function AddEndEffector(obj, end_effector)
-            if nargin < 1
+            if nargin < 2
                 obj.HasArm = false;
                 return;
             end
@@ -203,6 +203,14 @@ classdef multirotor < handle
             obj.State = mult.State;
             obj.I_inv = mult.I_inv;
             obj.LastTime = 0;
+            obj.HasArm = mult.HasEndEffector();
+            obj.TotalSpeedLimit = mult.TotalSpeedLimit;
+            obj.VelocityLimits = mult.VelocityLimits;
+            obj.OmegaLimits = mult.OmegaLimits;
+            if obj.HasArm == true
+                obj.EndEffector = arm;
+                obj.EndEffector.CopyFrom(mult.EndEffector);
+            end
         end
         
         function Visualize(obj)
@@ -238,6 +246,9 @@ classdef multirotor < handle
 
         function F = GetGravityForce(obj)
             F = physics.Gravity * obj.Mass;
+            if obj.HasEndEffector()
+                F = F + physics.Gravity * obj.EndEffector.TotalMass;
+            end
         end
         
         function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared, get_maximum)
@@ -262,6 +273,14 @@ classdef multirotor < handle
                 G_armI = obj.Rotors{i}.ArmMass * physics.Gravity;
                 G_armB = Rot_BI * G_armI;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
+            end
+            if obj.HasEndEffector()
+                r = obj.EndEffector.EndEffectorPosition;
+                G_eeI = obj.EndEffector.EndEffectorMass * physics.Gravity;
+                G_eeB = Rot_BI * G_eeI;
+                G_armI = obj.EndEffector.ArmMass * physics.Gravity;
+                G_armB = Rot_BI * G_armI;
+                M = M + cross(r, G_eeB) + cross(r/2, G_armB);
             end
         end
         
