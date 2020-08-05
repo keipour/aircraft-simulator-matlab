@@ -6,24 +6,11 @@ close all
 addpath('simulator');
 
 %% Define the hardware architecture
+%m = robots.floating_hex();
+%m = robots.quadrotor();
+m = robots.tilted_hex(true);
 
-% RotorPlacementAngles = [45, 135, 225, 315];
-% RotorRotationDirections = [-1, 1, -1, 1];
-% RotorDihedralAngle = 0;
-% RotorSidewardAngle = 0;
-% RotorInwardAngle = 0;
-
-RotorPlacementAngles = [30, 90, 150, 210, 270, 330];
-RotorRotationDirections = [-1, 1, -1, 1, -1, 1];
-RotorDihedralAngle = 0;
-RotorSidewardAngle = [-30, 30, -30, 30, -30, 30];
-RotorInwardAngle = 0;
-
-m = multirotor(RotorPlacementAngles, RotorRotationDirections);
-m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
-m.AddEndEffector(arm);
-
-m.Visualize();
+%m.Visualize();
 %m.VisualizeAxes();
 %m.AnalyzeDynamicManipulability(2, 2);
 
