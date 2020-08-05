@@ -33,8 +33,10 @@ classdef control_allocation < handle
             saturation_flag = false;
             max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxrotorSpeedSquared, multirotor.Rotors, 'uni', 0));
             if any(rotor_speeds_squared > max_rotor_speeds)
-                mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
-                rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;
+                %mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
+                %rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;
+                ind = rotor_speeds_squared > max_rotor_speeds;
+                rotor_speeds_squared(ind) = max_rotor_speeds(ind);
                 saturation_flag = true;
             end
             if any(rotor_speeds_squared < 0)
