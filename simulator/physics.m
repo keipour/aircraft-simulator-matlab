@@ -35,7 +35,7 @@ classdef physics
             % Calculate the arm tensor (sum of all the arms as rods connecting center to rotors)
             arm_tensor = cell(num_rotors, 1);
             for i = 1 : num_rotors
-                arm_tensor{i} = rod_inertia(mass_arms(i), 0, 0, 0, X_rotors(i), Y_rotors(i), Z_rotors(i));
+                arm_tensor{i} = support_files.rod_inertia(mass_arms(i), 0, 0, 0, X_rotors(i), Y_rotors(i), Z_rotors(i));
             end
             
             % Calculate the overall tensor as the sum of all the tensors
@@ -53,7 +53,7 @@ classdef physics
             mass_ee_end = multirotor.EndEffector.EndEffectorMass;
             base_pos = multirotor.EndEffector.BasePosition;
             ee_pos = multirotor.EndEffector.EndEffectorPosition;
-            arm_rod_tensor = rod_inertia(mass_ee_arm, base_pos(1), ...
+            arm_rod_tensor = support_files.rod_inertia(mass_ee_arm, base_pos(1), ...
                 base_pos(2), base_pos(3), ee_pos(1), ee_pos(2), ee_pos(3));
             ee_tensor = point_mass_inertia(mass_ee_end, ee_pos(1), ee_pos(2), ee_pos(3));
 
@@ -68,20 +68,20 @@ function inertia_tensor = solid_sphere_inertia(radius, mass)
 end
 
 %% Calculate the intertia tensor of a rod from point 1 to 2 around the center
-function inertia_tensor = rod_inertia(mass, x1, y1, z1, x2, y2, z2)
-    N = 1e5; % Numerical calculation fidelity
-
-    x_lin = linspace(x1, x2, N);
-    y_lin = linspace(y1, y2, N);
-    z_lin = linspace(z1, z2, N);
-    dm = mass / length(x_lin);
-
-    % Calculate the tensor by summing the point masses
-    inertia_tensor  = zeros(3);
-    for i = 1 : length(x_lin)
-        inertia_tensor = inertia_tensor + point_mass_inertia(dm, x_lin(i), y_lin(i), z_lin(i));
-    end
-end
+% function inertia_tensor = rod_inertia(mass, x1, y1, z1, x2, y2, z2)
+%     N = 1e5; % Numerical calculation fidelity
+% 
+%     x_lin = linspace(x1, x2, N);
+%     y_lin = linspace(y1, y2, N);
+%     z_lin = linspace(z1, z2, N);
+%     dm = mass / length(x_lin);
+% 
+%     % Calculate the tensor by summing the point masses
+%     inertia_tensor  = zeros(3);
+%     for i = 1 : length(x_lin)
+%         inertia_tensor = inertia_tensor + point_mass_inertia(dm, x_lin(i), y_lin(i), z_lin(i));
+%     end
+% end
 
 %% Calculate the intertia tensor of a point mass at x, y, z around the center
 function inertia_tensor = point_mass_inertia(mass, x, y, z)
