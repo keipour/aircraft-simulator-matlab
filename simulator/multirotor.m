@@ -13,6 +13,7 @@ classdef multirotor < handle
 
     properties(SetAccess=protected, GetAccess=public)
         NumOfRotors                 % Number of rotors
+        TotalMass                   % Total mass including the arm
         InitialState                % Initial state
         State                       % The current state
         I_inv                       % Inversion of I
@@ -168,7 +169,7 @@ classdef multirotor < handle
                 get_maximum = false;
             end
             accel = (obj.GetGravityForce() + ...
-                obj.GetThrustForce(eye(3), RotorSpeedsSquared, get_maximum)) / obj.Mass;
+                obj.GetThrustForce(eye(3), RotorSpeedsSquared, get_maximum)) / obj.TotalMass;
         end
         
         function omega_dot = CalculateAngularAccelerationManipulability(obj, RotorSpeedsSquared)
@@ -186,6 +187,10 @@ classdef multirotor < handle
             obj.I = obj.EstimateInertia();
             obj.UpdateNumOfRotors();
             obj.LastTime = 0;
+            obj.TotalMass = obj.Mass;
+            if obj.HasArm
+                obj.TotalMass = obj.TotalMass + obj.EndEffector.TotalMass;
+            end
         end
         
         function inertia_tensor = EstimateInertia(obj)
@@ -207,6 +212,7 @@ classdef multirotor < handle
             obj.TotalSpeedLimit = mult.TotalSpeedLimit;
             obj.VelocityLimits = mult.VelocityLimits;
             obj.OmegaLimits = mult.OmegaLimits;
+            obj.TotalMass = mult.TotalMass;
             if obj.HasArm == true
                 obj.EndEffector = arm;
                 obj.EndEffector.CopyFrom(mult.EndEffector);
@@ -245,10 +251,7 @@ classdef multirotor < handle
         end
 
         function F = GetGravityForce(obj)
-            F = physics.Gravity * obj.Mass;
-            if obj.HasEndEffector()
-                F = F + physics.Gravity * obj.EndEffector.TotalMass;
-            end
+            F = physics.Gravity * obj.TotalMass;
         end
         
         function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared, get_maximum)
@@ -274,7 +277,7 @@ classdef multirotor < handle
                 G_armB = Rot_BI * G_armI;
                 M = M + cross(r, G_motorB) + cross(r/2, G_armB);
             end
-            if obj.HasEndEffector()
+            if obj.HasArm
                 r = obj.EndEffector.EndEffectorPosition;
                 G_eeI = obj.EndEffector.EndEffectorMass * physics.Gravity;
                 G_eeB = Rot_BI * G_eeI;
@@ -301,7 +304,7 @@ classdef multirotor < handle
         end
         
         function p_dotdot = GetLinearAcceleration(obj, force)
-            p_dotdot = force / obj.Mass;
+            p_dotdot = force / obj.TotalMass;
         end
         
         function omega_dot = GetAngularAcceleration(obj, moment)
