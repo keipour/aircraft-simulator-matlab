@@ -11,10 +11,7 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     zoom_level = max(zoom_level, 0);
     min_zoom = 2; % in meters
     
-    n_rotors = multirotor.NumOfRotors;
-    
     % Load the data from the logger
-
     [pos, t] = logger.GetMeasuredPositions();
     x = pos(:, 1);
     y = pos(:, 2);
@@ -24,22 +21,18 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     pitch = rpy(:, 2);
     yaw = rpy(:, 3);
 
-    % Initialization
-    
-    rotor_pos = zeros([3, n_rotors]);
-    for i = 1 : n_rotors
-        arm_length = multirotor.Rotors{i}.ArmLength;
-        dihedral = multirotor.Rotors{i}.DihedralAngle;
-        arm_angle = multirotor.Rotors{i}.ArmAngle;
-        rotor_pos(1,i) = arm_length * cosd(dihedral) * cosd(arm_angle);
-        rotor_pos(2,i) = arm_length * cosd(dihedral) * sind(arm_angle);
-        rotor_pos(3,i) = arm_length * sind(dihedral);
-    end
-
-    % set up first frame
+    % Set up the first frame
     uif = uifigure('Position', [0 0 300 300]);
     horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
-    fig = figure('WindowKeyPressFcn',@Key_Down);
+    fig = openfig('+support_files/animation_gui.fig');
+    set(fig, 'WindowKeyPressFcn', @Key_Down);
+    set(fig, 'KeyPressFcn', @Key_Down);
+    
+    mult_lbl_handle = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues');
+    ee_lbl_handle = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues');
+    anim_lbl_handle = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues');
+    
+    set_axis_limits(num_of_zoom_levels, zoom_level, [x(1); y(1); z(1)], x, y, z, min_zoom);
     graphics.PlotMultirotor(multirotor);
     view(3);
     
@@ -51,74 +44,40 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         myplot{i, 3} = dataObjs(i).ZData;
     end
     
+    setup_figure_axes_and_title(fig);
+
     ind = 1;
     is_paused = false;
     while true
 
-        tic;
-        
         % Exit the animation if the window is closed
-        if ~ishghandle(fig)
+        if ~ishghandle(fig) || ind == length(t)
             break
         end
         
-        T = [eul2rotm([yaw(ind); pitch(ind); roll(ind)]', 'ZYX'), ...
-            [x(ind); y(ind); z(ind)]; 0, 0, 0, 1];
+        tic;
+        
+        curr_pos = [x(ind); y(ind); z(ind)];
+        curr_yrp_rad = [yaw(ind); pitch(ind); roll(ind)];
+        curr_rpy_deg = rad2deg([roll(ind); pitch(ind); yaw(ind)]);
+        curr_time = t(ind);
+        
         figure(fig);
-        for i = 1 : length(dataObjs)
-            if startsWith(dataObjs(i).Type, 'p')
-                data = [myplot{i, 1}, myplot{i, 2}, myplot{i, 3}]';
-                data = T * [data; ones(1, length(myplot{i, 1}))];
-                set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
-            elseif startsWith(dataObjs(i).Type, 'l')
-                data = [myplot{i, 1}; myplot{i, 2}; myplot{i, 3}];
-                data = T * [data; ones(1, length(myplot{i, 1}))];
-                set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
-            end
-        end
-        
-        horizon.Roll = rad2deg(roll(ind));
-        horizon.Pitch = rad2deg(pitch(ind));
-        
-%    dir_pos = [multirotor.Rotors{1}.ArmLength * cosd(multirotor.Rotors{1}.DihedralAngle) / 2; 0; 0];
-%         figure(fig);
-%         draw_hex([x(ind), y(ind), z(ind)], [yaw(ind), pitch(ind), roll(ind)], ...
-%             rotor_pos, dir_pos);
 
-        % Convert the coordinates to NED
-        set(fig.CurrentAxes, 'ydir', 'reverse');
-        set(gca, 'zdir', 'reverse');
+        % Draw the robot
+        dataObjs = transform_robot(curr_pos, curr_yrp_rad, dataObjs, myplot);
 
-        xlabel('N');     ylabel('E');     zlabel('D');
+        horizon.Roll = curr_rpy_deg(1);
+        horizon.Pitch = curr_rpy_deg(2);
         
-        [xlimits, ylimits, zlimits] = calc_all_axis_limits...
-            (num_of_zoom_levels, zoom_level, [x(ind); y(ind); z(ind)],...
-            x, y, z, min_zoom);
-        xlim(xlimits);
-        ylim(ylimits);
-        zlim(zlimits);
+        set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_zoom);
+        show_status(mult_lbl_handle, ee_lbl_handle, anim_lbl_handle, ...
+            curr_time, zoom_level, speed, curr_pos, curr_rpy_deg);
         
-        strtitle = sprintf('Time: %4.1f  Zoom: %d  Speed: %4.2fx\nXYZ: (%4.1f, %4.1f, %4.1f)  RPY: (%4.1f, %4.1f, %4.1f)', ...
-            t(ind), zoom_level, speed, x(ind), y(ind), z(ind), rad2deg(roll(ind)), rad2deg(pitch(ind)), rad2deg(yaw(ind))); 
-
-        title(strtitle);
-
-        grid on
         drawnow;
         exec_time = toc;
-
-        if is_paused == true
-            pause(0.05);
-            continue;
-        end
         
-        current_time = t(ind);
-        while ind < length(t) && current_time + exec_time * speed >= t(ind)
-            ind = ind + 1;
-            exec_time = toc;
-        end
-
-        pause(t(ind) - current_time - exec_time * speed);
+        ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind);
     end
     
     try
@@ -126,7 +85,7 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     catch
     end
     
-    function Key_Down(src,event)
+    function Key_Down(~,event)
         key_code = int8(event.Character);
         if key_code == 32 % space key
             is_paused = ~is_paused;
@@ -158,26 +117,67 @@ end
 
 %% Helper functions
 
-function draw_hex(pos, eul, rotor_pos, dir_pos)
-    rotm = eul2rotm(eul, 'ZYX');
+function setup_figure_axes_and_title(fig)
+    figure(fig);
     
-    rotor_pos = rotm * rotor_pos;
-    rotor_pos(1, :) = rotor_pos(1, :) + pos(1);
-    rotor_pos(2, :) = rotor_pos(2, :) + pos(2);
-    rotor_pos(3, :) = rotor_pos(3, :) + pos(3);
-    
-    hold off
-    
-    dir_pos(:) = rotm * dir_pos(:);
-    dir_pos(1) = pos(1) + dir_pos(1);
-    dir_pos(2) = pos(2) + dir_pos(2);
-    dir_pos(3) = pos(3) + dir_pos(3);
+    % Convert the coordinates to NED
+    set(fig.CurrentAxes, 'YDir', 'reverse');
+    set(fig.CurrentAxes, 'ZDir', 'reverse');
 
-    plot3([pos(1), dir_pos(1)], [pos(2), dir_pos(2)], [pos(3), dir_pos(3)], 'g')
+    xlabel('N');     ylabel('E');     zlabel('D');
+    grid on
+end
 
-    for i = 1 : 6
-       hold on
-       plot3([pos(1), rotor_pos(1, i)], [pos(2), rotor_pos(2,i)], [pos(3), rotor_pos(3,i)], 'b')
+function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind)
+    if is_paused == true
+        pause(0.03);
+        return;
+    end
+
+    while ind < length(t) && curr_time + exec_time * speed >= t(ind)
+        ind = ind + 1;
+    end
+
+    pause_time = t(ind) - curr_time - exec_time * speed;
+    pause(pause_time);
+end
+
+function show_status(m_lbl, e_lbl, a_lbl, curr_time, zoom_level, speed, curr_pos, curr_rpy_deg)
+    m_str = sprintf('%0.2f\n\n%0.2f\n\n%0.2f\n\n%0.2f%c\n\n%0.2f%c\n\n%0.2f%c', ...
+        curr_pos(1), curr_pos(2), curr_pos(3), curr_rpy_deg(1), char(176), ...
+        curr_rpy_deg(2), char(176), curr_rpy_deg(3), char(176));
+
+    e_str = sprintf('-\n\n-\n\n-\n\n');
+
+    a_str = sprintf('%0.2f\n\n%d\n\n%0.2fx', curr_time, zoom_level, speed);
+
+    %title(strtitle);
+    
+    set(m_lbl, 'String', m_str);
+    set(e_lbl, 'String', e_str);
+    set(a_lbl, 'String', a_str);
+end
+
+function set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_zoom)
+    [xlimits, ylimits, zlimits] = calc_all_axis_limits(num_of_zoom_levels, ...
+        zoom_level, curr_pos, x, y, z, min_zoom);
+    xlim(xlimits);
+    ylim(ylimits);
+    zlim(zlimits);
+end
+
+function dataObjs = transform_robot(pos, rpy, dataObjs, myplot)
+    T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
+    for i = 1 : length(dataObjs)
+        if startsWith(dataObjs(i).Type, 'p')
+            data = [myplot{i, 1}, myplot{i, 2}, myplot{i, 3}]';
+            data = T * [data; ones(1, length(myplot{i, 1}))];
+            set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
+        elseif startsWith(dataObjs(i).Type, 'l')
+            data = [myplot{i, 1}; myplot{i, 2}; myplot{i, 3}];
+            data = T * [data; ones(1, length(myplot{i, 1}))];
+            set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
+        end
     end
 end
 
