@@ -44,7 +44,9 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         myplot{i, 3} = dataObjs(i).ZData;
     end
     
-    setup_figure_axes_and_title(fig);
+    figure(fig);
+    xlabel('N');     ylabel('E');     zlabel('D');
+    grid on
 
     ind = 1;
     is_paused = false;
@@ -116,17 +118,6 @@ function animate_logged_traj(multirotor, zoom_level, speed)
 end
 
 %% Helper functions
-
-function setup_figure_axes_and_title(fig)
-    figure(fig);
-    
-    % Convert the coordinates to NED
-    set(fig.CurrentAxes, 'YDir', 'reverse');
-    set(fig.CurrentAxes, 'ZDir', 'reverse');
-
-    xlabel('N');     ylabel('E');     zlabel('D');
-    grid on
-end
 
 function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind)
     if is_paused == true
