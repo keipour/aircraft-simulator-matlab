@@ -125,42 +125,9 @@ classdef multirotor < handle
             % Calculate the time step
             dt = time - obj.LastTime;
             
-            % Calculate the current rotation matrix
-            RBI = obj.GetRotationMatrix();
+            obj.UpdateStateNewtonEuler(RotorSpeedsSquared, dt);
             
-            % Calculate the total force and moment
-            obj.State.Force = obj.GetGravityForce() + ...
-                obj.GetThrustForce(RBI', RotorSpeedsSquared);
-            obj.State.Moment = obj.GetGravityMoment(RBI) + ...
-                obj.GetThrustMoment(RotorSpeedsSquared) + ...
-                obj.GetReactionMoment(RotorSpeedsSquared);
-            
-            % Calculate the equations of motion
-            p_dotdot = obj.GetLinearAcceleration(obj.State.Force);
-            omega_dot = obj.GetAngularAcceleration(obj.State.Moment);
-            phi_dot = obj.GetEulerRate();
-            
-            % Update the rest of the state
-            obj.State.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
-                obj.State.Velocity * dt;
-            obj.State.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
-            obj.State.Velocity = check_limits(obj.State.Velocity, obj.VelocityLimits);
-            obj.State.Velocity = check_limits(obj.State.Velocity, obj.TotalSpeedLimit);
-            obj.State.Acceleration = p_dotdot;
-
-            obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
-            obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
-            obj.State.Omega = check_limits(obj.State.Omega, obj.OmegaLimits);
-
-            obj.State.EulerRate = phi_dot;
-            obj.State.AngularAcceleration = omega_dot;
-            
-            for i = 1 : obj.NumOfRotors
-                [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
-                obj.State.RotorSpeeds(i) = sqrt(rs);
-                obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
-            end
-            
+            % Update the time of the update
             obj.LastTime = time;
         end
         
@@ -241,6 +208,48 @@ classdef multirotor < handle
     
     %% Private Methods
     methods(Access=protected)
+        
+        function UpdateStateNewtonEuler(obj, RotorSpeedsSquared, dt)
+            % Calculate the current rotation matrix
+            RBI = obj.GetRotationMatrix();
+            
+            % Calculate the total force and moment
+            obj.State.Force = obj.GetGravityForce() + ...
+                obj.GetThrustForce(RBI', RotorSpeedsSquared);
+            obj.State.Moment = obj.GetGravityMoment(RBI) + ...
+                obj.GetThrustMoment(RotorSpeedsSquared) + ...
+                obj.GetReactionMoment(RotorSpeedsSquared);
+            
+            % Calculate the equations of motion
+            p_dotdot = obj.GetLinearAcceleration(obj.State.Force);
+            omega_dot = obj.GetAngularAcceleration(obj.State.Moment);
+            phi_dot = obj.GetEulerRate();
+            
+            % Update the rest of the state
+            obj.State.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
+                obj.State.Velocity * dt;
+            obj.State.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
+            obj.State.Velocity = check_limits(obj.State.Velocity, obj.VelocityLimits);
+            obj.State.Velocity = check_limits(obj.State.Velocity, obj.TotalSpeedLimit);
+            obj.State.Acceleration = p_dotdot;
+
+            obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
+            obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
+            obj.State.Omega = check_limits(obj.State.Omega, obj.OmegaLimits);
+
+            obj.State.EulerRate = phi_dot;
+            obj.State.AngularAcceleration = omega_dot;
+            
+            for i = 1 : obj.NumOfRotors
+                [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
+                obj.State.RotorSpeeds(i) = sqrt(rs);
+                obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
+            end
+        end
+        
+        function UpdateStateEulerLagrange(obj, RotorSpeedsSquared, dt)
+
+        end
         
         function UpdateNumOfRotors(obj)
             obj.NumOfRotors = length(obj.Rotors);
@@ -354,4 +363,8 @@ function x_lim = check_limits(x, lim)
     for i = 1 : length(x)
         x_lim(i) = check_scalar_limit(x(i), lim(i));
     end
+end
+
+function X = skewsym(x)
+    X = [0 -x(3) x(2) ; x(3) 0 -x(1) ; -x(2) x(1) 0 ];
 end
