@@ -2,6 +2,7 @@ classdef simulation < handle
     properties
         Multirotor multirotor
         Controller controller
+        Environment environment
     end
     
     properties(Constant)
@@ -14,10 +15,18 @@ classdef simulation < handle
     
     %% Methods
     methods
-        function obj = simulation(multrotor, controller)
+        function obj = simulation(multrotor, contrller, envronment)
+            if nargin < 2
+                contrller = controller(multrotor);
+            end
+            if nargin < 3
+                envronment = environment();
+            end
+            
             obj.InitialMultirotor = multrotor;
-            obj.Controller = controller;
+            obj.Controller = contrller;
             obj.Multirotor = multirotor(0, 1);
+            obj.Environment = envronment;
             obj.Reset();
         end
 

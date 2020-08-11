@@ -14,13 +14,19 @@ m = robots.tilted_hex(true);
 %m.VisualizeAxes();
 %m.AnalyzeDynamicManipulability(2, 2);
 
+%% Define the environment
+
+% Add a wall and the ground to the environment
+e = environment;
+e.AddCuboidObject([15; 10; -2.5], [1; 20; 5], 0);
+e.AddGroundPlane([0; 20], [0; 20]);
+
 %% Prepare the simulation
 
-c = controller(m);
-sim = simulation(m, c);
+sim = simulation(m, controller(m), e);
 
 % Initial multirotor state
-pos = [0; 0; 0];
+pos = [0; 10; -2];
 vel = [0; 0; 0];
 rpy = [0; 0; 0];
 omega = [0; 0; 0];
@@ -42,7 +48,7 @@ sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 
 % Position response
 figure;
-sim.SimulatePositionResponse([20; 0; 0], 90, true);
+sim.SimulatePositionResponse([20; 10; -2], 90, true);
 
 % Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);
