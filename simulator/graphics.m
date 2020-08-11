@@ -134,6 +134,13 @@ classdef graphics
             fprintf('\n');
         end
 
+        function VisualizeEnvironment(environment)
+            figure;
+            support_files.visualize_environment(environment, false);
+            view(3);
+            drawnow;
+        end
+        
         function VisualizeMultirotor(multirotor, axes_only)
             figure;
             support_files.visualize_multirotor(multirotor, axes_only, false);
@@ -141,18 +148,25 @@ classdef graphics
             drawnow;
         end
         
+        function PlotEnvironment(environment)
+            support_files.visualize_environment(environment, true);
+        end
+        
         function PlotMultirotor(multirotor)
             support_files.visualize_multirotor(multirotor, false, true);
         end
         
-        function AnimateLoggedTrajectory(multirotor, zoom_level, speed)
+        function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, speed)
             if nargin < 2
-                zoom_level = 0;
+                envronment = environment;
             end
             if nargin < 3
+                zoom_level = 0;
+            end
+            if nargin < 4
                 speed = 1;
             end
-            support_files.animate_logged_traj(multirotor, zoom_level, speed);
+            support_files.animate_logged_traj(multirotor, envronment, zoom_level, speed);
         end
         
         function PrintDynamicManipulabilityAnalysis(res)

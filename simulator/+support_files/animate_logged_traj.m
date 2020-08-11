@@ -1,11 +1,5 @@
-function animate_logged_traj(multirotor, zoom_level, speed)
-    if nargin < 2
-        zoom_level = 0;
-    end
-    if nargin < 3
-        speed = 1;
-    end
-    
+function animate_logged_traj(multirotor, environment, zoom_level, speed)
+
     num_of_zoom_levels = 5;
     zoom_level = min(zoom_level, num_of_zoom_levels);
     zoom_level = max(zoom_level, 0);
@@ -26,7 +20,7 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
     fig = openfig('+support_files/animation_gui.fig');
     set(fig, 'WindowKeyPressFcn', @Key_Down);
-    set(fig, 'KeyPressFcn', @Key_Down);
+    %set(fig, 'KeyPressFcn', @Key_Down);
     
     mult_lbl_handle = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues');
     ee_lbl_handle = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues');
@@ -36,12 +30,15 @@ function animate_logged_traj(multirotor, zoom_level, speed)
     graphics.PlotMultirotor(multirotor);
     view(3);
     
-    dataObjs = findobj(fig,'-property','XData');
-    myplot = cell(length(dataObjs), 3);
-    for i = 1 : length(dataObjs)
-        myplot{i, 1} = dataObjs(i).XData;
-        myplot{i, 2} = dataObjs(i).YData;
-        myplot{i, 3} = dataObjs(i).ZData;
+    multirotorObjs = findobj(fig,'-property','XData');
+    
+    graphics.PlotEnvironment(environment);
+    
+    myplot = cell(length(multirotorObjs), 3);
+    for i = 1 : length(multirotorObjs)
+        myplot{i, 1} = multirotorObjs(i).XData;
+        myplot{i, 2} = multirotorObjs(i).YData;
+        myplot{i, 3} = multirotorObjs(i).ZData;
     end
     
     figure(fig);
@@ -67,7 +64,7 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         figure(fig);
 
         % Draw the robot
-        dataObjs = transform_robot(curr_pos, curr_yrp_rad, dataObjs, myplot);
+        multirotorObjs = transform_robot(curr_pos, curr_yrp_rad, multirotorObjs, myplot);
 
         horizon.Roll = curr_rpy_deg(1);
         horizon.Pitch = curr_rpy_deg(2);
@@ -100,11 +97,11 @@ function animate_logged_traj(multirotor, zoom_level, speed)
         elseif key_code == 31 % down key
             speed = max(speed / 2, 1/16);
         elseif key_code == 28 % left arrow key
-            while ind > 1 && current_time - 2 <= t(ind)
+            while ind > 1 && curr_time - 2 <= t(ind)
                 ind = ind - 1;
             end
         elseif key_code == 29 % right arrow key
-            while ind < length(t) && current_time + 2 >= t(ind)
+            while ind < length(t) && curr_time + 2 >= t(ind)
                 ind = ind + 1;
             end
         elseif key_code == 42 || key_code == 46 % . or *
@@ -182,10 +179,15 @@ end
 function lim = calc_single_axis_limits(r_x, minx, maxx, step)
     lim = [r_x - step / 2, r_x + step / 2];
     if lim(1) < minx
-        lim = [minx, minx + step];
+        lim(1) = minx;
     end
     if lim(2) > maxx
-        lim = [maxx - step, maxx];
+        lim(2) = maxx;
+    end
+    new_step = lim(2) - lim(1);
+    if new_step < step
+        diff = step - new_step;
+        lim = [lim(1) - diff / 2, lim(2) + diff / 2];
     end
 end
 
