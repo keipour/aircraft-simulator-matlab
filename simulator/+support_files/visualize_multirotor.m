@@ -127,12 +127,14 @@ end
 
 function plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_size, arm_labels_on)
     ee_color = [0.4940, 0.1840, 0.5560];
-    line_width = 6;
     if plot_axes_only
         line_width = 1;
+        plot3([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], 'Color', ee_color, 'LineWidth', line_width);
+    else
+        arm_radius = 0.01;
+        line3d([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], arm_radius, ee_color);
     end
-    plot3([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], 'Color', ee_color, 'LineWidth', line_width);
-
+    
     if arm_labels_on && plot_axes_only
         label_dist = 0.04;
         dp = -label_dist * z_axis;
@@ -145,11 +147,14 @@ function plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_size,
 end
 
 function plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_size)
-    line_width = 3;
     if plot_axes_only
         line_width = 1;
+        plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', line_width);
+    else
+        arm_radius = 0.01;
+        line3d([0, position(1)], [0, position(2)], [0, position(3)], arm_radius, 'k');
     end
-    plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', line_width);
+    
     if arm_labels_on
         label_dist = 0.02;
         dp = -(motor_size + label_dist) * z_axis;
@@ -170,7 +175,8 @@ function plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diam
     dmot = motor_size * axis;
     pos_m1 = position - dmot;
     pos_m2 = position + dmot;
-    plot3([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], 'Color', motor_color, 'LineWidth', 10);
+    motor_radius = 0.02;
+    line3d([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], motor_radius, motor_color);
     circlePlane3D(pos_m2, axis, rotor_size, 0.005, ~no_axes, rotor_color, arrow_size, direction, no_axes);
 end
 
@@ -184,6 +190,10 @@ function plotAxes(position, Rotation, arrow_size)
         arrow3d([position(1) end_pos(1)], [position(2) end_pos(2)], [position(3) end_pos(3)], 0.8, 0.005, 0.01, colors{i});
         text(label_pos(1), label_pos(2), label_pos(3), labels{i}, 'Interpreter', 'latex');
     end
+end
+
+function h = line3d(x, y, z, radius, colr)
+    h = arrow3d(x, y, z, 1.0, radius, radius, colr);
 end
 
 %% Draw a 3-D circle
