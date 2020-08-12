@@ -31,7 +31,6 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     view(3);
     
     multirotorObjs = findobj(fig,'-property','XData');
-    
     graphics.PlotEnvironment(environment);
     
     myplot = cell(length(multirotorObjs), 3);
@@ -157,14 +156,21 @@ end
 function dataObjs = transform_robot(pos, rpy, dataObjs, myplot)
     T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
     for i = 1 : length(dataObjs)
-        if startsWith(dataObjs(i).Type, 'p')
+        if startsWith(dataObjs(i).Type, 'p') % patch
             data = [myplot{i, 1}, myplot{i, 2}, myplot{i, 3}]';
             data = T * [data; ones(1, length(myplot{i, 1}))];
             set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
-        elseif startsWith(dataObjs(i).Type, 'l')
+        elseif startsWith(dataObjs(i).Type, 'l') % line
             data = [myplot{i, 1}; myplot{i, 2}; myplot{i, 3}];
             data = T * [data; ones(1, length(myplot{i, 1}))];
             set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
+        elseif startsWith(dataObjs(i).Type, 's') % surface
+            data = [myplot{i, 1}(:), myplot{i, 2}(:), myplot{i, 3}(:)]';
+            data = T * [data; ones(1, numel(myplot{i, 1}))]; 
+            X = reshape(data(1, :), size(myplot{i, 1}, 1), []);
+            Y = reshape(data(2, :), size(myplot{i, 2}, 1), []);
+            Z = reshape(data(3, :), size(myplot{i, 3}, 1), []);
+            set(dataObjs(i), 'XData', X, 'YData', Y, 'ZData', Z);
         end
     end
 end
