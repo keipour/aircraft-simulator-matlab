@@ -7,6 +7,9 @@ function visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_model
     if nargin < 3
         plot_only = false;
     end
+    if nargin < 4
+        draw_collision_model = false;
+    end
 
     % Visualization settings
     box_height = 0.1; % in meters
