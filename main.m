@@ -52,3 +52,7 @@ sim.SimulatePositionResponse([20; 10; -2], 90, true);
 
 % Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);
+
+%% Animate the result
+
+graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1);
