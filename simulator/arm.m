@@ -12,6 +12,7 @@ classdef arm < handle
         EndEffectorPosition     % Position for end-effector in body frame
         R_BE                    % Rotation matrix for end-effector
         TotalMass               % Total mass in Kg
+        CollisionModel          % Collision model of the arm
     end
     
     %% Public methods
@@ -57,6 +58,7 @@ classdef arm < handle
             obj.R_BE = [x_axis, y_axis, z_axis];
             
             obj.TotalMass = obj.ArmMass + obj.EndEffectorMass;
+            obj.CollisionModel = obj.CalulateCollisionModel();            
         end
         
         function CopyFrom(obj, ee)
@@ -67,6 +69,17 @@ classdef arm < handle
             obj.BasePosition = ee.BasePosition;
             obj.EndEffectorPosition = ee.EndEffectorPosition;
             obj.R_BE = ee.EndEffectorPosition;
+            obj.CollisionModel = ee.CollisionModel;
+        end
+        
+        function cm = CalulateCollisionModel(obj)
+            radius = 0.02; % in meters
+            cm = collisionBox(obj.Length, 2 * radius, 2 * radius);
+
+            R = vrrotvec2mat(vrrotvec([1, 0, 0], obj.Direction));
+            center = (obj.EndEffectorPosition + obj.BasePosition) / 2;
+            T = [R, center; 0, 0, 0, 1];
+            cm.Pose = T;
         end
     end
 end

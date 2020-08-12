@@ -18,6 +18,7 @@ classdef multirotor < handle
         State                       % The current state
         I_inv                       % Inversion of I
         EndEffector arm
+        CollisionModel
     end
     
     properties(SetAccess=protected, GetAccess=protected)
@@ -155,6 +156,7 @@ classdef multirotor < handle
             obj.UpdateNumOfRotors();
             obj.LastTime = 0;
             obj.TotalMass = obj.Mass;
+            obj.CollisionModel = obj.CalculateCollisionModel();
             if obj.HasArm
                 obj.TotalMass = obj.TotalMass + obj.EndEffector.TotalMass;
             end
@@ -180,14 +182,18 @@ classdef multirotor < handle
             obj.VelocityLimits = mult.VelocityLimits;
             obj.OmegaLimits = mult.OmegaLimits;
             obj.TotalMass = mult.TotalMass;
+            obj.CollisionModel = mult.CollisionModel;
             if obj.HasArm == true
                 obj.EndEffector = arm;
                 obj.EndEffector.CopyFrom(mult.EndEffector);
             end
         end
         
-        function Visualize(obj)
-            graphics.VisualizeMultirotor(obj, false);
+        function Visualize(obj, draw_collision_model)
+            if nargin < 2
+                draw_collision_model = false;
+            end
+            graphics.VisualizeMultirotor(obj, false, draw_collision_model);
         end
         
         function VisualizeAxes(obj)
@@ -198,12 +204,45 @@ classdef multirotor < handle
             analysis.AnalyzeDynamicManipulability(obj, lin_steps, ang_steps);
         end
         
-        function R = GetRotationMatrix(obj)
+        function RBI = GetRotationMatrix(obj)
             roll = deg2rad(obj.State.RPY(1));
             pitch = deg2rad(obj.State.RPY(2));
             yaw = deg2rad(obj.State.RPY(3));
-            R = angle2dcm(yaw, pitch, roll);
+            RBI = angle2dcm(yaw, pitch, roll);
         end
+        
+        function cm = CalculateCollisionModel(obj)
+            x = [-obj.PayloadRadius, obj.PayloadRadius];
+            y = [-obj.PayloadRadius, obj.PayloadRadius];
+            z = [-obj.PayloadRadius, obj.PayloadRadius];
+
+            for i = 1 : obj.NumOfRotors
+                x(1) = min(x(1), obj.Rotors{i}.Position(1));
+                x(2) = max(x(2), obj.Rotors{i}.Position(1));
+                y(1) = min(y(1), obj.Rotors{i}.Position(2));
+                y(2) = max(y(2), obj.Rotors{i}.Position(2));
+                z(1) = min(z(1), obj.Rotors{i}.Position(3));
+                z(2) = max(z(2), obj.Rotors{i}.Position(3));
+            end
+            
+            cm = collisionBox(x(2) - x(1), y(2) - y(1), z(2) - z(1));
+            T = trvec2tform([mean(x), mean(y), mean(z)]);
+            cm.Pose = T;
+        end
+        
+        function cms = GetTransformedCollisionModel(obj)
+            mult_cm = obj.CollisionModel;
+            RBI = obj.GetRotationMatrix(obj);
+            mult_cm.Pose = mult_cm.Pose * [RBI', obj.State.Position];
+            if obj.HasArm
+                arm_cm = obj.EndEffector.CollisionModel;
+                arm_cm.Pose = arm_cm.Pose * [RBI', obj.State.Position];
+                cms = {mult_cm, arm_cm};
+            else
+                cms = {mult_cm};
+            end
+        end
+        
     end
     
     %% Private Methods
