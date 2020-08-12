@@ -59,6 +59,11 @@ classdef physics
 
             inertia_tensor = inertia_tensor + arm_rod_tensor + ee_tensor;
         end
+        
+        function RNI = GetRotationMatrix(roll, pitch, yaw)
+            RNI = angle2dcm(yaw, pitch, roll);
+        end
+
     end
 end
 
