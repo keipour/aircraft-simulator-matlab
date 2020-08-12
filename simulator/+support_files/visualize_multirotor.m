@@ -360,21 +360,25 @@ normn1=[normn1,normn1,normn1];
 n1=n1./normn1;
 P1=n1+Pc;
 
-j=1;
-for theta=([0:N])*2*pi./(N);
-    R1=Pc+radii2*cos(theta).*(P1-Pc) + radii2*sin(theta).*cross(dr,(P1-Pc)) -origin_shift;
-    X1(4:5,j)=R1(:,1);
-    Y1(4:5,j)=R1(:,2);
-    Z1(4:5,j)=R1(:,3);
-    j=j+1;
+if radii2 > radii
+    j=1;
+    for theta=([0:N])*2*pi./(N)
+        R1=Pc+radii2*cos(theta).*(P1-Pc) + radii2*sin(theta).*cross(dr,(P1-Pc)) -origin_shift;
+        X1(4:5,j)=R1(:,1);
+        Y1(4:5,j)=R1(:,2);
+        Z1(4:5,j)=R1(:,3);
+        j=j+1;
+    end
 end
 
 X1(1,:)=X1(1,:)*0 + x(1);
 Y1(1,:)=Y1(1,:)*0 + y(1);
 Z1(1,:)=Z1(1,:)*0 + z(1);
-X1(5,:)=X1(5,:)*0 + x(3);
-Y1(5,:)=Y1(5,:)*0 + y(3);
-Z1(5,:)=Z1(5,:)*0 + z(3);
+if radii2 > radii
+    X1(5,:)=X1(5,:)*0 + x(3);
+    Y1(5,:)=Y1(5,:)*0 + y(3);
+    Z1(5,:)=Z1(5,:)*0 + z(3);
+end
 
 h=surf(X1,Y1,Z1,'facecolor',colr,'edgecolor','none');
 end
