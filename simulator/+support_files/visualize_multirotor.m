@@ -2,7 +2,7 @@
 % This file visualizes the multirotor geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
 % Last updated: June 22, 2020
-function visualize_multirotor(m, plot_axes_only, plot_only)
+function visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_model)
     
     if nargin < 3
         plot_only = false;
@@ -74,6 +74,14 @@ function visualize_multirotor(m, plot_axes_only, plot_only)
         end
     end
     
+    if draw_collision_model
+        cm = {m.CollisionModel};
+        if m.HasEndEffector()
+            cm{2} = m.EndEffector.CollisionModel;
+        end
+        plotCollisionModels(cm);
+    end
+    
     % Make the plot more presentable
 
     if plot_only == false
@@ -101,6 +109,13 @@ function visualize_multirotor(m, plot_axes_only, plot_only)
 end
 
 %% Helper functions
+
+function plotCollisionModels(cm)
+    for i = 1 : length(cm)
+        hold on
+        show(cm{i});
+    end
+end
 
 function plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_size, box_height)
     num_of_rotors = length(arms_order);

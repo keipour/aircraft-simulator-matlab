@@ -141,9 +141,15 @@ classdef graphics
             drawnow;
         end
         
-        function VisualizeMultirotor(multirotor, axes_only)
+        function VisualizeMultirotor(multirotor, axes_only, draw_collision_model)
+            if nargin < 2
+                axes_only = false;
+            end
+            if nargin < 3
+                draw_collision_model = false;
+            end
             figure;
-            support_files.visualize_multirotor(multirotor, axes_only, false);
+            support_files.visualize_multirotor(multirotor, axes_only, false, draw_collision_model);
             view(3);
             drawnow;
         end
