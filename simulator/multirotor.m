@@ -208,7 +208,7 @@ classdef multirotor < handle
             roll = deg2rad(obj.State.RPY(1));
             pitch = deg2rad(obj.State.RPY(2));
             yaw = deg2rad(obj.State.RPY(3));
-            RBI = angle2dcm(yaw, pitch, roll);
+            RBI = physics.GetRotationMatrix(roll, pitch, yaw);
         end
         
         function cm = CalculateCollisionModel(obj)
@@ -230,13 +230,17 @@ classdef multirotor < handle
             cm.Pose = T;
         end
         
-        function cms = GetTransformedCollisionModel(obj)
-            mult_cm = obj.CollisionModel;
-            RBI = obj.GetRotationMatrix(obj);
-            mult_cm.Pose = mult_cm.Pose * [RBI', obj.State.Position];
+        function cms = GetTransformedCollisionModel(obj, pos, rpy)
+            mult_cm = collisionBox(obj.CollisionModel.X, ...
+                obj.CollisionModel.Y, obj.CollisionModel.Z);
+            RBI = physics.GetRotationMatrix(rpy(1), rpy(2), rpy(3));
+            T = [RBI', pos; 0, 0, 0, 1];
+            mult_cm.Pose = T * obj.CollisionModel.Pose;
             if obj.HasArm
-                arm_cm = obj.EndEffector.CollisionModel;
-                arm_cm.Pose = arm_cm.Pose * [RBI', obj.State.Position];
+                arm_cm = collisionBox(obj.EndEffector.CollisionModel.X, ...
+                    obj.EndEffector.CollisionModel.Y,...
+                    obj.EndEffector.CollisionModel.Z);
+                arm_cm.Pose = T * obj.EndEffector.CollisionModel.Pose;
                 cms = {mult_cm, arm_cm};
             else
                 cms = {mult_cm};
