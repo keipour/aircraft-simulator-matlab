@@ -26,20 +26,32 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     ee_lbl_handle = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues');
     anim_lbl_handle = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues');
     
-    set_axis_limits(num_of_zoom_levels, zoom_level, [x(1); y(1); z(1)], x, y, z, min_zoom);
-    graphics.PlotMultirotor(multirotor);
-    view(3);
+    %set_axis_limits(num_of_zoom_levels, zoom_level, [x(1); y(1); z(1)], x, y, z, min_zoom);
     
-    multirotorObjs = findobj(fig,'-property','XData');
-    graphics.PlotEnvironment(environment);
-    
-    myplot = cell(length(multirotorObjs), 3);
+    % Draw and save the multirotor
+    multirotorObjs = graphics.PlotMultirotor(multirotor);
+    multirotor_data = cell(length(multirotorObjs), 3);
     for i = 1 : length(multirotorObjs)
-        myplot{i, 1} = multirotorObjs(i).XData;
-        myplot{i, 2} = multirotorObjs(i).YData;
-        myplot{i, 3} = multirotorObjs(i).ZData;
+        multirotor_data{i, 1} = multirotorObjs(i).XData;
+        multirotor_data{i, 2} = multirotorObjs(i).YData;
+        multirotor_data{i, 3} = multirotorObjs(i).ZData;
     end
     
+    % Draw the multirotor shadow
+    hold on
+    shadowObjs = circlePlane3D([0, 0, 0], [0; 0; 1], multirotor.PayloadRadius * 2, 0.2, 'black', 0.5);
+    shadow_data = cell(length(shadowObjs), 3);
+    for i = 1 : length(shadowObjs)
+        shadow_data{i, 1} = shadowObjs(i).XData;
+        shadow_data{i, 2} = shadowObjs(i).YData;
+        shadow_data{i, 3} = shadowObjs(i).ZData;
+    end
+    
+    % Draw the environment
+    graphics.PlotEnvironment(environment);
+
+    view(3);
+
     figure(fig);
     xlabel('N');     ylabel('E');     zlabel('D');
     grid on
@@ -49,7 +61,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     while true
 
         % Exit the animation if the window is closed
-        if ~ishghandle(fig) || ind == length(t)
+        if ~ishghandle(fig) %|| ind == length(t)
             break
         end
         
@@ -63,7 +75,10 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         figure(fig);
 
         % Draw the robot
-        multirotorObjs = transform_robot(curr_pos, curr_yrp_rad, multirotorObjs, myplot);
+        multirotorObjs = transform_robot(curr_pos, curr_yrp_rad, multirotorObjs, multirotor_data);
+
+        % Draw the shadow
+        shadowObjs = transform_shadow(curr_pos, curr_yrp_rad, shadowObjs, shadow_data);
 
         horizon.Roll = curr_rpy_deg(1);
         horizon.Pitch = curr_rpy_deg(2);
@@ -99,10 +114,12 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
             while ind > 1 && curr_time - 2 <= t(ind)
                 ind = ind - 1;
             end
+            curr_time = t(ind);
         elseif key_code == 29 % right arrow key
             while ind < length(t) && curr_time + 2 >= t(ind)
                 ind = ind + 1;
             end
+            curr_time = t(ind);
         elseif key_code == 42 || key_code == 46 % . or *
             speed = 1;
         elseif key_code >= 48 && key_code <= 48 + num_of_zoom_levels % numbers
@@ -153,24 +170,46 @@ function set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_
     zlim(zlimits);
 end
 
-function dataObjs = transform_robot(pos, rpy, dataObjs, myplot)
+function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)
     T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
-            data = [myplot{i, 1}, myplot{i, 2}, myplot{i, 3}]';
-            data = T * [data; ones(1, length(myplot{i, 1}))];
+            data = [multirotor_data{i, 1}, multirotor_data{i, 2}, multirotor_data{i, 3}]';
+            data = T * [data; ones(1, length(multirotor_data{i, 1}))];
             set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
         elseif startsWith(dataObjs(i).Type, 'l') % line
-            data = [myplot{i, 1}; myplot{i, 2}; myplot{i, 3}];
-            data = T * [data; ones(1, length(myplot{i, 1}))];
+            data = [multirotor_data{i, 1}; multirotor_data{i, 2}; multirotor_data{i, 3}];
+            data = T * [data; ones(1, length(multirotor_data{i, 1}))];
             set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
         elseif startsWith(dataObjs(i).Type, 's') % surface
-            data = [myplot{i, 1}(:), myplot{i, 2}(:), myplot{i, 3}(:)]';
-            data = T * [data; ones(1, numel(myplot{i, 1}))]; 
-            X = reshape(data(1, :), size(myplot{i, 1}, 1), []);
-            Y = reshape(data(2, :), size(myplot{i, 2}, 1), []);
-            Z = reshape(data(3, :), size(myplot{i, 3}, 1), []);
+            data = [multirotor_data{i, 1}(:), multirotor_data{i, 2}(:), multirotor_data{i, 3}(:)]';
+            data = T * [data; ones(1, numel(multirotor_data{i, 1}))]; 
+            X = reshape(data(1, :), size(multirotor_data{i, 1}, 1), []);
+            Y = reshape(data(2, :), size(multirotor_data{i, 2}, 1), []);
+            Z = reshape(data(3, :), size(multirotor_data{i, 3}, 1), []);
             set(dataObjs(i), 'XData', X, 'YData', Y, 'ZData', Z);
+        end
+    end
+end
+
+function dataObjs = transform_shadow(pos, rpy, dataObjs, shadow_data)
+    T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
+    for i = 1 : length(dataObjs)
+        if startsWith(dataObjs(i).Type, 'p') % patch
+            data = [shadow_data{i, 1}, shadow_data{i, 2}, shadow_data{i, 3}]';
+            data = T * [data; ones(1, length(shadow_data{i, 1}))];
+            set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', -0.001*ones(size(data(3, :)')));
+        elseif startsWith(dataObjs(i).Type, 'l') % line
+            data = [shadow_data{i, 1}; shadow_data{i, 2}; shadow_data{i, 3}];
+            data = T * [data; ones(1, length(shadow_data{i, 1}))];
+            set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', -0.001*ones(size(data(3, :)')));
+        elseif startsWith(dataObjs(i).Type, 's') % surface
+            data = [shadow_data{i, 1}(:), shadow_data{i, 2}(:), shadow_data{i, 3}(:)]';
+            data = T * [data; ones(1, numel(shadow_data{i, 1}))]; 
+            X = reshape(data(1, :), size(shadow_data{i, 1}, 1), []);
+            Y = reshape(data(2, :), size(shadow_data{i, 2}, 1), []);
+            Z = reshape(data(3, :), size(shadow_data{i, 3}, 1), []);
+            set(dataObjs(i), 'XData', X, 'YData', Y, 'ZData',  -0.001*ones(size(Z)));
         end
     end
 end
@@ -213,4 +252,58 @@ function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, x, y, z
     limx = calc_single_axis_limits(pos(1), minx, maxx, step);
     limy = calc_single_axis_limits(pos(2), miny, maxy, step);
     limz = calc_single_axis_limits(pos(3), minz, maxz, step);
+    
+    % Correction for ground
+    ground_thickness = 0.001;
+    if limz(2) > ground_thickness
+        limz = [-step + ground_thickness, ground_thickness];
+    end
+end
+
+%% Draw a 3-D circle
+% Downloaded from https://www.mathworks.com/matlabcentral/fileexchange/37879-circle-plane-in-3d
+% With some modifications and bug fixes
+function H = circlePlane3D( center, normal, radious, theintv, color, alpha)
+    %CIRCLEPLANE3D Summary of this function goes here
+    %--------------------------------------------------------------------------
+    %Generate a circle plane in 3D with the given center and radious
+    %The plane is defined by the normal vector
+    %theintv is the interval theta which allow you to control your polygon
+    %shape
+    % Example:,
+    %
+    %   circlePlane3D([0 0 0], [1 -1 2], 5, 0.2, 1, [0 0 1], '-'); 
+    %   circlePlane3D([3 3 -3],[0 1 1], 3, 0.1, 1, 'y', '-');
+    %   
+    %   Cheng-Yuan Wu <ieda_wind@hotmail.com>
+    %   Version 1.00
+    %   Aug, 2012
+    %--------------------------------------------------------------------------
+
+    %generate circle polygon
+    t = 0:theintv:2*pi;
+    x = radious*cos(t);
+    y = radious*sin(t);
+    z = zeros(size(x));
+    %compute rotate theta and axis
+    zaxis = [0 0 1];
+    normal = normal/norm(normal);
+    ang = acos(dot(zaxis,normal));
+    axis = cross(zaxis, normal)/norm(cross(zaxis, normal));
+    if any(isnan(axis))
+        axis = [1 0 0 ];
+    end
+    % A skew symmetric representation of the normalized axis
+    axis_skewed = [ 0 -axis(3) axis(2) ; axis(3) 0 -axis(1) ; -axis(2) axis(1) 0]; 
+    % Rodrigues formula for the rotation matrix 
+    R = eye(3) + sin(ang)*axis_skewed + (1-cos(ang))*axis_skewed*axis_skewed;
+    fx = R(1,1)*x + R(1,2)*y + R(1,3)*z;
+    fy = R(2,1)*x + R(2,2)*y + R(2,3)*z;
+    fz = R(3,1)*x + R(3,2)*y + R(3,3)*z;
+    %translate center
+    fx = fx+center(1);
+    fy = fy+center(2);
+    fz = fz+center(3);
+    H = fill3(fx, fy, fz, color, 'FaceAlpha', alpha);
+    H.EdgeColor = 'none';
 end
