@@ -16,7 +16,7 @@ classdef environment < handle
         end
         
         function AddGroundPlane(obj, xlimits, ylimits)
-            ground_depth = 0.2;
+            ground_depth = 0.001;
             
             o.Type = 1;
             center = [(xlimits(2) + xlimits(1)) / 2; ...
