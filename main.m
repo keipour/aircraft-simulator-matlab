@@ -19,7 +19,7 @@ m = robots.tilted_hex(true);
 % Add a wall and the ground to the environment
 e = environment;
 e.AddCuboidObject([15; 10; -2.5], [1; 20; 5], 0);
-e.AddGroundPlane([0; 20], [0; 20]);
+e.AddGroundPlane([-100; 100], [-100; 100]);
 
 %% Prepare the simulation
 
