@@ -189,15 +189,15 @@ classdef multirotor < handle
             end
         end
         
-        function Visualize(obj, draw_collision_model)
+        function H = Visualize(obj, draw_collision_model)
             if nargin < 2
                 draw_collision_model = false;
             end
-            graphics.VisualizeMultirotor(obj, false, draw_collision_model);
+            H = graphics.VisualizeMultirotor(obj, false, draw_collision_model);
         end
         
-        function VisualizeAxes(obj)
-            graphics.VisualizeMultirotor(obj, true);
+        function H = VisualizeAxes(obj)
+            H = graphics.VisualizeMultirotor(obj, true);
         end
         
         function AnalyzeDynamicManipulability(obj, lin_steps, ang_steps)
