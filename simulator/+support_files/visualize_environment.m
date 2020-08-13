@@ -9,8 +9,8 @@ function visualize_environment(e, plot_only)
     end
 
     % Visualization settings
-    ground_color = [0, 1, 1];
-    obstacle_color = [0, 1, 0];
+    ground_color = [0.5, 0.85, 0.85];
+    obstacle_color = [0, 0, 0.8];
     plot_title = 'Your Cool Environment';
     lighting_on = ~plot_only; % turn on the special lighting
 
