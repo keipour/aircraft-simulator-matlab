@@ -171,6 +171,7 @@ classdef simulation < handle
                 new_state.Omega = zeros(3, 1);
                 new_state.Position = obj.Multirotor.State.Position;
                 new_state.RPY = obj.Multirotor.State.RPY;
+                new_state.EndEffectorPosition = obj.Multirotor.State.EndEffectorPosition;
             end
             
             obj.Multirotor.SetState(new_state);

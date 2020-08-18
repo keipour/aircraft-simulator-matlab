@@ -73,7 +73,7 @@ classdef multirotor < handle
         function e_pos = GetEndEffectorPosition(obj)
             obj.CheckEndEffector();
             RBI = obj.GetRotationMatrix();
-            e_pos = state.Position + RBI' * obj.EndEffector.EndEffectorPosition;
+            e_pos = obj.State.Position + RBI' * obj.EndEffector.EndEffectorPosition;
         end
         
         function e_rot = GetEndEffectorRotation(obj)
@@ -296,6 +296,8 @@ classdef multirotor < handle
                 new_state.RotorSpeeds(i) = sqrt(rs);
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
             end
+            
+            new_state.EndEffectorPosition = obj.GetEndEffectorPosition();
         end
         
         function UpdateStateEulerLagrange(obj, RotorSpeedsSquared, dt)

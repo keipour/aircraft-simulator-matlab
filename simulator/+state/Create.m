@@ -10,4 +10,7 @@ function s = Create(n_rotors)
     s.Moment              = zeros(3, 1);        % Total generated moment
     s.RotorSpeeds         = zeros(n_rotors, 1); % Rotor speeds
     s.RotorsSaturated     = false;              % If rotor saturation happens
+    s.EndEffectorPosition = zeros(3, 1);        % End effector position in global frame
+    s.ForceSensor         = zeros(3, 1);        % Force sensor reading in N
+    s.MomentSensor        = zeros(3, 1);        % Moment sensor reading in N/m
 end

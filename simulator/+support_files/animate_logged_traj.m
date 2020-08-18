@@ -14,7 +14,11 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     roll = rpy(:, 1);
     pitch = rpy(:, 2);
     yaw = rpy(:, 3);
-
+    ee_pos = logger.GetMeasuredEndEffectorPositions();
+    ee_x = ee_pos(:, 1);
+    ee_y = ee_pos(:, 2);
+    ee_z = ee_pos(:, 3);
+    
     % Set up the first frame
     uif = uifigure('Position', [0 0 300 300]);
     horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
@@ -70,6 +74,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         curr_pos = [x(ind); y(ind); z(ind)];
         curr_yrp_rad = [yaw(ind); pitch(ind); roll(ind)];
         curr_rpy_deg = rad2deg([roll(ind); pitch(ind); yaw(ind)]);
+        curr_ee_pos = [ee_x(ind); ee_y(ind); ee_z(ind)]
         curr_time = t(ind);
         
         figure(fig);
@@ -85,7 +90,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         
         set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_zoom);
         show_status(mult_lbl_handle, ee_lbl_handle, anim_lbl_handle, ...
-            curr_time, zoom_level, speed, curr_pos, curr_rpy_deg);
+            curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, curr_ee_pos);
         
         drawnow;
         exec_time = toc;
@@ -146,12 +151,12 @@ function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time,
     pause(pause_time);
 end
 
-function show_status(m_lbl, e_lbl, a_lbl, curr_time, zoom_level, speed, curr_pos, curr_rpy_deg)
+function show_status(m_lbl, e_lbl, a_lbl, curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, curr_ee_pos)
     m_str = sprintf('%0.2f\n\n%0.2f\n\n%0.2f\n\n%0.2f%c\n\n%0.2f%c\n\n%0.2f%c', ...
         curr_pos(1), curr_pos(2), curr_pos(3), curr_rpy_deg(1), char(176), ...
         curr_rpy_deg(2), char(176), curr_rpy_deg(3), char(176));
 
-    e_str = sprintf('-\n\n-\n\n-\n\n');
+    e_str = sprintf('%0.2f\n\n%0.2f\n\n%0.2f', curr_ee_pos(1), curr_ee_pos(2), curr_ee_pos(3));
 
     a_str = sprintf('%0.2f\n\n%d\n\n%0.2fx', curr_time, zoom_level, speed);
 

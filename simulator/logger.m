@@ -103,6 +103,21 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
         end
         
+        function [data, times] = GetMeasuredEndEffectorPositions()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.EndEffectorPosition', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetForceSensorReadings()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.ForceSensor', measured_data, 'uni', 0));
+        end
+
+        function [data, times] = GetMomentSensorReadings()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.MomentSensor', measured_data, 'uni', 0));
+        end
+
         function [data, times, labels] = GetField(str)
             str = lower(str);
             
@@ -161,9 +176,17 @@ classdef logger < handle
                 [data, times] = logger.GetMeasuredOmegas();
                 labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Velocity'};
 
+            elseif contains_and(str, {'forc', 'sens'})
+                [data, times] = logger.GetForceSensorReadings();
+                labels = {'F_x', 'F_y', 'F_z', 'Force Sensor'};
+
             elseif contains(str, 'forc')
                 [data, times] = logger.GetMeasuredForces();
                 labels = {'F_x', 'F_y', 'F_z', 'Generated Force'};
+
+            elseif contains_or(str, {'momen', 'torq'}) && contains(str, 'sens')
+                [data, times] = logger.GetMomentSensorReadings();
+                labels = {'M_x', 'M_y', 'M_z', 'Moment Sensor'};
 
             elseif contains_or(str, {'momen', 'torq'})
                 [data, times] = logger.GetMeasuredMoments();
@@ -173,6 +196,10 @@ classdef logger < handle
                 [data, times] = logger.GetMeasuredVelocities();
                 labels = {'V_x', 'V_y', 'V_z', 'Velocity'};
             
+            elseif contains(str, 'eff')
+                [data, times] = logger.GetMeasuredEndEffectorPositions();
+                labels = {'x_e', 'y_e', 'z_e', 'End Effector Position'};
+
             elseif contains(str, 'pos')
                 [data_meas, times_meas] = logger.GetMeasuredPositions();
                 [data_des, times_des] = logger.GetDesiredPositionYaw();
