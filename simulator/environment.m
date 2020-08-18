@@ -1,7 +1,8 @@
 classdef environment < handle
     
-    properties
+    properties (SetAccess = private, GetAccess = public)
         Objects = {};
+        CollisionModels = {};
     end
     
     methods
@@ -31,6 +32,7 @@ classdef environment < handle
         
         function AddObject(obj, object)
             obj.Objects{length(obj.Objects)+1} = object;
+            obj.CollisionModels{length(obj.CollisionModels)+1} = object.Geometry;
         end
     end
 end

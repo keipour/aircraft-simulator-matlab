@@ -222,6 +222,12 @@ function step = calc_single_axis_size(n_levels, level, minx, maxx, min_lim)
 end
 
 function lim = calc_single_axis_limits(r_x, minx, maxx, step)
+    if step + 1e-5 > (maxx - minx)
+        center = (minx + maxx) / 2;
+        lim = [center - step / 2, center + step / 2];
+        return;
+    end
+
     lim = [r_x - step / 2, r_x + step / 2];
     if lim(1) < minx
         lim(1) = minx;
@@ -237,7 +243,7 @@ function lim = calc_single_axis_limits(r_x, minx, maxx, step)
 end
 
 function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, x, y, z, min_lim)
-    expand = 2;
+    expand = 3;
     
     minx = min(x) - expand; maxx = max(x) + expand;
     miny = min(y) - expand; maxy = max(y) + expand;
