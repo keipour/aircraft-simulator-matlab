@@ -122,18 +122,34 @@ classdef multirotor < handle
             obj.UpdateStructure();
         end
         
-        function new_state = CalcNextState(obj, RotorSpeedsSquared, time)
+        function UpdateState(obj, new_state)
+            obj.State = new_state;
+        end
+        
+        function [force, moment] = CalcForcesMoments(obj, RotorSpeedsSquared)
+
+            % Calculate the current rotation matrix
+            RBI = obj.GetRotationMatrix();
+
+            % Calculate the total force
+            force = obj.GetGravityForce() + ...
+                obj.GetThrustForce(RBI', RotorSpeedsSquared);
+
+            % Calculate the total moment
+            moment = obj.GetGravityMoment(RBI) + ...
+                obj.GetThrustMoment(RotorSpeedsSquared) + ...
+                obj.GetReactionMoment(RotorSpeedsSquared);
+        end
+        
+        function new_state = CalcNextState(obj, force, moment, RotorSpeedsSquared, time)
+
             % Calculate the time step
             dt = time - obj.LastTime;
             
-            new_state = obj.CalcStateNewtonEuler(RotorSpeedsSquared, dt);
+            new_state = obj.CalcStateNewtonEuler(force, moment, RotorSpeedsSquared, dt);
             
             % Update the time of the update
             obj.LastTime = time;
-        end
-        
-        function SetState(obj, new_state)
-            obj.State = new_state;
         end
         
         function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared, get_maximum)
@@ -256,20 +272,14 @@ classdef multirotor < handle
     %% Private Methods
     methods(Access=protected)
         
-        function new_state = CalcStateNewtonEuler(obj, RotorSpeedsSquared, dt)
+        function new_state = CalcStateNewtonEuler(obj, force, moment, RotorSpeedsSquared, dt)
             
             % Create the new state
             new_state = state.Create(obj.NumOfRotors);
             
-            % Calculate the current rotation matrix
-            RBI = obj.GetRotationMatrix();
-            
-            % Calculate the total force and moment
-            new_state.Force = obj.GetGravityForce() + ...
-                obj.GetThrustForce(RBI', RotorSpeedsSquared);
-            new_state.Moment = obj.GetGravityMoment(RBI) + ...
-                obj.GetThrustMoment(RotorSpeedsSquared) + ...
-                obj.GetReactionMoment(RotorSpeedsSquared);
+            % Save the force and moment
+            new_state.Force = force;
+            new_state.Moment = moment;
             
             % Calculate the equations of motion
             p_dotdot = obj.GetLinearAcceleration(new_state.Force);

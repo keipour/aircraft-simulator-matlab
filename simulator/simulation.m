@@ -155,7 +155,9 @@ classdef simulation < handle
     methods (Access = private)
 
         function UpdateAllStates(obj, rotor_speeds_squared, time)
-            new_state = obj.Multirotor.CalcNextState(rotor_speeds_squared, time);
+            
+            [force, moment] = obj.Multirotor.CalcForcesMoments(rotor_speeds_squared);
+            new_state = obj.Multirotor.CalcNextState(force, moment, rotor_speeds_squared, time);
             
             % Check for collistion
             cm = obj.Multirotor.GetTransformedCollisionModel(...
@@ -164,17 +166,10 @@ classdef simulation < handle
             collision = physics.CheckCollision(cm, obj.Environment.CollisionModels);
             
             if collision == true
-                new_state.Acceleration = zeros(3, 1);
-                new_state.EulerRate = zeros(3, 1);
-                new_state.AngularAcceleration = zeros(3, 1);
-                new_state.Velocity = zeros(3, 1);
-                new_state.Omega = zeros(3, 1);
-                new_state.Position = obj.Multirotor.State.Position;
-                new_state.RPY = obj.Multirotor.State.RPY;
-                new_state.EndEffectorPosition = obj.Multirotor.State.EndEffectorPosition;
+                new_state = obj.Multirotor.CalcNextState(zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time);
             end
             
-            obj.Multirotor.SetState(new_state);
+            obj.Multirotor.UpdateState(new_state);
         end
         
     end
