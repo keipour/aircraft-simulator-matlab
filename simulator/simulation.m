@@ -61,7 +61,7 @@ classdef simulation < handle
             if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
                 rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
             end
-            obj.Multirotor.UpdateState(rotor_speeds_squared, time);
+            obj.UpdateAllStates(rotor_speeds_squared, time);
             logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
         end
         
@@ -150,5 +150,12 @@ classdef simulation < handle
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
         
+    end
+    
+    methods (Access = private)
+       function UpdateAllStates(obj, rotor_speeds_squared, time)
+            new_state = obj.Multirotor.CalcNextState(rotor_speeds_squared, time);
+            obj.Multirotor.SetState(new_state);
+        end
     end
 end

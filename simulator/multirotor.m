@@ -122,14 +122,18 @@ classdef multirotor < handle
             obj.UpdateStructure();
         end
         
-        function UpdateState(obj, RotorSpeedsSquared, time)
+        function new_state = CalcNextState(obj, RotorSpeedsSquared, time)
             % Calculate the time step
             dt = time - obj.LastTime;
             
-            obj.UpdateStateNewtonEuler(RotorSpeedsSquared, dt);
+            new_state = obj.CalcStateNewtonEuler(RotorSpeedsSquared, dt);
             
             % Update the time of the update
             obj.LastTime = time;
+        end
+        
+        function SetState(obj, new_state)
+            obj.State = new_state;
         end
         
         function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared, get_maximum)
@@ -252,41 +256,45 @@ classdef multirotor < handle
     %% Private Methods
     methods(Access=protected)
         
-        function UpdateStateNewtonEuler(obj, RotorSpeedsSquared, dt)
+        function new_state = CalcStateNewtonEuler(obj, RotorSpeedsSquared, dt)
+            
+            % Create the new state
+            new_state = state.Create(obj.NumOfRotors);
+            
             % Calculate the current rotation matrix
             RBI = obj.GetRotationMatrix();
             
             % Calculate the total force and moment
-            obj.State.Force = obj.GetGravityForce() + ...
+            new_state.Force = obj.GetGravityForce() + ...
                 obj.GetThrustForce(RBI', RotorSpeedsSquared);
-            obj.State.Moment = obj.GetGravityMoment(RBI) + ...
+            new_state.Moment = obj.GetGravityMoment(RBI) + ...
                 obj.GetThrustMoment(RotorSpeedsSquared) + ...
                 obj.GetReactionMoment(RotorSpeedsSquared);
             
             % Calculate the equations of motion
-            p_dotdot = obj.GetLinearAcceleration(obj.State.Force);
-            omega_dot = obj.GetAngularAcceleration(obj.State.Moment);
+            p_dotdot = obj.GetLinearAcceleration(new_state.Force);
+            omega_dot = obj.GetAngularAcceleration(new_state.Moment);
             phi_dot = obj.GetEulerRate();
             
             % Update the rest of the state
-            obj.State.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
+            new_state.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + ...
                 obj.State.Velocity * dt;
-            obj.State.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
-            obj.State.Velocity = check_limits(obj.State.Velocity, obj.VelocityLimits);
-            obj.State.Velocity = check_limits(obj.State.Velocity, obj.TotalSpeedLimit);
-            obj.State.Acceleration = p_dotdot;
+            new_state.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
+            new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
+            new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
+            new_state.Acceleration = p_dotdot;
 
-            obj.State.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
-            obj.State.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
-            obj.State.Omega = check_limits(obj.State.Omega, obj.OmegaLimits);
+            new_state.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
+            new_state.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
+            new_state.Omega = check_limits(new_state.Omega, obj.OmegaLimits);
 
-            obj.State.EulerRate = phi_dot;
-            obj.State.AngularAcceleration = omega_dot;
+            new_state.EulerRate = phi_dot;
+            new_state.AngularAcceleration = omega_dot;
             
             for i = 1 : obj.NumOfRotors
                 [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
-                obj.State.RotorSpeeds(i) = sqrt(rs);
-                obj.State.RotorsSaturated = obj.State.RotorsSaturated || sat;
+                new_state.RotorSpeeds(i) = sqrt(rs);
+                new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
             end
         end
         
