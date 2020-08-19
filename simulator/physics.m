@@ -64,13 +64,13 @@ classdef physics
             RNI = angle2dcm(yaw, pitch, roll);
         end
 
-        function flag = CheckCollision(set1, set2)
+        function flag = CheckAllCollisions(set1, set2)
         % Check collision between two different sets of collision geometries
 
             flag = false;
             for i = 1 : length(set1)
                 for j = 1 : length(set2)
-                    if checkCollision(set1{i}, set2{j})
+                    if physics.CheckCollision(set1{i}, set2{j})
                         flag = true;
                         return;
                     end
@@ -78,6 +78,16 @@ classdef physics
             end
         end
 
+        function [collisionStatus, separationDist, witnessPts] = CheckCollision(geom1, geom2)
+            [collisionStatus, separationDist, witnessPts] = ...
+                    robotics.core.internal.intersect(geom1.GeometryInternal, geom1.Position, geom1.Quaternion,...
+                                                     geom2.GeometryInternal, geom2.Position, geom2.Quaternion, 1);
+            if collisionStatus
+                separationDist = nan;
+                witnessPts = nan(3,2);
+            end
+        end
+        
     end
 end
 
