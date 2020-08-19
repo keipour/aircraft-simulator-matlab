@@ -24,6 +24,7 @@ classdef multirotor < handle
     properties(SetAccess=protected, GetAccess=protected)
         LastTime = 0;               % Last update time
         HasArm = false;
+        TransformedCollisionModels
     end
     
     %% Public methods
@@ -177,8 +178,17 @@ classdef multirotor < handle
             obj.LastTime = 0;
             obj.TotalMass = obj.Mass;
             obj.CollisionModel = obj.CalculateCollisionModel();
+            mult_cm = collisionBox(obj.CollisionModel.X, ...
+                obj.CollisionModel.Y, obj.CollisionModel.Z);
+
             if obj.HasArm
                 obj.TotalMass = obj.TotalMass + obj.EndEffector.TotalMass;
+                arm_cm = collisionBox(obj.EndEffector.CollisionModel.X, ...
+                    obj.EndEffector.CollisionModel.Y,...
+                    obj.EndEffector.CollisionModel.Z);
+                obj.TransformedCollisionModels = {mult_cm, arm_cm};
+            else
+                obj.TransformedCollisionModels = {mult_cm};
             end
         end
         
@@ -202,10 +212,22 @@ classdef multirotor < handle
             obj.VelocityLimits = mult.VelocityLimits;
             obj.OmegaLimits = mult.OmegaLimits;
             obj.TotalMass = mult.TotalMass;
-            obj.CollisionModel = mult.CollisionModel;
-            if obj.HasArm == true
+            obj.CollisionModel = collisionBox(mult.CollisionModel.X, ...
+                mult.CollisionModel.Y, mult.CollisionModel.Z);
+            obj.CollisionModel.Pose = mult.CollisionModel.Pose;
+
+            mult_cm = collisionBox(mult.CollisionModel.X, ...
+                mult.CollisionModel.Y, mult.CollisionModel.Z);
+            if obj.HasArm
+                arm_cm = collisionBox(mult.EndEffector.CollisionModel.X, ...
+                    mult.EndEffector.CollisionModel.Y,...
+                    mult.EndEffector.CollisionModel.Z);
+                obj.TransformedCollisionModels = {mult_cm, arm_cm};
+
                 obj.EndEffector = arm;
                 obj.EndEffector.CopyFrom(mult.EndEffector);
+            else
+                obj.TransformedCollisionModels = {mult_cm};
             end
         end
         
@@ -251,19 +273,12 @@ classdef multirotor < handle
         end
         
         function cms = GetTransformedCollisionModel(obj, pos, rpy)
-            mult_cm = collisionBox(obj.CollisionModel.X, ...
-                obj.CollisionModel.Y, obj.CollisionModel.Z);
+            cms = obj.TransformedCollisionModels;
             RBI = physics.GetRotationMatrix(rpy(1), rpy(2), rpy(3));
             T = [RBI', pos; 0, 0, 0, 1];
-            mult_cm.Pose = T * obj.CollisionModel.Pose;
+            cms{1}.Pose = T * obj.CollisionModel.Pose;
             if obj.HasArm
-                arm_cm = collisionBox(obj.EndEffector.CollisionModel.X, ...
-                    obj.EndEffector.CollisionModel.Y,...
-                    obj.EndEffector.CollisionModel.Z);
-                arm_cm.Pose = T * obj.EndEffector.CollisionModel.Pose;
-                cms = {mult_cm, arm_cm};
-            else
-                cms = {mult_cm};
+                cms{2}.Pose = T * obj.EndEffector.CollisionModel.Pose;
             end
         end
         
