@@ -166,6 +166,11 @@ classdef simulation < handle
             collision = physics.CheckCollision(cm, obj.Environment.CollisionModels);
             
             if collision == true
+                vel_vector = new_state.Velocity / norm(obj.Multirotor.State.Velocity);
+                collision_force = dot(force, vel_vector) * vel_vector;
+                
+                R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
+                
                 new_state = obj.Multirotor.CalcNextState(zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time);
             end
             
