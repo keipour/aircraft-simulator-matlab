@@ -68,7 +68,7 @@ classdef arm < handle
             obj.Direction = ee.Direction;
             obj.BasePosition = ee.BasePosition;
             obj.EndEffectorPosition = ee.EndEffectorPosition;
-            obj.R_BE = ee.EndEffectorPosition;
+            obj.R_BE = ee.R_BE;
             obj.CollisionModel = ee.CollisionModel;
         end
         
