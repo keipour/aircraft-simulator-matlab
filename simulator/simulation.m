@@ -157,21 +157,31 @@ classdef simulation < handle
         function UpdateAllStates(obj, rotor_speeds_squared, time)
             
             [force, moment] = obj.Multirotor.CalcForcesMoments(rotor_speeds_squared);
-            new_state = obj.Multirotor.CalcNextState(force, moment, rotor_speeds_squared, time);
+            new_state = obj.Multirotor.CalcNextState(force, moment, ...
+                zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time, false, zeros(3, 1));
             
             % Check for collistion
-            cm = obj.Multirotor.GetTransformedCollisionModel(...
-                obj.Multirotor.State.Position, obj.Multirotor.State.RPY);
+            cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, new_state.RPY);
             
-            collision = physics.CheckCollision(cm, obj.Environment.CollisionModels);
+            collision = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
             if collision == true
-                vel_vector = new_state.Velocity / norm(obj.Multirotor.State.Velocity);
-                collision_force = dot(force, vel_vector) * vel_vector;
+                % TODO: Determine the collision force vector direction properly
+                % TODO: Add moment handling
                 
+                wall_normal = [-1; 0; 0];
+                
+                % Calculate the force sensor reading
+                collision_force = -dot(force, wall_normal);
+                if collision_force < 0
+                    collision_force = 0;
+                end
+                collision_force_vec = collision_force * wall_normal;
                 R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
+                force_sensor = R_SI' * collision_force_vec;
                 
-                new_state = obj.Multirotor.CalcNextState(zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time);
+                new_state = obj.Multirotor.CalcNextState(force, moment, force_sensor, zeros(3, 1),...
+                    rotor_speeds_squared, time, true, wall_normal);
             end
             
             obj.Multirotor.UpdateState(new_state);
