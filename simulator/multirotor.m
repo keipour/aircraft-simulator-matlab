@@ -157,9 +157,11 @@ classdef multirotor < handle
                 force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
             end
             
-            
             new_state = obj.CalcStateNewtonEuler(force + force_ext_I, moment + force_moment_ext_B, dt, is_collision, collision_normal);
 
+            % Save the force and moment data
+            new_state.Force = force;
+            new_state.Moment = moment;
             new_state.ForceSensor = force_sensor;
             new_state.MomentSensor = torque_sensor;
             
@@ -316,13 +318,9 @@ classdef multirotor < handle
             % Create the new state
             new_state = state.Create(obj.NumOfRotors);
             
-            % Save the force and moment
-            new_state.Force = force;
-            new_state.Moment = moment;
-            
             % Calculate the equations of motion
-            p_dotdot = obj.GetLinearAcceleration(new_state.Force);
-            omega_dot = obj.GetAngularAcceleration(new_state.Moment);
+            p_dotdot = obj.GetLinearAcceleration(force);
+            omega_dot = obj.GetAngularAcceleration(moment);
             phi_dot = obj.GetEulerRate();
             
             new_state.Acceleration = p_dotdot;
