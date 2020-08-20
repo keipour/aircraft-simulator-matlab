@@ -148,10 +148,15 @@ classdef multirotor < handle
             % Calculate the time step
             dt = time - obj.LastTime;
             
-            force_ext_B = obj.EndEffector.R_BE * force_sensor;
-            force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
-            moment_ext_B = obj.EndEffector.R_BE * torque_sensor;
-            force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
+            force_moment_ext_B = zeros(3, 1);
+            force_ext_I = zeros(3, 1);
+            if obj.HasArm
+                force_ext_B = obj.EndEffector.R_BE * force_sensor;
+                moment_ext_B = obj.EndEffector.R_BE * torque_sensor;
+                force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
+                force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
+            end
+            
             
             new_state = obj.CalcStateNewtonEuler(force + force_ext_I, moment + force_moment_ext_B, dt, is_collision, collision_normal);
 
@@ -164,7 +169,9 @@ classdef multirotor < handle
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
             end
             
-            new_state.EndEffectorPosition = obj.GetEndEffectorPosition();
+            if obj.HasArm
+                new_state.EndEffectorPosition = obj.GetEndEffectorPosition();
+            end
 
             % Update the time of the update
             obj.LastTime = time;

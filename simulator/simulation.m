@@ -170,15 +170,20 @@ classdef simulation < handle
                 % TODO: Add moment handling
                 
                 wall_normal = [-1; 0; 0];
-                
-                % Calculate the force sensor reading
-                collision_force = -dot(force, wall_normal);
-                if collision_force < 0
-                    collision_force = 0;
+                force_sensor = zeros(3, 1);
+
+                if obj.Multirotor.HasEndEffector()
+
+                    % Calculate the force sensor reading
+                    collision_force = -dot(force, wall_normal);
+                    if collision_force < 0
+                        collision_force = 0;
+                    end
+
+                    collision_force_vec = collision_force * wall_normal;
+                    R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
+                    force_sensor = R_SI' * collision_force_vec;
                 end
-                collision_force_vec = collision_force * wall_normal;
-                R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
-                force_sensor = R_SI' * collision_force_vec;
                 
                 new_state = obj.Multirotor.CalcNextState(force, moment, force_sensor, zeros(3, 1),...
                     rotor_speeds_squared, time, true, wall_normal);
