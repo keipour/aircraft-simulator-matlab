@@ -161,7 +161,7 @@ classdef simulation < handle
                 zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time, false, zeros(3, 1));
             
             % Check for collistion
-            cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, new_state.RPY);
+            cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
             
             collision = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
