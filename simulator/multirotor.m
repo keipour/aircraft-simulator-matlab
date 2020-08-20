@@ -148,11 +148,12 @@ classdef multirotor < handle
             % Calculate the time step
             dt = time - obj.LastTime;
             
-            R_IS = obj.GetRotationMatrix()' * obj.EndEffector.R_BE;
-            force_ext_I = R_IS * force_sensor;
+            force_ext_B = obj.EndEffector.R_BE * force_sensor;
+            force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
             moment_ext_B = obj.EndEffector.R_BE * torque_sensor;
+            force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
             
-            new_state = obj.CalcStateNewtonEuler(force + force_ext_I, moment + moment_ext_B, dt, is_collision, collision_normal);
+            new_state = obj.CalcStateNewtonEuler(force + force_ext_I, moment + force_moment_ext_B, dt, is_collision, collision_normal);
 
             new_state.ForceSensor = force_sensor;
             new_state.MomentSensor = torque_sensor;
@@ -288,9 +289,9 @@ classdef multirotor < handle
             cm.Pose = T;
         end
         
-        function cms = GetTransformedCollisionModel(obj, pos, rpy)
+        function cms = GetTransformedCollisionModel(obj, pos, rpy_rad)
             cms = obj.TransformedCollisionModels;
-            RBI = physics.GetRotationMatrix(rpy(1), rpy(2), rpy(3));
+            RBI = physics.GetRotationMatrix(rpy_rad(1), rpy_rad(2), rpy_rad(3));
             T = [RBI', pos; 0, 0, 0, 1];
             cms{1}.Pose = T * obj.CollisionModel.Pose;
             if obj.HasArm
