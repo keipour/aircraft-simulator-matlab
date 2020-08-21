@@ -60,8 +60,15 @@ classdef physics
             inertia_tensor = inertia_tensor + arm_rod_tensor + ee_tensor;
         end
         
-        function RNI = GetRotationMatrix(roll, pitch, yaw)
+        function RNI = GetRotationMatrixRadians(roll, pitch, yaw)
             RNI = angle2dcm(yaw, pitch, roll);
+        end
+
+        function RNI = GetRotationMatrixDegrees(roll, pitch, yaw)
+            r = deg2rad(roll);
+            p = deg2rad(pitch);
+            y = deg2rad(yaw);
+            RNI = physics.GetRotationMatrixRadians(r, p, y);
         end
 
         function flag = CheckAllCollisions(set1, set2)

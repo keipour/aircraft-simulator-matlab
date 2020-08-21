@@ -156,9 +156,17 @@ classdef simulation < handle
 
         function UpdateAllStates(obj, rotor_speeds_squared, time)
             
+            persistent last_time;
+            if isempty(last_time)
+                last_time = 0;
+            end
+            
+            dt = time - last_time;
+            last_time = time;
+            
             [force, moment] = obj.Multirotor.CalcForcesMoments(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(force, moment, ...
-                zeros(3, 1), zeros(3, 1), rotor_speeds_squared, time, false, zeros(3, 1));
+                zeros(3, 1), zeros(3, 1), rotor_speeds_squared, dt, false, zeros(3, 1));
             
             % Check for collistion
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
@@ -186,7 +194,7 @@ classdef simulation < handle
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(force, moment, force_sensor, zeros(3, 1),...
-                    rotor_speeds_squared, time, true, wall_normal);
+                    rotor_speeds_squared, dt, true, wall_normal);
             end
             
             obj.Multirotor.UpdateState(new_state);
