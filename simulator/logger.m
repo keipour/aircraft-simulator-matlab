@@ -108,6 +108,11 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.EndEffectorPosition', measured_data, 'uni', 0));
         end
 
+        function [data, times] = GetMeasuredEndEffectorVelocities()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.EndEffectorVelocity', measured_data, 'uni', 0));
+        end
+
         function [data, times] = GetForceSensorReadings()
             [measured_data, times] = logger.GetMeasuredStates();
             data = cell2mat(cellfun(@(s)s.ForceSensor', measured_data, 'uni', 0));
@@ -191,6 +196,10 @@ classdef logger < handle
             elseif contains_or(str, {'momen', 'torq'})
                 [data, times] = logger.GetMeasuredMoments();
                 labels = {'M_x', 'M_y', 'M_z', 'Generated Moment'};
+
+            elseif contains_or(str, {'vel', 'speed'}) && contains(str, 'eff')
+                [data, times] = logger.GetMeasuredEndEffectorVelocities();
+                labels = {'V_xe', 'V_ye', 'V_ze', 'End Effector Velocity'};
 
             elseif contains_or(str, {'vel', 'speed'})
                 [data, times] = logger.GetMeasuredVelocities();
