@@ -26,13 +26,13 @@ e.AddGroundPlane([-100; 100], [-100; 100]);
 sim = simulation(m, controller(m), e);
 
 % Initial multirotor state
-pos = [0; 10; -2];
+pos = [10; 10; -2];
 vel = [0; 0; 0];
 rpy = [0; 0; 0];
 omega = [0; 0; 0];
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
-sim.SetTotalTime(10);
+sim.SetTotalTime(20);
 
 %% Prepare the controller
 
@@ -48,7 +48,7 @@ sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 
 % Position response
 figure;
-sim.SimulatePositionResponse([20; 10; -2], 0, true);
+sim.SimulatePositionResponse([17; 8; -2], 0, true);
 
 % Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);

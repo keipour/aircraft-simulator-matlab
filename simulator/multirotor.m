@@ -99,8 +99,11 @@ classdef multirotor < handle
             obj.State.Velocity = vel;
             obj.State.RPY = rpy;
             obj.State.Omega = omega;
-            obj.State.EndEffectorPosition = obj.CalcEndEffectorPosition(obj.State.Position, obj.State.RPY);
-            obj.State.EndEffectorVelocity = obj.CalcEndEffectorVelocity(obj.State.Velocity, obj.State.Omega, obj.State.RPY);
+            
+            if obj.HasArm
+                obj.State.EndEffectorPosition = obj.CalcEndEffectorPosition(obj.State.Position, obj.State.RPY);
+                obj.State.EndEffectorVelocity = obj.CalcEndEffectorVelocity(obj.State.Velocity, obj.State.Omega, obj.State.RPY);
+            end
         end
         
         function SetRotorAngles(obj, RotorInwardAngles, RotorSidewardAngles, RotorDihedralAngles)
@@ -369,15 +372,17 @@ classdef multirotor < handle
 
             if obj.HasArm
                 % We assume that the collision happened at the end effector
-                vel_vector_normal = dot(obj.State.EndEffectorVelocity, collision_normal) * collision_normal;
-                new_state.EndEffectorVelocity = obj.State.EndEffectorVelocity - vel_vector_normal;
+                new_state.EndEffectorVelocity = obj.State.EndEffectorVelocity + new_state.Acceleration * dt;
+                vel_vector_normal = dot(new_state.EndEffectorVelocity, collision_normal) * collision_normal;
+                new_state.EndEffectorVelocity = new_state.EndEffectorVelocity - vel_vector_normal;
                 new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
                 RBI = obj.GetRotationMatrix();
                 new_state.Position = new_state.EndEffectorPosition - RBI' * obj.EndEffector.EndEffectorPosition;
                 new_state.Velocity = (new_state.Position - obj.State.Position) / dt;
             else
-                vel_vector_normal = dot(obj.State.Velocity, collision_normal) * collision_normal;
-                new_state.Velocity = obj.State.Velocity - vel_vector_normal;
+                new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
+                vel_vector_normal = dot(new_state.Velocity, collision_normal) * collision_normal;
+                new_state.Velocity = new_state.Velocity - vel_vector_normal;
                 new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
                 new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
                 new_state.Position = obj.State.Position + new_state.Velocity * dt;

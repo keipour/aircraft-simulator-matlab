@@ -74,7 +74,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         curr_pos = [x(ind); y(ind); z(ind)];
         curr_yrp_rad = [yaw(ind); pitch(ind); roll(ind)];
         curr_rpy_deg = rad2deg([roll(ind); pitch(ind); yaw(ind)]);
-        curr_ee_pos = [ee_x(ind); ee_y(ind); ee_z(ind)]
+        curr_ee_pos = [ee_x(ind); ee_y(ind); ee_z(ind)];
         curr_time = t(ind);
         
         figure(fig);
