@@ -1,6 +1,6 @@
 function animate_logged_traj(multirotor, environment, zoom_level, speed)
 
-    num_of_zoom_levels = 5;
+    num_of_zoom_levels = 9;
     zoom_level = min(zoom_level, num_of_zoom_levels);
     zoom_level = max(zoom_level, 0);
     min_zoom = 2; % in meters
@@ -14,10 +14,19 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     roll = rpy(:, 1);
     pitch = rpy(:, 2);
     yaw = rpy(:, 3);
+    [vel, t] = logger.GetMeasuredVelocities();
+    [omega, t] = logger.GetMeasuredOmegas();
+    [accel, t] = logger.GetMeasuredAccelerations();
+    [alpha, t] = logger.GetMeasuredAngularAccelerations();
+
     ee_pos = logger.GetMeasuredEndEffectorPositions();
     ee_x = ee_pos(:, 1);
     ee_y = ee_pos(:, 2);
     ee_z = ee_pos(:, 3);
+    ee_vel = logger.GetMeasuredEndEffectorVelocities();
+
+    f_sensor = logger.GetForceSensorReadings();
+    contact = any(f_sensor, 2);
     
     % Set up the first frame
     uif = uifigure('Position', [0 0 300 300]);
@@ -26,9 +35,14 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     set(fig, 'WindowKeyPressFcn', @Key_Down);
     %set(fig, 'KeyPressFcn', @Key_Down);
     
-    mult_lbl_handle = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues');
-    ee_lbl_handle = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues');
-    anim_lbl_handle = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues');
+    mult_lbl_handle1 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues1');
+    mult_lbl_handle2 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues2');
+    mult_lbl_handle3 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues3');
+    ee_lbl_handle1 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues1');
+    ee_lbl_handle2 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues2');
+    ee_lbl_handle3 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues3');
+    anim_lbl_handle1 = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues1');
+    anim_lbl_handle2 = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues2');
     
     %set_axis_limits(num_of_zoom_levels, zoom_level, [x(1); y(1); z(1)], x, y, z, min_zoom);
     
@@ -89,8 +103,12 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         horizon.Pitch = curr_rpy_deg(2);
         
         set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_zoom);
-        show_status(mult_lbl_handle, ee_lbl_handle, anim_lbl_handle, ...
-            curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, curr_ee_pos);
+        show_status(mult_lbl_handle1, mult_lbl_handle2, mult_lbl_handle3, ...
+            ee_lbl_handle1, ee_lbl_handle2, ee_lbl_handle3, ...
+            anim_lbl_handle1, anim_lbl_handle2,...
+            curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, ...
+            vel(ind, :), omega(ind, :), accel(ind, :), alpha(ind, :), ...
+            curr_ee_pos, ee_vel(ind, :), f_sensor(ind, :), contact(ind, :));
         
         drawnow;
         exec_time = toc;
@@ -151,20 +169,37 @@ function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time,
     pause(pause_time);
 end
 
-function show_status(m_lbl, e_lbl, a_lbl, curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, curr_ee_pos)
-    m_str = sprintf('%0.2f\n\n%0.2f\n\n%0.2f\n\n%0.2f%c\n\n%0.2f%c\n\n%0.2f%c', ...
+function show_status(m_lbl1, m_lbl2, m_lbl3, e_lbl1, e_lbl2, e_lbl3, a_lbl1, a_lbl2, ...
+    curr_time, zoom_level, speed, curr_pos, curr_rpy_deg, vel, omega, accel, alpha, ...
+	curr_ee_pos, ee_vel, f_sensor, contact)
+
+    m_str1 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f%c\n\n%0.3f%c\n\n%0.3f%c', ...
         curr_pos(1), curr_pos(2), curr_pos(3), curr_rpy_deg(1), char(176), ...
         curr_rpy_deg(2), char(176), curr_rpy_deg(3), char(176));
 
-    e_str = sprintf('%0.2f\n\n%0.2f\n\n%0.2f', curr_ee_pos(1), curr_ee_pos(2), curr_ee_pos(3));
+    m_str2 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f', ...
+        vel(1), vel(2), vel(3), omega(1), omega(2), omega(3));
 
-    a_str = sprintf('%0.2f\n\n%d\n\n%0.2fx', curr_time, zoom_level, speed);
+    m_str3 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f', ...
+        accel(1), accel(2), accel(3), alpha(1), alpha(2), alpha(3));
+
+    e_str1 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f', curr_ee_pos(1), curr_ee_pos(2), curr_ee_pos(3));
+    e_str2 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f', ee_vel(1), ee_vel(2), ee_vel(3));
+    e_str3 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f', f_sensor(1), f_sensor(2), f_sensor(3));
+
+    a_str1 = sprintf('%0.3f\n\n%d', curr_time, zoom_level);
+    a_str2 = sprintf('%0.2fx\n\n%d', speed, contact);
 
     %title(strtitle);
     
-    set(m_lbl, 'String', m_str);
-    set(e_lbl, 'String', e_str);
-    set(a_lbl, 'String', a_str);
+    set(m_lbl1, 'String', m_str1);
+    set(m_lbl2, 'String', m_str2);
+    set(m_lbl3, 'String', m_str3);
+    set(e_lbl1, 'String', e_str1);
+    set(e_lbl2, 'String', e_str2);
+    set(e_lbl3, 'String', e_str3);
+    set(a_lbl1, 'String', a_str1);
+    set(a_lbl2, 'String', a_str2);
 end
 
 function set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_zoom)
