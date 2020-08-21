@@ -116,12 +116,12 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         elseif key_code == 31 % down key
             speed = max(speed / 2, 1/16);
         elseif key_code == 28 % left arrow key
-            while ind > 1 && curr_time - 2 <= t(ind)
+            while ind > 1 && curr_time - 2 * speed <= t(ind)
                 ind = ind - 1;
             end
             curr_time = t(ind);
         elseif key_code == 29 % right arrow key
-            while ind < length(t) && curr_time + 2 >= t(ind)
+            while ind < length(t) && curr_time + 2 * speed >= t(ind)
                 ind = ind + 1;
             end
             curr_time = t(ind);
