@@ -1,15 +1,15 @@
 classdef trajectory_controller < handle
 
-    properties
-        WaypointFollower
-        LookAheadDistance double
+    properties (SetAccess = private, GetAccess = public)
+        Waypoints                       % All the waypoints
+        NumOfWaypoints                  % The number of waypoints
+        TransitionRadius double = 0.25; % When should transition to the next point (in meters)
+        CurrentWaypoint int32 = 0;      % The index of the current active waypoint
     end
     
     properties (SetAccess = private, GetAccess = private)
-        Initialized = false;
-        Finished = false;
-        Waypoints
-        LastWaypoint
+        Initialized = false;            % Is the trajectory initialized?
+        Finished = false;               % Is the trajectory finished?
     end
     
     methods
@@ -18,42 +18,37 @@ classdef trajectory_controller < handle
             flag = obj.Initialized;
         end
         
-        function SetWaypoints(obj, waypoints, radius, lookahead_dist)
-            poses = waypoints(:, 1:3);
-            yaws = deg2rad(waypoints(:, 4));
-            obj.WaypointFollower = uavWaypointFollower(...
-                'UAVType', 'multirotor', 'Waypoints', poses, ...
-                'YawAngles', yaws, 'TransitionRadius', radius);
-            obj.LookAheadDistance = lookahead_dist;
-            obj.Waypoints = waypoints;
-            obj.LastWaypoint = waypoints(size(waypoints, 1), :)';
-            obj.Initialized = true;
+        function flag = IsFinished(obj)
+            flag = obj.Finished;
         end
         
-        function [lookahead_pose, finished] = CalcLookaheadPoint(obj, pose)
-
-            % Return the last waypoint if the sequense is finished
-            if obj.Finished
-                lookahead_pose = obj.LastWaypoint;
-                finished = true;
-                return;
+        function SetWaypoints(obj, waypoints, radius)
+            obj.Waypoints = waypoints;
+            obj.NumOfWaypoints = size(waypoints, 1);
+            if obj.NumOfWaypoints == 0
+                error('At least one waypoint is needed to initialize the trajectory controller.');
             end
-                
-            % Calculate the lookahead point
-            pose = [pose(1 : 3); deg2rad(pose(4))];
-
-            [lookahead_point, ~, desired_yaw, ~, finished] = obj.WaypointFollower(pose, obj.LookAheadDistance);
-
-            % Check if the sequense is finished and we need to send the
-            % last waypoint instead of the lookahead
-            if finished > 0
-                obj.Finished = true;
-                lookahead_pose = obj.LastWaypoint;
-            else
-                % Otherwise send the lookahead
-                lookahead_pose = [lookahead_point; rad2deg(desired_yaw)];
-            end
+            mustBePositive(radius);
+            obj.TransitionRadius = radius;
             
+            obj.Initialized = true;
+            obj.Finished = false;
+            obj.CurrentWaypoint = 1;
+        end
+        
+        function next_wp = CalcLookaheadPoint(obj, pose)
+
+            % Switch to the next point if we're within the radius of the
+            % current one
+            next_wp = obj.Waypoints(obj.CurrentWaypoint, :)';
+            if norm(next_wp(1 : 3) - pose(1 : 3)) < obj.TransitionRadius
+                if obj.CurrentWaypoint < obj.NumOfWaypoints
+                    obj.CurrentWaypoint = obj.CurrentWaypoint + 1;
+                    next_wp = obj.Waypoints(obj.CurrentWaypoint, :)';
+                else
+                    obj.Finished = true;
+                end
+            end
         end
     end
 end
