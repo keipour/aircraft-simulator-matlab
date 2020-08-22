@@ -47,8 +47,12 @@ sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 %sim.SimulateAttitudeResponse([0; 0; -90], true);
 
 % Position response
-figure;
-sim.SimulatePositionResponse([17; 8; -2], 0, true);
+%figure;
+%sim.SimulatePositionResponse([17; 8; -2], 0, true);
+
+% Trajectory following
+traj = [12, 12, -4, 0; 12, 16, -3, 90];
+sim.SimulateTrajectory(traj, 0.25, 2);
 
 % Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);

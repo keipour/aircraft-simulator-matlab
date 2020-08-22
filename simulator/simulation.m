@@ -3,6 +3,7 @@ classdef simulation < handle
         Multirotor multirotor
         Controller controller
         Environment environment
+        TrajectoryController trajectory_controller
     end
     
     properties(Constant)
@@ -27,13 +28,15 @@ classdef simulation < handle
             obj.Controller = contrller;
             obj.Multirotor = multirotor(0, 1);
             obj.Environment = envronment;
+            obj.TrajectoryController = trajectory_controller;
             obj.Reset();
         end
 
         function Reset(obj)
             obj.Controller.Reset();
             obj.Timer.Reset();
-            
+            obj.TrajectoryController = trajectory_controller;
+
             % Keep some state fields
             istate = obj.Multirotor.InitialState;
             obj.Multirotor.CopyFrom(obj.InitialMultirotor);
@@ -101,6 +104,19 @@ classdef simulation < handle
             logger.Add(logger_signals.DesiredLinearAcceleration, lin_accel);
         end
         
+        function NextStepTrajectoryController(obj, time)
+        % Calculate the multirotor command for a desired trajectpry
+            
+            pose = [obj.Multirotor.State.Position; obj.Multirotor.State.RPY(3)];
+            [lookahead_pose, ~] = obj.TrajectoryController.CalcLookaheadPoint(pose);
+            if time >= 0
+                logger.Add(logger_signals.DesiredPositionYaw, lookahead_pose);
+            else
+                time = 0;
+            end
+            last_commands.DesiredPositionYaw.Set(lookahead_pose, time);
+        end
+        
         function NextSimulationStep(obj)
             [time, module] = obj.Timer.NextTimeStep();
             if module == obj.Timer.PlantIndex
@@ -113,6 +129,8 @@ classdef simulation < handle
                 obj.NextStepPositionController(time);
             elseif module == obj.Timer.AttControllerIndex && last_commands.DesiredRPY.IsInitialized()
                 obj.NextStepAttitudeController(time);
+            elseif module == obj.Timer.TrajControllerIndex && obj.TrajectoryController.IsInitialized()
+                obj.NextStepTrajectoryController(time);
             end
         end
         
@@ -150,6 +168,17 @@ classdef simulation < handle
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
         
+        function res = SimulateTrajectory(obj, traj_des, radius, lookahead_dist)
+        % Simulate the response to a desired attitude input
+            
+            obj.Reset();
+            obj.TrajectoryController.SetWaypoints(traj_des, radius, lookahead_dist);
+
+            obj.NextStepTrajectoryController(-1);
+            while ~obj.Timer.IsFinished()
+                obj.NextSimulationStep();
+            end
+        end
     end
     
     methods (Access = private)

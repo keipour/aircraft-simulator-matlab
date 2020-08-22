@@ -4,6 +4,7 @@ classdef timer < handle
         PlantRate = 2000;               % in Hertz
         AttitudeControllerRate = 450;   % in Hertz
         PositionControllerRate = 55;    % in Hertz
+        TrajectoryControllerRate = 20;  % in Hertz
     end
     
     properties (SetAccess = protected, GetAccess = public)
@@ -17,6 +18,7 @@ classdef timer < handle
     end
     
     properties (Constant)
+        TrajControllerIndex = 4;
         PosControllerIndex = 2;
         AttControllerIndex = 3;
         PlantIndex = 1;
@@ -87,7 +89,8 @@ classdef timer < handle
     
     methods(Access = protected)
         function [times, modules] = CreateTimeSteps(obj)
-            T = cell(3, 1);
+            T = cell(4, 1);
+            T{obj.TrajControllerIndex} = 0 : 1 / obj.TrajectoryControllerRate : obj.TotalTime;
             T{obj.PosControllerIndex} = 0 : 1 / obj.PositionControllerRate : obj.TotalTime;
             T{obj.AttControllerIndex} = 0 : 1 / obj.AttitudeControllerRate : obj.TotalTime;
             T{obj.PlantIndex} = 0 : 1 / obj.PlantRate : obj.TotalTime;
