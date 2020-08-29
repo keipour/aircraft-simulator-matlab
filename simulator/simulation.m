@@ -193,9 +193,9 @@ classdef simulation < handle
             dt = time - last_time;
             last_time = time;
             
-            [force, moment] = obj.Multirotor.CalcForcesMoments(rotor_speeds_squared);
-            new_state = obj.Multirotor.CalcNextState(force, moment, ...
-                zeros(3, 1), zeros(3, 1), rotor_speeds_squared, dt, false, zeros(3, 1));
+            [wrench] = obj.Multirotor.CalcForceWrench(rotor_speeds_squared);
+            new_state = obj.Multirotor.CalcNextState(wrench, ...
+                zeros(6, 1), rotor_speeds_squared, dt, false, zeros(3, 1));
             
             % Check for collistion
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
@@ -212,7 +212,7 @@ classdef simulation < handle
                 if obj.Multirotor.HasEndEffector()
 
                     % Calculate the force sensor reading
-                    collision_force = -dot(force, wall_normal);
+                    collision_force = -dot(wrench(4:6), wall_normal);
                     if collision_force < 0
                         collision_force = 0;
                     end
@@ -222,7 +222,8 @@ classdef simulation < handle
                     force_sensor = R_SI' * collision_force_vec;
                 end
                 
-                new_state = obj.Multirotor.CalcNextState(force, moment, force_sensor, zeros(3, 1),...
+                torque_sensor = zeros(3, 1);
+                new_state = obj.Multirotor.CalcNextState(wrench, [torque_sensor; force_sensor],...
                     rotor_speeds_squared, dt, true, wall_normal);
             end
             

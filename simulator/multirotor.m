@@ -136,7 +136,7 @@ classdef multirotor < handle
             obj.State = new_state;
         end
         
-        function [force, moment] = CalcForcesMoments(obj, RotorSpeedsSquared)
+        function [wrench] = CalcForceWrench(obj, RotorSpeedsSquared)
 
             % Calculate the current rotation matrix
             RBI = obj.GetRotationMatrix();
@@ -149,32 +149,32 @@ classdef multirotor < handle
             moment = obj.GetGravityMoment(RBI) + ...
                 obj.GetThrustMoment(RotorSpeedsSquared) + ...
                 obj.GetReactionMoment(RotorSpeedsSquared);
+            
+            wrench = [moment; force];
         end
         
-        function new_state = CalcNextState(obj, force, moment, force_sensor, torque_sensor, ...
+        function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
                 RotorSpeedsSquared, dt, is_collision, collision_normal)
 
             force_moment_ext_B = zeros(3, 1);
             force_ext_I = zeros(3, 1);
             if obj.HasArm
-                force_ext_B = obj.EndEffector.R_BE * force_sensor;
-                moment_ext_B = obj.EndEffector.R_BE * torque_sensor;
+                force_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(4:6);
+                moment_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(1:3);
                 force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
                 force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
             end
             
-            if ~is_collision
-                % Calculate the time step
-                new_state = obj.CalcStateNewtonEuler(force, moment, dt);
-            else
-                new_state = obj.CalcStateInCollision(force + force_ext_I, moment, dt, collision_normal);
-            end
+            % Calculate the time step
+            new_state = obj.CalcStateNewtonEuler(wrench, [zeros(3, 1); force_ext_I], ...
+                dt, is_collision, collision_normal);
             
             % Save the force and moment data
-            new_state.Force = force;
-            new_state.Moment = moment;
-            new_state.ForceSensor = force_sensor;
-            new_state.MomentSensor = torque_sensor;
+            new_state.Force = wrench(4:6);
+            new_state.Moment = wrench(1:3);
+            new_state.ForceSensor = tf_sensor_wrench(4:6);
+            new_state.MomentSensor = tf_sensor_wrench(1:3);
+            new_state.InCollision = is_collision;
             
             for i = 1 : obj.NumOfRotors
                 [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
@@ -320,10 +320,15 @@ classdef multirotor < handle
     %% Private Methods
     methods(Access=protected)
         
-        function new_state = CalcStateNewtonEuler(obj, force, moment, dt)
+        function new_state = CalcStateNewtonEuler(obj, wrench, ext_wrench, ...
+                dt, is_collision, collision_normal)
             
             % Create the new state
             new_state = state.Create(obj.NumOfRotors);
+            
+            % Get the total force
+            force = wrench(4:6) + ext_wrench(4:6);
+            moment = wrench(1:3) + ext_wrench(1:3);
             
             % Calculate the equations of motion
             p_dotdot = obj.GetLinearAcceleration(force);
@@ -335,57 +340,35 @@ classdef multirotor < handle
             new_state.Acceleration = p_dotdot;
             new_state.AngularAcceleration = omega_dot;
 
-            new_state.Position = obj.State.Position + 0.5 * new_state.Acceleration * dt * dt + ...
-                obj.State.Velocity * dt;
-
-            new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
-            new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
-            new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
-            
-            % Update the rest of the state
-            new_state.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
-            new_state.Omega = obj.State.Omega + new_state.AngularAcceleration * dt;
-            new_state.Omega = check_limits(new_state.Omega, obj.OmegaLimits);
-
-            new_state.EulerRate = phi_dot;
-        end
-        
-        function new_state = CalcStateInCollision(obj, force, moment, dt, collision_normal)
-            %rrrpy = obj.State.RPY
-                        
-            
-            % Create the new state
-            new_state = state.Create(obj.NumOfRotors);
-            
-            % Calculate the equations of motion
-            p_dotdot = obj.GetLinearAcceleration(force);
-            omega_dot = obj.GetAngularAcceleration(moment);
-            phi_dot = obj.GetEulerRate();
-            
-            % I assume approximately constant acceleration to update these
-            % first before other variables
-            new_state.Acceleration = p_dotdot;
-            new_state.AngularAcceleration = omega_dot;
-
-            % I assume no bouncing due to the impact and no impulse
-            % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
-
-            if obj.HasArm
+            % If there is a collision
+            if is_collision
+                % I assume no bouncing due to the impact and no impulse
+                % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
                 % We assume that the collision happened at the end effector
-                new_state.EndEffectorVelocity = obj.State.EndEffectorVelocity + new_state.Acceleration * dt;
-                vel_vector_normal = dot(new_state.EndEffectorVelocity, collision_normal) * collision_normal;
-                new_state.EndEffectorVelocity = new_state.EndEffectorVelocity - vel_vector_normal;
-                new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
-                RBI = obj.GetRotationMatrix();
-                new_state.Position = new_state.EndEffectorPosition - RBI' * obj.EndEffector.EndEffectorPosition;
-                new_state.Velocity = (new_state.Position - obj.State.Position) / dt;
+                % if it has end effector
+                if obj.HasArm
+                    new_state.EndEffectorVelocity = obj.State.EndEffectorVelocity + new_state.Acceleration * dt;
+                    vel_vector_normal = dot(new_state.EndEffectorVelocity, collision_normal) * collision_normal;
+                    new_state.EndEffectorVelocity = new_state.EndEffectorVelocity - vel_vector_normal;
+                    new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
+                    RBI = obj.GetRotationMatrix();
+                    new_state.Position = new_state.EndEffectorPosition - RBI' * obj.EndEffector.EndEffectorPosition;
+                    new_state.Velocity = (new_state.Position - obj.State.Position) / dt;
+                else
+                    new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
+                    vel_vector_normal = dot(new_state.Velocity, collision_normal) * collision_normal;
+                    new_state.Velocity = new_state.Velocity - vel_vector_normal;
+                    new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
+                    new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
+                    new_state.Position = obj.State.Position + new_state.Velocity * dt;
+                end
             else
+                new_state.Position = obj.State.Position + 0.5 * new_state.Acceleration * dt * dt + ...
+                    obj.State.Velocity * dt;
+
                 new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
-                vel_vector_normal = dot(new_state.Velocity, collision_normal) * collision_normal;
-                new_state.Velocity = new_state.Velocity - vel_vector_normal;
                 new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
                 new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
-                new_state.Position = obj.State.Position + new_state.Velocity * dt;
             end
             
             % Update the rest of the state
@@ -395,7 +378,6 @@ classdef multirotor < handle
 
             new_state.EulerRate = phi_dot;
         end
-        
         
         function UpdateStateEulerLagrange(obj, RotorSpeedsSquared, dt)
 
