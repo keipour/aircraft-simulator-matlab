@@ -70,25 +70,6 @@ classdef multirotor < handle
             has_end_effector = obj.HasArm;
         end
         
-        function e_pos = CalcEndEffectorPosition(obj, m_pos, m_rpy_deg)
-            obj.CheckEndEffector();
-            RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
-            e_pos = m_pos + RBI' * obj.EndEffector.EndEffectorPosition;
-        end
-        
-        function e_vel = CalcEndEffectorVelocity(obj, m_vel, m_omega, m_rpy_deg)
-        % Reference: https://www.mdpi.com/2076-3417/9/11/2230
-            obj.CheckEndEffector();
-            RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
-            e_vel = m_vel + RBI' * cross(m_omega, obj.EndEffector.EndEffectorPosition);
-        end
-        
-        function e_rot = GetEndEffectorRotation(obj)
-            obj.CheckEndEffector();
-            RBI = obj.GetRotationMatrix();
-            e_rot = RBI' * obj.EndEffector.R_BR;
-        end
-        
         function SetInitialState(obj, pos, vel, rpy, omega)
             obj.InitialState.Position = pos;
             obj.InitialState.Velocity = vel;
@@ -381,6 +362,25 @@ classdef multirotor < handle
         
         function UpdateStateEulerLagrange(obj, RotorSpeedsSquared, dt)
 
+        end
+        
+        function e_pos = CalcEndEffectorPosition(obj, m_pos, m_rpy_deg)
+            obj.CheckEndEffector();
+            RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
+            e_pos = m_pos + RBI' * obj.EndEffector.EndEffectorPosition;
+        end
+        
+        function e_vel = CalcEndEffectorVelocity(obj, m_vel, m_omega, m_rpy_deg)
+        % Reference: https://www.mdpi.com/2076-3417/9/11/2230
+            obj.CheckEndEffector();
+            RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
+            e_vel = m_vel + RBI' * cross(m_omega, obj.EndEffector.EndEffectorPosition);
+        end
+        
+        function e_rot = GetEndEffectorRotation(obj)
+            obj.CheckEndEffector();
+            RBI = obj.GetRotationMatrix();
+            e_rot = RBI' * obj.EndEffector.R_BR;
         end
         
         function UpdateNumOfRotors(obj)
