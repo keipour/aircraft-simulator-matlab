@@ -10,7 +10,13 @@ function s = CopyFrom(s, new_state)
     s.Moment              = new_state.Moment;
     s.RotorSpeeds         = new_state.RotorSpeeds;
     s.RotorsSaturated     = new_state.RotorsSaturated;
+    
     s.EndEffectorPosition = new_state.EndEffectorPosition;
+    s.EndEffectorVelocity = new_state.EndEffectorVelocity;
+    s.EndEffectorOmega    = new_state.EndEffectorOmega;
+    
     s.ForceSensor         = new_state.ForceSensor;
     s.MomentSensor        = new_state.MomentSensor;
+    
+    s.InCollision         = new_state.InCollision;
 end
