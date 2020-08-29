@@ -113,6 +113,11 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.EndEffectorVelocity', measured_data, 'uni', 0));
         end
 
+        function [data, times] = GetCollisionStatus()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.InCollision', measured_data, 'uni', 0));
+        end
+
         function [data, times] = GetForceSensorReadings()
             [measured_data, times] = logger.GetMeasuredStates();
             data = cell2mat(cellfun(@(s)s.ForceSensor', measured_data, 'uni', 0));
@@ -224,6 +229,10 @@ classdef logger < handle
             elseif contains(str, 'sat')
                 [data, times] = logger.GetMeasuredRotorSaturations();
                 labels = {'Motor Saturations', 'Motor Saturations'};
+
+            elseif contains_or(str, {'contact', 'colli'})
+                [data, times] = logger.GetContactStatus();
+                labels = {'Contact Status', 'Contact Status'};
 
             else
                 error('Input string not recognized.');
