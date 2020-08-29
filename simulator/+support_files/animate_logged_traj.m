@@ -26,7 +26,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     ee_vel = logger.GetMeasuredEndEffectorVelocities();
 
     f_sensor = logger.GetForceSensorReadings();
-    contact = any(f_sensor, 2);
+    contact = logger.GetCollisionStatus();
     
     % Set up the first frame
     uif = uifigure('Position', [0 0 300 300]);
