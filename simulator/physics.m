@@ -61,7 +61,25 @@ classdef physics
         end
         
         function RNI = GetRotationMatrixRadians(roll, pitch, yaw)
-            RNI = angle2dcm(yaw, pitch, roll);
+            angles = [yaw pitch roll];
+
+            RNI = zeros(3, 3);
+            cang = cos(angles);
+            sang = sin(angles);
+
+            %     [          cy*cz,          cy*sz,            -sy]
+            %     [ sy*sx*cz-sz*cx, sy*sx*sz+cz*cx,          cy*sx]
+            %     [ sy*cx*cz+sz*sx, sy*cx*sz-cz*sx,          cy*cx]
+
+            RNI(1,1) = cang(2).*cang(1);
+            RNI(1,2) = cang(2).*sang(1);
+            RNI(1,3) = -sang(2);
+            RNI(2,1) = sang(3).*sang(2).*cang(1) - cang(3).*sang(1);
+            RNI(2,2) = sang(3).*sang(2).*sang(1) + cang(3).*cang(1);
+            RNI(2,3) = sang(3).*cang(2);
+            RNI(3,1) = cang(3).*sang(2).*cang(1) + sang(3).*sang(1);
+            RNI(3,2) = cang(3).*sang(2).*sang(1) - sang(3).*cang(1);
+            RNI(3,3) = cang(3).*cang(2);
         end
 
         function RNI = GetRotationMatrixDegrees(roll, pitch, yaw)

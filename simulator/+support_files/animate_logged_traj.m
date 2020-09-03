@@ -86,7 +86,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         tic;
         
         curr_pos = [x(ind); y(ind); z(ind)];
-        curr_yrp_rad = [yaw(ind); pitch(ind); roll(ind)];
+        curr_rpy_rad = [roll(ind); pitch(ind); yaw(ind)];
         curr_rpy_deg = rad2deg([roll(ind); pitch(ind); yaw(ind)]);
         curr_ee_pos = [ee_x(ind); ee_y(ind); ee_z(ind)];
         curr_time = t(ind);
@@ -94,10 +94,10 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         figure(fig);
 
         % Draw the robot
-        multirotorObjs = transform_robot(curr_pos, curr_yrp_rad, multirotorObjs, multirotor_data);
+        multirotorObjs = transform_robot(curr_pos, curr_rpy_rad, multirotorObjs, multirotor_data);
 
         % Draw the shadow
-        shadowObjs = transform_shadow(curr_pos, curr_yrp_rad, shadowObjs, shadow_data);
+        shadowObjs = transform_shadow(curr_pos, curr_rpy_rad, shadowObjs, shadow_data);
 
         horizon.Roll = curr_rpy_deg(1);
         horizon.Pitch = curr_rpy_deg(2);
@@ -215,7 +215,7 @@ function set_axis_limits(num_of_zoom_levels, zoom_level, curr_pos, x, y, z, min_
 end
 
 function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)
-    T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
+    T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', pos; 0, 0, 0, 1];
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [multirotor_data{i, 1}, multirotor_data{i, 2}, multirotor_data{i, 3}]';
@@ -237,7 +237,7 @@ function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)
 end
 
 function dataObjs = transform_shadow(pos, rpy, dataObjs, shadow_data)
-    T = [eul2rotm(rpy', 'ZYX'), pos; 0, 0, 0, 1];
+    T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', pos; 0, 0, 0, 1];
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [shadow_data{i, 1}, shadow_data{i, 2}, shadow_data{i, 3}]';
