@@ -121,8 +121,12 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     catch
     end
     
-    function Key_Down(~,event)
+    function Key_Down(~, event)
         key_code = int8(event.Character);
+        if ~isnumeric(key_code) || isempty(key_code)
+            return;
+        end
+        
         if key_code == 32 % space key
             is_paused = ~is_paused;
         elseif key_code == 43 || key_code == 61 % + key
