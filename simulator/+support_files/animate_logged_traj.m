@@ -29,7 +29,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         tic;
 
         % Exit the animation if the window is closed
-        if ~ishghandle(fig) || ind == length(t)
+        if ~ishghandle(fig) %|| ind == length(t)
             break
         end
         

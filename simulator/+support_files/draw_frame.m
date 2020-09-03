@@ -69,10 +69,7 @@ function set_frame_limits(num_of_zoom_levels, zoom_level, curr_pos, limits, min_
 end
 
 function step = calc_single_axis_size(n_levels, level, minx, maxx, min_lim)
-    step = (maxx - minx) * (1 - level / n_levels);
-    if step < min_lim
-        step = min_lim;
-    end
+    step = (maxx - minx - min_lim) * (1 - level / n_levels) + min_lim;
 end
 
 function lim = calc_single_axis_limits(r_x, minx, maxx, step)
