@@ -64,3 +64,4 @@ graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang
 %% Animate the result
 
 graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true);
+%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true);

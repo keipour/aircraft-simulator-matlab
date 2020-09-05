@@ -1,6 +1,19 @@
 function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
-    show_info, show_horizon, video_fps)
+    show_info, show_horizon, video_fps, video_filename)
 
+    is_recording = false;
+    video_writer = [];
+    if ~isempty(video_filename)
+        is_recording = true;
+        video_writer = VideoWriter(video_filename);
+        video_writer.Quality = 100;
+        if video_fps > 0
+            video_writer.FrameRate = video_fps;
+        else
+            video_writer.FrameRate = 30;
+        end
+    end
+    
     num_of_zoom_levels = 9;
     zoom_level = min(zoom_level, num_of_zoom_levels);
     zoom_level = max(zoom_level, 0);
@@ -23,6 +36,10 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     %set(fig, 'KeyPressFcn', @Key_Down);
     
     %set_axis_limits(num_of_zoom_levels, zoom_level, [x(1); y(1); z(1)], x, y, z, min_zoom);
+    
+    if is_recording
+        open(video_writer);
+    end
     
     ind = 1;
     is_paused = false;
@@ -48,10 +65,19 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
             horizon.Pitch = curr_state.RPY(2);
         end
         
+        if is_recording
+            curr_frame = getframe(gcf);
+            writeVideo(video_writer, curr_frame);
+        end
+        
         drawnow;
         exec_time = toc;
         
         ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind, video_fps);
+    end
+    
+    if is_recording
+        close(video_writer);
     end
     
     try
