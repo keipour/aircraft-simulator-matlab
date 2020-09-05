@@ -35,7 +35,7 @@ classdef collision_box < support_files.collision_base
         Z
     end
     
-    properties (Access = {?robotics.core.internal.InternalAccess})
+    properties (Access = protected)
         %XInternal
         XInternal
         
@@ -109,7 +109,7 @@ classdef collision_box < support_files.collision_base
         function updateGeometry(obj, x, y, z)
             %updateGeometry
             obj.GeometryInternal = robotics.core.internal.CollisionGeometry(x, y, z);
-            [F, V] = robotics.core.internal.PrimitiveMeshGenerator.boxMesh([x,y,z]);
+            [F, V] = box_mesh([x,y,z]);
             obj.VisualMeshVertices = V;
             obj.VisualMeshFaces = F;
             obj.EstimatedMaxReach = max([x, y, z]);            
@@ -124,4 +124,37 @@ classdef collision_box < support_files.collision_base
             
         end
     end    
+end
+
+%% Helper functions
+
+function [F, V] = box_mesh(sz)
+    %boxMesh Create mesh for a box shape. The origin is at the
+    %   center of the box. The input arguments are the three side
+    %   lengths of the box, given as a 3-by-1 vector
+    xl = sz(1); yl = sz(2); zl = sz(3);
+
+    V = [xl/2, -yl/2, -zl/2; 
+         xl/2,  yl/2, -zl/2;
+        -xl/2,  yl/2, -zl/2;
+        -xl/2, -yl/2, -zl/2;
+         xl/2, -yl/2,  zl/2; 
+         xl/2,  yl/2,  zl/2;
+        -xl/2,  yl/2,  zl/2;
+        -xl/2, -yl/2,  zl/2];
+    F = [1 2 6;
+         1 6 5;
+         2 3 7;
+         2 7 6;
+         3 4 8;
+         3 8 7;
+         4 1 5;
+         4 5 8;
+         5 6 7;
+         5 7 8;
+         1 4 2;
+         2 4 3];
+
+    % Flip between CW and CCW ordering
+    F = [F(:,1), F(:,3), F(:,2)];
 end
