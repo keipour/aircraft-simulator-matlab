@@ -2,7 +2,10 @@
 
 clear all
 close all
-delete(findall(0));
+try
+    delete(findall(0));
+catch
+end
 
 addpath('simulator');
 
@@ -60,4 +63,4 @@ graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang
 
 %% Animate the result
 
-graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1);
+graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true);
