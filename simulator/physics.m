@@ -113,6 +113,28 @@ classdef physics
             end
         end
         
+        function quat = RotationMatrixToQuaternion(R)
+            if R(3, 3) < 0
+                if R(1, 1) > R(2, 2)
+                    t = 1 + R(1, 1) - R(2, 2) - R(3, 3);
+                    quat = [R(3, 2) - R(2, 3), t, R(1, 2) + R(2, 1), R(3, 1) + R(1, 3)];
+                else
+                    t = 1 - R(1, 1) + R(2, 2) - R(3, 3);
+                    quat = [R(1, 3) - R(3, 1), R(1, 2) + R(2, 1), t, R(2, 3) + R(3, 2)];
+                end
+            else
+                if R(1, 1) < -R(2, 2)
+                    t = 1 - R(1, 1) - R(2, 2) + R(3, 3);
+                    quat = [R(2, 1) - R(1, 2), R(3, 1) + R(1, 3), R(2, 3) + R(3, 2), t];
+                else
+                    t = 1 + R(1, 1) + R(2, 2) + R(3, 3);
+                    quat = [t, R(3, 2) - R(2, 3), R(1, 3) - R(3, 1), R(2, 1) - R(1, 2)];
+                end
+            end
+            quat = quat * 0.5 / sqrt(t);
+
+        end
+        
     end
 end
 
