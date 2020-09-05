@@ -1,9 +1,13 @@
 function [fig, label_handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
-    = create_frame_figure(multirotor, environment)
+    = create_frame_figure(multirotor, environment, show_info)
     
 
     % Set up the first frame
-    fig = openfig('+support_files/animation_gui.fig');
+    if show_info
+        fig = openfig('+support_files/animation_gui.fig');
+    else
+        fig = figure;
+    end
     
     label_handles.mult1 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues1');
     label_handles.mult2 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues2');
@@ -39,6 +43,9 @@ function [fig, label_handles, multirotorObjs, multirotor_data, shadowObjs, shado
     view(3);
 
     xlabel('N');     ylabel('E');     zlabel('D');
+    
+    fig.CurrentAxes.YDir = 'Reverse';
+    fig.CurrentAxes.ZDir = 'Reverse';
 end
 
 %% Draw a 3-D circle

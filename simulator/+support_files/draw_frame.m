@@ -1,6 +1,6 @@
 function [multirotorObjs, shadowObjs] = draw_frame(fig, curr_state, curr_time, ...
     multirotorObjs, multirotor_data, shadowObjs, shadow_data, label_handles, ...
-    num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed)
+    num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed, show_info)
 
     figure(fig);
     
@@ -12,7 +12,9 @@ function [multirotorObjs, shadowObjs] = draw_frame(fig, curr_state, curr_time, .
 
     set_frame_limits(num_of_zoom_levels, zoom_level, curr_state.Position, axis_limits, min_zoom);
 
-    update_frame_labels(label_handles, curr_time, zoom_level, speed, curr_state);
+    if show_info
+        update_frame_labels(label_handles, curr_time, zoom_level, speed, curr_state);
+    end
 end
 
 function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)

@@ -1,4 +1,15 @@
-function animate_logged_traj(multirotor, environment, zoom_level, speed)
+function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
+    show_info, show_horizon, video_fps)
+
+    if nargin < 5
+        show_info = true;
+    end
+    if nargin < 6
+        show_horizon = false;
+    end
+    if nargin < 7
+        video_fps = 0;
+    end
 
     num_of_zoom_levels = 9;
     zoom_level = min(zoom_level, num_of_zoom_levels);
@@ -11,11 +22,12 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
     pos_lim = [min(pos, [], 1)', max(pos, [], 1)'];
     
     % Set up the first frame
-    uif = uifigure('Position', [0 0 300 300]);
-    horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
-
+    if show_horizon
+        uif = uifigure('Position', [0 0 300 300]);
+        horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
+    end
     [fig, lh, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
-    = support_files.create_frame_figure(multirotor, environment);
+    = support_files.create_frame_figure(multirotor, environment, show_info);
     
     set(fig, 'WindowKeyPressFcn', @Key_Down);
     %set(fig, 'KeyPressFcn', @Key_Down);
@@ -39,15 +51,17 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed)
         % Draw the frame
         [multirotorObjs, shadowObjs] = support_files.draw_frame(fig, curr_state, ...
             curr_time, multirotorObjs, multirotor_data, shadowObjs, shadow_data, ...
-            lh, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed);
+            lh, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, show_info);
         
-        horizon.Roll = curr_state.RPY(1);
-        horizon.Pitch = curr_state.RPY(2);
+        if show_horizon
+            horizon.Roll = curr_state.RPY(1);
+            horizon.Pitch = curr_state.RPY(2);
+        end
         
         drawnow;
         exec_time = toc;
         
-        ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind);
+        ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind, video_fps);
     end
     
     try
@@ -93,16 +107,28 @@ end
 
 %% Helper functions
 
-function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind)
+function ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind, video_fps)
     if is_paused == true
-        pause(0.03);
+        if video_fps > 0
+            pause(1 / video_fps);
+        else
+            pause(0.03);
+        end
         return;
     end
 
-    while ind < length(t) && curr_time + exec_time * speed >= t(ind)
+    time_forward = exec_time;
+    if video_fps > 0
+        time_forward = 1 / video_fps;
+    end
+    
+    while ind < length(t) && curr_time + time_forward * speed >= t(ind)
         ind = ind + 1;
     end
-
-    pause_time = t(ind) - curr_time - exec_time * speed;
+    
+    pause_time = 1e-6;
+    if video_fps > 0
+        pause_time = max(1 / video_fps - exec_time, 1e-6);
+    end
     pause(pause_time);
 end
