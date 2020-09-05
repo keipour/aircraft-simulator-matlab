@@ -1,16 +1,6 @@
 function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     show_info, show_horizon, video_fps)
 
-    if nargin < 5
-        show_info = true;
-    end
-    if nargin < 6
-        show_horizon = false;
-    end
-    if nargin < 7
-        video_fps = 0;
-    end
-
     num_of_zoom_levels = 9;
     zoom_level = min(zoom_level, num_of_zoom_levels);
     zoom_level = max(zoom_level, 0);
