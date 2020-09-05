@@ -162,7 +162,7 @@ classdef graphics
             H = support_files.visualize_multirotor(multirotor, false, true);
         end
         
-        function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, speed, show_info, show_horizon)
+        function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, speed, show_info)
             if nargin < 2
                 envronment = environment;
             end
@@ -175,16 +175,13 @@ classdef graphics
             if nargin < 5
                 show_info = true;
             end
-            if nargin < 6
-                show_horizon = true;
-            end
             
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, show_horizon, 27, 'adada.avi');
+                speed, show_info, 0, '');
         end
         
         function RecordLoggedTrajectoryAnimation(filename, fps, multirotor, ...
-                envronment, zoom_level, speed, show_info, show_horizon)
+                envronment, zoom_level, speed, show_info)
             if nargin < 4
                 envronment = environment;
             end
@@ -197,12 +194,9 @@ classdef graphics
             if nargin < 7
                 show_info = true;
             end
-            if nargin < 8
-                show_horizon = true;
-            end
             
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, show_horizon, fps, filename);
+                speed, show_info, fps, filename);
         end
         
         function PrintDynamicManipulabilityAnalysis(res)

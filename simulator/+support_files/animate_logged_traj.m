@@ -1,6 +1,11 @@
 function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
-    show_info, show_horizon, video_fps, video_filename)
+    show_info, video_fps, video_filename)
 
+    num_of_zoom_levels = 9;
+    zoom_level = min(zoom_level, num_of_zoom_levels);
+    zoom_level = max(zoom_level, 0);
+    min_zoom = 2; % in meters
+    
     is_recording = false;
     video_writer = [];
     if ~isempty(video_filename)
@@ -14,22 +19,13 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         end
     end
     
-    num_of_zoom_levels = 9;
-    zoom_level = min(zoom_level, num_of_zoom_levels);
-    zoom_level = max(zoom_level, 0);
-    min_zoom = 2; % in meters
-    
     % Load the data from the logger
     [states, t] = logger.GetMeasuredStates();
     [pos, ~] = logger.GetMeasuredPositions();
     pos_lim = [min(pos, [], 1)', max(pos, [], 1)'];
     
     % Set up the first frame
-    if show_horizon
-        uif = uifigure('Position', [0 0 300 300]);
-        horizon = uiaerohorizon(uif, 'Position', [0 0 300 300]);
-    end
-    [fig, lh, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
+    [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
     = support_files.create_frame_figure(multirotor, environment, show_info);
     
     set(fig, 'WindowKeyPressFcn', @Key_Down);
@@ -48,7 +44,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         tic;
 
         % Exit the animation if the window is closed
-        if ~ishghandle(fig) %|| ind == length(t)
+        if ~ishghandle(fig) || ind == length(t)
             break
         end
         
@@ -58,11 +54,11 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         % Draw the frame
         [multirotorObjs, shadowObjs] = support_files.draw_frame(fig, curr_state, ...
             curr_time, multirotorObjs, multirotor_data, shadowObjs, shadow_data, ...
-            lh, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, show_info);
+            handles, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, show_info);
         
-        if show_horizon
-            horizon.Roll = curr_state.RPY(1);
-            horizon.Pitch = curr_state.RPY(2);
+        if ~isempty(handles.horizon)
+            rpy = deg2rad(curr_state.RPY);
+            handles.horizon.update(rpy(3), rpy(2), rpy(1));
         end
         
         if is_recording
@@ -78,11 +74,6 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     
     if is_recording
         close(video_writer);
-    end
-    
-    try
-        delete(uif);
-    catch
     end
     
     function Key_Down(~, event)

@@ -1,4 +1,4 @@
-function [fig, label_handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
+function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
     = create_frame_figure(multirotor, environment, show_info)
     
 
@@ -9,14 +9,21 @@ function [fig, label_handles, multirotorObjs, multirotor_data, shadowObjs, shado
         fig = figure;
     end
     
-    label_handles.mult1 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues1');
-    label_handles.mult2 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues2');
-    label_handles.mult3 = findobj('Style','text','-and','Tag', 'lblMultirotorFieldValues3');
-    label_handles.ee1 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues1');
-    label_handles.ee2 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues2');
-    label_handles.ee3 = findobj('Style','text','-and','Tag', 'lblEndEffectorFieldValues3');
-    label_handles.anim1 = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues1');
-    label_handles.anim2 = findobj('Style','text','-and','Tag', 'lblAnimationFieldValues2');
+    handles.mult1 = findobj(fig, 'Tag', 'lblMultirotorFieldValues1');
+    handles.mult2 = findobj(fig, 'Tag', 'lblMultirotorFieldValues2');
+    handles.mult3 = findobj(fig, 'Tag', 'lblMultirotorFieldValues3');
+    handles.ee1 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues1');
+    handles.ee2 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues2');
+    handles.ee3 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues3');
+    handles.anim1 = findobj(fig, 'Tag', 'lblAnimationFieldValues1');
+    handles.anim2 = findobj(fig, 'Tag', 'lblAnimationFieldValues2');
+    handles.axhorizon = findobj(fig, 'Tag', 'figHorizon');
+    handles.axanim = findobj(fig, 'Tag', 'figAnimation');
+    handles.horizon = [];
+    
+    if ~isempty(handles.axanim)
+        axes(handles.axanim);
+    end
     
     % Draw and save the multirotor
     multirotorObjs = graphics.PlotMultirotor(multirotor);
@@ -44,8 +51,15 @@ function [fig, label_handles, multirotorObjs, multirotor_data, shadowObjs, shado
 
     xlabel('N');     ylabel('E');     zlabel('D');
     
-    fig.CurrentAxes.YDir = 'Reverse';
-    fig.CurrentAxes.ZDir = 'Reverse';
+    if ~show_info
+        handles.axanim = gca;
+        fig.CurrentAxes.YDir = 'Reverse';
+        fig.CurrentAxes.ZDir = 'Reverse';
+    else
+        handles.horizon = support_files.artificial_horizon('Axes', handles.axhorizon, ...
+            'ReticleType', '-.-', 'Reticlecolor', [0.3010 0.7450 0.9330], ...
+            'EdgeColor', [0.2 0.2 0.2], 'GroundColor', [0.8 1.0 0.8], 'SkyColor', [0.8 0.898 1.0]);
+    end    
 end
 
 %% Draw a 3-D circle

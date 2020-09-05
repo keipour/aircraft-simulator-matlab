@@ -2,10 +2,6 @@
 
 clear all
 close all
-try
-    delete(findall(0));
-catch
-end
 
 addpath('simulator');
 
@@ -42,7 +38,7 @@ sim.SetTotalTime(20);
 
 sim.Controller.AttitudeController.SetPID(60, 0, 20);
 sim.Controller.PositionController.SetPID(3, 0, 7);
-sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
+%sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 
 %% Get the controller response(s)
 
@@ -51,17 +47,17 @@ sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 %sim.SimulateAttitudeResponse([0; 0; -90], true);
 
 % Position response
-figure;
-sim.SimulatePositionResponse([17; 8; -2], 0, true);
+%figure;
+%sim.SimulatePositionResponse([17; 8; -2], 0, true);
 
 % Trajectory following
-%traj = [12, 12, -4, 0; 12, 16, -3, 90];
-%sim.SimulateTrajectory(traj, 0.25);
+traj = [12, 12, -4, 0; 12, 16, -3, 90];
+sim.SimulateTrajectory(traj, 0.25);
 
 % Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);
 
 %% Animate the result
 
-graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true);
-%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true);
+graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true);
+%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true);
