@@ -8,7 +8,7 @@ classdef environment < handle
     methods
         function AddCuboidObject(obj, center, sizes, yaw)
             o.Type = 0;
-            bx = collisionBox(sizes(1), sizes(2), sizes(3));
+            bx = support_files.collision_box(sizes(1), sizes(2), sizes(3));
             T = trvec2tform(center');
             matZ = axang2tform([0 0 1 rad2deg(yaw)]);
             bx.Pose = T*matZ;
@@ -22,7 +22,7 @@ classdef environment < handle
             o.Type = 1;
             center = [(xlimits(2) + xlimits(1)) / 2; ...
                 (ylimits(2) + ylimits(1)) / 2; ground_depth / 2];
-            bx = collisionBox(xlimits(2) - xlimits(1), ...
+            bx = support_files.collision_box(xlimits(2) - xlimits(1), ...
                 ylimits(2) - ylimits(1), ground_depth);
             T = trvec2tform(center');
             bx.Pose = T;

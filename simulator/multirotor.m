@@ -193,12 +193,12 @@ classdef multirotor < handle
             obj.UpdateNumOfRotors();
             obj.TotalMass = obj.Mass;
             obj.CollisionModel = obj.CalculateCollisionModel();
-            mult_cm = collisionBox(obj.CollisionModel.X, ...
+            mult_cm = support_files.collision_box(obj.CollisionModel.X, ...
                 obj.CollisionModel.Y, obj.CollisionModel.Z);
 
             if obj.HasArm
                 obj.TotalMass = obj.TotalMass + obj.EndEffector.TotalMass;
-                arm_cm = collisionBox(obj.EndEffector.CollisionModel.X, ...
+                arm_cm = support_files.collision_box(obj.EndEffector.CollisionModel.X, ...
                     obj.EndEffector.CollisionModel.Y,...
                     obj.EndEffector.CollisionModel.Z);
                 obj.TransformedCollisionModels = {mult_cm, arm_cm};
@@ -226,14 +226,14 @@ classdef multirotor < handle
             obj.VelocityLimits = mult.VelocityLimits;
             obj.OmegaLimits = mult.OmegaLimits;
             obj.TotalMass = mult.TotalMass;
-            obj.CollisionModel = collisionBox(mult.CollisionModel.X, ...
+            obj.CollisionModel = support_files.collision_box(mult.CollisionModel.X, ...
                 mult.CollisionModel.Y, mult.CollisionModel.Z);
             obj.CollisionModel.Pose = mult.CollisionModel.Pose;
 
-            mult_cm = collisionBox(mult.CollisionModel.X, ...
+            mult_cm = support_files.collision_box(mult.CollisionModel.X, ...
                 mult.CollisionModel.Y, mult.CollisionModel.Z);
             if obj.HasArm
-                arm_cm = collisionBox(mult.EndEffector.CollisionModel.X, ...
+                arm_cm = support_files.collision_box(mult.EndEffector.CollisionModel.X, ...
                     mult.EndEffector.CollisionModel.Y,...
                     mult.EndEffector.CollisionModel.Z);
                 obj.TransformedCollisionModels = {mult_cm, arm_cm};
@@ -281,7 +281,7 @@ classdef multirotor < handle
                 z(2) = max(z(2), obj.Rotors{i}.Position(3));
             end
             
-            cm = collisionBox(x(2) - x(1), y(2) - y(1), z(2) - z(1));
+            cm = support_files.collision_box(x(2) - x(1), y(2) - y(1), z(2) - z(1));
             T = trvec2tform([mean(x), mean(y), mean(z)]);
             cm.Pose = T;
         end

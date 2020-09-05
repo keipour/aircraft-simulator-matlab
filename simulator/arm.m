@@ -74,7 +74,7 @@ classdef arm < handle
         
         function cm = CalulateCollisionModel(obj)
             radius = 0.02; % in meters
-            cm = collisionBox(obj.Length, 2 * radius, 2 * radius);
+            cm = support_files.collision_box(obj.Length, 2 * radius, 2 * radius);
 
             R = vrrotvec2mat(vrrotvec([1, 0, 0], obj.Direction));
             center = (obj.EndEffectorPosition + obj.BasePosition) / 2;
