@@ -1,5 +1,6 @@
 function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
-    = create_frame_figure(multirotor, environment, show_info)
+    = create_frame_figure(multirotor, environment, show_info, ...
+     show_horizon, show_fpv, is_recording)
     
 
     % Set up the first frame
@@ -19,7 +20,29 @@ function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data
     handles.anim2 = findobj(fig, 'Tag', 'lblAnimationFieldValues2');
     handles.axhorizon = findobj(fig, 'Tag', 'figHorizon');
     handles.axanim = findobj(fig, 'Tag', 'figAnimation');
-    handles.horizon = [];
+    handles.axfpv = findobj(fig, 'Tag', 'figFPV');
+    handles.hotkeyspanel = findobj(fig, 'Tag', 'pnlHotkeys');
+    
+    if show_fpv
+        handles.fpvfig = figure('Position', [0 0 200 200]);
+        handles.axfpvfig = axes(handles.fpvfig);
+        axes(handles.axfpvfig);
+        graphics.PlotEnvironment(environment);
+        set(gca, 'Xtick', [], 'Ytick', [], 'Ztick', [], 'Box', 'on', ...
+            'YDir', 'Reverse', 'ZDir', 'Reverse', 'Visible', 'on');
+        camproj('perspective');
+        axis off
+        axis equal
+        set(handles.fpvfig, 'Visible', 'off')
+    end
+
+    if ~isempty(handles.axfpv)
+        axis(handles.axfpv, 'off');
+    end
+    
+    if ~isempty(handles.axhorizon)
+        axis(handles.axhorizon, 'off');
+    end
     
     if ~isempty(handles.axanim)
         axes(handles.axanim);
@@ -56,10 +79,16 @@ function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data
         fig.CurrentAxes.YDir = 'Reverse';
         fig.CurrentAxes.ZDir = 'Reverse';
     else
+        if is_recording
+            handles.hotkeyspanel.Visible = 'Off';
+        end
+    end
+    
+    if show_horizon
         handles.horizon = support_files.artificial_horizon('Axes', handles.axhorizon, ...
             'ReticleType', '-.-', 'Reticlecolor', [0.3010 0.7450 0.9330], ...
             'EdgeColor', [0.2 0.2 0.2], 'GroundColor', [0.8 1.0 0.8], 'SkyColor', [0.8 0.898 1.0]);
-    end    
+    end
 end
 
 %% Draw a 3-D circle

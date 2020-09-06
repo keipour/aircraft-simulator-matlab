@@ -1,10 +1,13 @@
 function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
-    show_info, video_fps, video_filename)
+    show_info, show_horizon, show_fpv, video_fps, video_filename)
 
     num_of_zoom_levels = 9;
     zoom_level = min(zoom_level, num_of_zoom_levels);
     zoom_level = max(zoom_level, 0);
     min_zoom = 2; % in meters
+    
+    show_horizon = show_horizon && show_info;
+    show_fpv = show_fpv && show_info;
     
     is_recording = false;
     video_writer = [];
@@ -26,7 +29,8 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     
     % Set up the first frame
     [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
-    = support_files.create_frame_figure(multirotor, environment, show_info);
+    = support_files.create_frame_figure(multirotor, environment, show_info, ...
+     show_horizon, show_fpv, is_recording);
     
     set(fig, 'WindowKeyPressFcn', @Key_Down);
     %set(fig, 'KeyPressFcn', @Key_Down);
@@ -44,29 +48,33 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         tic;
 
         % Exit the animation if the window is closed
-        if ~ishghandle(fig) || ind == length(t)
+        if ~ishghandle(fig) %|| ind == length(t)
             break
         end
         
         curr_time = t(ind);
         curr_state = states{ind};
         
-        % Draw the frame
-        [multirotorObjs, shadowObjs] = support_files.draw_frame(fig, curr_state, ...
-            curr_time, multirotorObjs, multirotor_data, shadowObjs, shadow_data, ...
-            handles, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, show_info);
-        
-        if ~isempty(handles.horizon)
-            rpy = deg2rad(curr_state.RPY);
-            handles.horizon.update(rpy(3), rpy(2), rpy(1));
+        try
+            % Draw the frame
+            [multirotorObjs, shadowObjs] = support_files.draw_frame(fig, curr_state, ...
+                curr_time, multirotorObjs, multirotor_data, shadowObjs, shadow_data, ...
+                handles, num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, ...
+                show_info, show_horizon, show_fpv);
+
+            if is_recording
+                curr_frame = getframe(gcf);
+                writeVideo(video_writer, curr_frame);
+            end
+
+            drawnow;
+        catch ex
+            if strcmp(ex.identifier, 'images:imshow:invalidAxes')
+                break;
+            end
+            rethrow(ex)
         end
         
-        if is_recording
-            curr_frame = getframe(gcf);
-            writeVideo(video_writer, curr_frame);
-        end
-        
-        drawnow;
         exec_time = toc;
         
         ind = pause_and_update_index(is_paused, t, speed, curr_time, exec_time, ind, video_fps);
@@ -76,9 +84,13 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         close(video_writer);
     end
     
+    if isfield(handles,'fpvfig') && ishghandle(handles.fpvfig)
+        close(handles.fpvfig)
+    end
+    
     function Key_Down(~, event)
         key_code = int8(event.Character);
-        if ~isnumeric(key_code) %|| isempty(key_code)
+        if ~isnumeric(key_code) || isempty(key_code)
             return;
         end
         

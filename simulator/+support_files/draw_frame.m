@@ -1,24 +1,45 @@
 function [multirotorObjs, shadowObjs] = draw_frame(fig, curr_state, curr_time, ...
-    multirotorObjs, multirotor_data, shadowObjs, shadow_data, label_handles, ...
-    num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed, show_info)
+    multirotorObjs, multirotor_data, shadowObjs, shadow_data, handles, ...
+    num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed, show_info, ...
+    show_horizon, show_fpv)
 
     figure(fig);
     
+    % Get the current transform
+    rpy = deg2rad(curr_state.RPY);
+    T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', curr_state.Position; 0, 0, 0, 1];
+
     % Draw the robot
-    multirotorObjs = transform_robot(curr_state.Position, deg2rad(curr_state.RPY), multirotorObjs, multirotor_data);
+    multirotorObjs = transform_robot(T, multirotorObjs, multirotor_data);
 
     % Draw the shadow
-    shadowObjs = transform_shadow(curr_state.Position, deg2rad(curr_state.RPY), shadowObjs, shadow_data);
+    shadowObjs = transform_shadow(T, shadowObjs, shadow_data);
 
     set_frame_limits(num_of_zoom_levels, zoom_level, curr_state.Position, axis_limits, min_zoom);
 
-    if show_info
-        update_frame_labels(label_handles, curr_time, zoom_level, speed, curr_state);
+    if show_horizon
+        handles.horizon.update(rpy(3), rpy(2), rpy(1));
     end
+
+    if show_fpv
+        campos(handles.axfpvfig, curr_state.Position);
+        camtarget(handles.axfpvfig, curr_state.Position + T(1:3, 1));
+        camva(handles.axfpvfig, 120);
+        camup(handles.axfpvfig, -T(1:3, 3));
+        fpv_frame = frame2im(getframe(handles.axfpvfig));
+        imshow(fpv_frame, 'Parent', handles.axfpv);
+    end
+
+
+    if show_info
+        update_frame_labels(handles, curr_time, zoom_level, speed, curr_state);
+    end
+    
 end
 
-function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)
-    T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', pos; 0, 0, 0, 1];
+%% Helper functions
+
+function dataObjs = transform_robot(T, dataObjs, multirotor_data)
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [multirotor_data{i, 1}, multirotor_data{i, 2}, multirotor_data{i, 3}]';
@@ -39,8 +60,7 @@ function dataObjs = transform_robot(pos, rpy, dataObjs, multirotor_data)
     end
 end
 
-function dataObjs = transform_shadow(pos, rpy, dataObjs, shadow_data)
-    T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', pos; 0, 0, 0, 1];
+function dataObjs = transform_shadow(T, dataObjs, shadow_data)
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [shadow_data{i, 1}, shadow_data{i, 2}, shadow_data{i, 3}]';
@@ -118,7 +138,7 @@ function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, limits,
     end
 end
 
-function update_frame_labels(label_handles, curr_time, zoom_level, speed, curr_state)
+function update_frame_labels(handles, curr_time, zoom_level, speed, curr_state)
 
     m_str1 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f%c\n\n%0.3f%c\n\n%0.3f%c', ...
         curr_state.Position(1), curr_state.Position(2), curr_state.Position(3), ...
@@ -144,13 +164,13 @@ function update_frame_labels(label_handles, curr_time, zoom_level, speed, curr_s
 
     %title(strtitle);
     
-    set(label_handles.mult1, 'String', m_str1);
-    set(label_handles.mult2, 'String', m_str2);
-    set(label_handles.mult3, 'String', m_str3);
-    set(label_handles.ee1, 'String', e_str1);
-    set(label_handles.ee2, 'String', e_str2);
-    set(label_handles.ee3, 'String', e_str3);
-    set(label_handles.anim1, 'String', a_str1);
-    set(label_handles.anim2, 'String', a_str2);
+    set(handles.mult1, 'String', m_str1);
+    set(handles.mult2, 'String', m_str2);
+    set(handles.mult3, 'String', m_str3);
+    set(handles.ee1, 'String', e_str1);
+    set(handles.ee2, 'String', e_str2);
+    set(handles.ee3, 'String', e_str3);
+    set(handles.anim1, 'String', a_str1);
+    set(handles.anim2, 'String', a_str2);
     
 end

@@ -162,7 +162,8 @@ classdef graphics
             H = support_files.visualize_multirotor(multirotor, false, true);
         end
         
-        function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, speed, show_info)
+        function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, ...
+                speed, show_info, show_horizon, show_fpv)
             if nargin < 2
                 envronment = environment;
             end
@@ -175,13 +176,19 @@ classdef graphics
             if nargin < 5
                 show_info = true;
             end
-            
+            if nargin < 6
+                show_horizon = show_info;
+            end
+            if nargin < 7
+                show_fpv = show_info;
+            end
+                        
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, 0, '');
+                speed, show_info, show_horizon, show_fpv, 0, '');
         end
         
         function RecordLoggedTrajectoryAnimation(filename, fps, multirotor, ...
-                envronment, zoom_level, speed, show_info)
+                envronment, zoom_level, speed, show_info, show_horizon, show_fpv)
             if nargin < 4
                 envronment = environment;
             end
@@ -194,9 +201,15 @@ classdef graphics
             if nargin < 7
                 show_info = true;
             end
+            if nargin < 8
+                show_horizon = show_info;
+            end
+            if nargin < 9
+                show_fpv = show_info;
+            end
             
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, fps, filename);
+                speed, show_info, show_horizon, show_fpv, fps, filename);
         end
         
         function PrintDynamicManipulabilityAnalysis(res)
