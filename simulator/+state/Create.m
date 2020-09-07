@@ -18,5 +18,7 @@ function s = Create(n_rotors)
     s.ForceSensor         = zeros(3, 1);        % Force sensor reading in N
     s.MomentSensor        = zeros(3, 1);        % Moment sensor reading in N/m
     
+    s.WindForce           = zeros(3, 1);        % Wind force applied to the CoM in N
+    
     s.InCollision         = false;              % If multirotor is in collision
 end

@@ -20,6 +20,7 @@ m = robots.tilted_hex(true);
 e = environment;
 e.AddCuboidObject([15; 10; -2.5], [1; 10; 5], 0);
 e.AddGroundPlane([-100; 100], [-100; 100]);
+e.AverageWind = [0; 0; 0];
 
 %% Prepare the simulation
 
@@ -38,7 +39,7 @@ sim.SetTotalTime(20);
 
 sim.Controller.AttitudeController.SetPID(60, 0, 20);
 sim.Controller.PositionController.SetPID(3, 0, 7);
-%sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
+sim.Controller.PositionController.AttitudeType = attitude_types.ZeroTilt;
 
 %% Get the controller response(s)
 
@@ -54,8 +55,8 @@ sim.Controller.PositionController.SetPID(3, 0, 7);
 traj = [12, 12, -4, 0; 12, 16, -3, 90];
 sim.SimulateTrajectory(traj, 0.25);
 
-% Additional plots
-graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, true);
+%% Draw Additional plots
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind'}, true);
 
 %% Animate the result
 

@@ -1,4 +1,8 @@
 classdef environment < handle
+
+    properties
+        AverageWind = [0; 0; 0];  % The wind vector in global frame
+    end
     
     properties (SetAccess = private, GetAccess = public)
         Objects = {};

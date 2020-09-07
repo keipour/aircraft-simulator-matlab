@@ -2,6 +2,7 @@ classdef physics
     
     properties(Constant)
         Gravity = [0; 0; 9.80665];  % in m/s^2
+        AirDensity = 1.229          % in kg/m^3
     end
     
     methods(Static)
@@ -133,6 +134,14 @@ classdef physics
             end
             quat = quat * 0.5 / sqrt(t);
 
+        end
+        
+        function as = GetAirVelocity(vel, wind_vel)
+            as = wind_vel - vel;
+        end
+        
+        function f = GetWindForce(air_vel, eff_area)
+            f = 1/2 * physics.AirDensity * (air_vel.^2) * eff_area;
         end
         
     end

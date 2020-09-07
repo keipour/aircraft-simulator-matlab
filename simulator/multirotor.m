@@ -1,27 +1,28 @@
 classdef multirotor < handle
     properties
-        % Fixed Properties
         Rotors
-        Mass = 7.427;                 % in Kg
+        Mass = 7.427;               % in Kg
         I                           % Inertia
         PayloadRadius = 0.15;       % in meters
         
-        TotalSpeedLimit = 20;                       % in m/s
-        VelocityLimits = [10; 10; 8];               % in m/s
-        OmegaLimits = deg2rad([70; 70; 30]);        % in deg/s
+        TotalSpeedLimit = 20;                          % in m/s
+        VelocityLimits = [10; 10; 8];                  % in m/s
+        OmegaLimits = deg2rad([70; 70; 30]);           % in deg/s
+        WindModel support_files.multirotor_wind_model ...
+            = support_files.multirotor_wind_model;     % Model used for wind pressure calculation
     end
 
-    properties(SetAccess=protected, GetAccess=public)
+    properties (SetAccess=protected, GetAccess=public)
         NumOfRotors                 % Number of rotors
         TotalMass                   % Total mass including the arm
         InitialState                % Initial state
         State                       % The current state
         I_inv                       % Inversion of I
-        EndEffector arm
-        CollisionModel
+        EndEffector arm             % Manipulator arm
+        CollisionModel              % Model used for collision detection
     end
     
-    properties(SetAccess=protected, GetAccess=protected)
+    properties (SetAccess=protected, GetAccess=protected)
         HasArm = false;
         TransformedCollisionModels
     end
@@ -135,15 +136,15 @@ classdef multirotor < handle
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
-                RotorSpeedsSquared, dt, is_collision, collision_normal)
+                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal)
 
             force_moment_ext_B = zeros(3, 1);
-            force_ext_I = zeros(3, 1);
+            force_ext_I = wind_force;
             if obj.HasArm
                 force_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(4:6);
                 moment_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(1:3);
                 force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
-                force_ext_I = obj.GetRotationMatrix()' * force_ext_B;
+                force_ext_I = wind_force + obj.GetRotationMatrix()' * force_ext_B;
             end
             
             % Calculate the time step
@@ -156,6 +157,7 @@ classdef multirotor < handle
             new_state.ForceSensor = tf_sensor_wrench(4:6);
             new_state.MomentSensor = tf_sensor_wrench(1:3);
             new_state.InCollision = is_collision;
+            new_state.WindForce = wind_force;
             
             for i = 1 : obj.NumOfRotors
                 [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
@@ -195,6 +197,8 @@ classdef multirotor < handle
             obj.CollisionModel = obj.CalculateCollisionModel();
             mult_cm = support_files.collision_box(obj.CollisionModel.X, ...
                 obj.CollisionModel.Y, obj.CollisionModel.Z);
+            
+            obj.WindModel.Update(obj);
 
             if obj.HasArm
                 obj.TotalMass = obj.TotalMass + obj.EndEffector.TotalMass;
@@ -243,6 +247,8 @@ classdef multirotor < handle
             else
                 obj.TransformedCollisionModels = {mult_cm};
             end
+            
+            obj.WindModel.CopyFrom(mult.WindModel);
         end
         
         function H = Visualize(obj, draw_collision_model)

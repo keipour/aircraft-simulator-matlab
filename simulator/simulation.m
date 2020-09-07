@@ -193,9 +193,14 @@ classdef simulation < handle
             dt = time - last_time;
             last_time = time;
             
+            % Calculate the applied wind_force
+            air_velocity = physics.GetAirVelocity(obj.Multirotor.State.Velocity, obj.Environment.AverageWind);
+            eff_wind_area = obj.Multirotor.WindModel.CalcualteEffectiveArea(air_velocity, obj.Multirotor.State.RPY);
+            wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
+            
             [wrench] = obj.Multirotor.CalcForceWrench(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
-                zeros(6, 1), rotor_speeds_squared, dt, false, zeros(3, 1));
+                zeros(6, 1), wind_force, rotor_speeds_squared, dt, false, zeros(3, 1));
             
             % Check for collistion
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
@@ -224,7 +229,7 @@ classdef simulation < handle
                 
                 torque_sensor = zeros(3, 1);
                 new_state = obj.Multirotor.CalcNextState(wrench, [torque_sensor; force_sensor],...
-                    rotor_speeds_squared, dt, true, wall_normal);
+                    wind_force, rotor_speeds_squared, dt, true, wall_normal);
             end
             
             obj.Multirotor.UpdateState(new_state);

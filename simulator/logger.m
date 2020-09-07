@@ -73,6 +73,11 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.RotorSpeeds', measured_data, 'uni', 0));
         end
         
+        function [data, times] = GetAppliedWindForces()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.WindForce', measured_data, 'uni', 0));
+        end
+        
         function [data, times] = GetMeasuredRotorSaturations()
             [measured_data, times] = logger.GetMeasuredStates();
             data = cell2mat(cellfun(@(s)s.RotorsSaturated', measured_data, 'uni', 0));
@@ -185,6 +190,10 @@ classdef logger < handle
             elseif contains(str, 'omega') || (contains_or(str, {'ang', 'rot'}) && contains_or(str, {'vel', 'rate', 'speed'}))
                 [data, times] = logger.GetMeasuredOmegas();
                 labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Velocity'};
+
+            elseif contains_or(str, {'air', 'wind'})
+                [data, times] = logger.GetAppliedWindForces();
+                labels = {'F_x', 'F_y', 'F_z', 'Wind Force'};
 
             elseif contains_and(str, {'forc', 'sens'})
                 [data, times] = logger.GetForceSensorReadings();
