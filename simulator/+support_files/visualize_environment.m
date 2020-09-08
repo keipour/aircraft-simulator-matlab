@@ -2,7 +2,7 @@
 % This file visualizes the environment geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
 % Last updated: August 11, 2020
-function visualize_environment(e, plot_only)
+function H = visualize_environment(e, plot_only)
     
     if nargin < 2
         plot_only = false;
@@ -14,6 +14,8 @@ function visualize_environment(e, plot_only)
     plot_title = 'Your Cool Environment';
     lighting_on = ~plot_only; % turn on the special lighting
 
+    H = [];
+
     for i = 1 : length(e.Objects)
         o = e.Objects{i};
         hold on
@@ -24,6 +26,7 @@ function visualize_environment(e, plot_only)
         elseif o.Type == 1
             patchObj.FaceColor = ground_color;
         end
+        H = [H; patchObj];
     end
 
     % Make the plot more presentable
