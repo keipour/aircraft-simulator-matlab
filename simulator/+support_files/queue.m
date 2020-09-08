@@ -29,7 +29,6 @@ classdef queue < handle
         end
         
         function Add(obj, row, data, time)
-            row = uint32(row);
             len = obj.Lengths(row, 1) + 1;
             obj.Lengths(row, 1) = len;
             obj.Data{row}{len} = data;

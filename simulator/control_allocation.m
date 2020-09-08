@@ -26,6 +26,29 @@ classdef control_allocation < handle
         function [rotor_speeds_squared, saturated] = CalcRotorSpeeds(obj, multirotor, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
+            persistent lin_accel_last
+            persistent ang_accel_last
+            persistent rotor_speeds_squared_last
+            persistent saturated_last
+            if isempty(lin_accel_last)
+                lin_accel_last = zeros(3, 1);
+            end
+            if isempty(ang_accel_last)
+                ang_accel_last = zeros(3, 1);
+            end
+            if isempty(rotor_speeds_squared_last)
+                rotor_speeds_squared_last = zeros(multirotor.NumOfRotors, 1);
+            end
+            if isempty(saturated_last)
+                saturated_last = false;
+            end
+            
+            if isequal(lin_accel, lin_accel_last) && isequal(ang_accel, ang_accel_last)
+                rotor_speeds_squared = rotor_speeds_squared_last;
+                saturated = saturated_last;
+                return;
+            end
+        
             if obj.Method == control_allocation_types.NDI
                 rotor_speeds_squared = obj.NDIRotorSpeeds(multirotor, lin_accel, ang_accel);
             end
@@ -47,6 +70,11 @@ classdef control_allocation < handle
             if nargin > 1
                 saturated = saturation_flag;
             end
+            
+            lin_accel_last = lin_accel;
+            ang_accel_last = ang_accel;
+            saturated_last = saturated;
+            rotor_speeds_squared_last = rotor_speeds_squared;
         end
     end
     
