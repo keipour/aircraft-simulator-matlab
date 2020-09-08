@@ -1,6 +1,5 @@
-function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data] ...
-    = create_frame_figure(multirotor, environment, show_info, ...
-     show_horizon, show_fpv, is_recording)
+function [fig, form_handles, plot_handles, plot_data] = create_frame_figure...
+    (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam)
     
 
     % Set up the first frame
@@ -10,85 +9,92 @@ function [fig, handles, multirotorObjs, multirotor_data, shadowObjs, shadow_data
         fig = figure;
     end
     
-    handles.mult1 = findobj(fig, 'Tag', 'lblMultirotorFieldValues1');
-    handles.mult2 = findobj(fig, 'Tag', 'lblMultirotorFieldValues2');
-    handles.mult3 = findobj(fig, 'Tag', 'lblMultirotorFieldValues3');
-    handles.ee1 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues1');
-    handles.ee2 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues2');
-    handles.ee3 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues3');
-    handles.anim1 = findobj(fig, 'Tag', 'lblAnimationFieldValues1');
-    handles.anim2 = findobj(fig, 'Tag', 'lblAnimationFieldValues2');
-    handles.axhorizon = findobj(fig, 'Tag', 'figHorizon');
-    handles.axanim = findobj(fig, 'Tag', 'figAnimation');
-    handles.axfpv = findobj(fig, 'Tag', 'figFPV');
-    handles.hotkeyspanel = findobj(fig, 'Tag', 'pnlHotkeys');
+    form_handles.mult1 = findobj(fig, 'Tag', 'lblMultirotorFieldValues1');
+    form_handles.mult2 = findobj(fig, 'Tag', 'lblMultirotorFieldValues2');
+    form_handles.mult3 = findobj(fig, 'Tag', 'lblMultirotorFieldValues3');
+    form_handles.ee1 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues1');
+    form_handles.ee2 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues2');
+    form_handles.ee3 = findobj(fig, 'Tag', 'lblEndEffectorFieldValues3');
+    form_handles.anim1 = findobj(fig, 'Tag', 'lblAnimationFieldValues1');
+    form_handles.anim2 = findobj(fig, 'Tag', 'lblAnimationFieldValues2');
+    form_handles.axhorizon = findobj(fig, 'Tag', 'figHorizon');
+    form_handles.axanim = findobj(fig, 'Tag', 'figAnimation');
+    form_handles.axfpv = findobj(fig, 'Tag', 'figFPV');
+    form_handles.hotkeyspanel = findobj(fig, 'Tag', 'pnlHotkeys');
     
     if show_fpv
-        handles.fpvfig = figure('Position', [0 0 200 200]);
-        handles.axfpvfig = axes(handles.fpvfig);
-        axes(handles.axfpvfig);
-        graphics.PlotEnvironment(environment);
-        set(gca, 'Xtick', [], 'Ytick', [], 'Ztick', [], 'Box', 'on', ...
-            'YDir', 'Reverse', 'ZDir', 'Reverse', 'Visible', 'on');
-        camproj('perspective');
-        axis off
-        axis equal
-        set(handles.fpvfig, 'Visible', 'off')
+        form_handles.fpvfig = figure('Position', [0 0 200 200]);
+        form_handles.axfpvfig = axes(form_handles.fpvfig);
+        fpv_cam.Initialize(form_handles.axfpvfig);
+        set(form_handles.fpvfig, 'Visible', 'off')
     end
 
-    if ~isempty(handles.axfpv)
-        axis(handles.axfpv, 'off');
+    if ~isempty(form_handles.axfpv)
+        axis(form_handles.axfpv, 'off');
     end
     
-    if ~isempty(handles.axhorizon)
-        axis(handles.axhorizon, 'off');
+    if ~isempty(form_handles.axhorizon)
+        axis(form_handles.axhorizon, 'off');
     end
     
-    if ~isempty(handles.axanim)
-        axes(handles.axanim);
+    if ~isempty(form_handles.axanim)
+        axes(form_handles.axanim);
     end
     
-    % Draw and save the multirotor
-    multirotorObjs = graphics.PlotMultirotor(multirotor);
-    multirotor_data = cell(length(multirotorObjs), 3);
-    for i = 1 : length(multirotorObjs)
-        multirotor_data{i, 1} = multirotorObjs(i).XData;
-        multirotor_data{i, 2} = multirotorObjs(i).YData;
-        multirotor_data{i, 3} = multirotorObjs(i).ZData;
-    end
-    
-    % Draw the multirotor shadow
-    hold on
-    shadowObjs = circlePlane3D([0, 0, 0], [0; 0; 1], multirotor.PayloadRadius * 2, 0.2, 'black', 0.5);
-    shadow_data = cell(length(shadowObjs), 3);
-    for i = 1 : length(shadowObjs)
-        shadow_data{i, 1} = shadowObjs(i).XData;
-        shadow_data{i, 2} = shadowObjs(i).YData;
-        shadow_data{i, 3} = shadowObjs(i).ZData;
-    end
-    
-    % Draw the environment
-    graphics.PlotEnvironment(environment);
+    [plot_handles, plot_data] = create_all_objects(multirotor, environment);
 
+    if show_fpv
+        plot_handles.FPVMultirotor = copyobj(plot_handles.Multirotor, form_handles.axfpvfig);
+        plot_handles.FPVShadow = copyobj(plot_handles.Shadow, form_handles.axfpvfig);
+        plot_handles.FPVEnvironment = copyobj(plot_handles.Environment, form_handles.axfpvfig);
+    end
+    
     view(3);
 
     xlabel('N');     ylabel('E');     zlabel('D');
     
     if ~show_info
-        handles.axanim = gca;
+        form_handles.axanim = gca;
         fig.CurrentAxes.YDir = 'Reverse';
         fig.CurrentAxes.ZDir = 'Reverse';
     else
         if is_recording
-            handles.hotkeyspanel.Visible = 'Off';
+            form_handles.hotkeyspanel.Visible = 'Off';
         end
     end
     
     if show_horizon
-        handles.horizon = support_files.artificial_horizon('Axes', handles.axhorizon, ...
+        form_handles.horizon = support_files.artificial_horizon('Axes', form_handles.axhorizon, ...
             'ReticleType', '-.-', 'Reticlecolor', [0.3010 0.7450 0.9330], ...
             'EdgeColor', [0.2 0.2 0.2], 'GroundColor', [0.8 1.0 0.8], 'SkyColor', [0.8 0.898 1.0]);
     end
+end
+
+%% Helper functions
+
+function [plot_handles, plot_data] = create_all_objects(multirotor, environment)
+
+    % Draw and save the multirotor
+    plot_handles.Multirotor = graphics.PlotMultirotor(multirotor);
+    plot_data.Multirotor = cell(length(plot_handles.Multirotor), 3);
+    for i = 1 : length(plot_handles.Multirotor)
+        plot_data.Multirotor{i, 1} = plot_handles.Multirotor(i).XData;
+        plot_data.Multirotor{i, 2} = plot_handles.Multirotor(i).YData;
+        plot_data.Multirotor{i, 3} = plot_handles.Multirotor(i).ZData;
+    end
+    
+    % Draw the multirotor shadow
+    hold on
+    plot_handles.Shadow = circlePlane3D([0, 0, 0], [0; 0; 1], multirotor.PayloadRadius * 2, 0.2, 'black', 0.5);
+    plot_data.Shadow = cell(length(plot_handles.Shadow), 3);
+    for i = 1 : length(plot_handles.Shadow)
+        plot_data.Shadow{i, 1} = plot_handles.Shadow(i).XData;
+        plot_data.Shadow{i, 2} = plot_handles.Shadow(i).YData;
+        plot_data.Shadow{i, 3} = plot_handles.Shadow(i).ZData;
+    end
+    
+    % Draw the environment
+    plot_handles.Environment = graphics.PlotEnvironment(environment);
 end
 
 %% Draw a 3-D circle

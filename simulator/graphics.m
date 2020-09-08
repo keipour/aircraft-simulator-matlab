@@ -154,8 +154,8 @@ classdef graphics
             drawnow;
         end
         
-        function PlotEnvironment(environment)
-            support_files.visualize_environment(environment, true);
+        function H = PlotEnvironment(environment)
+            H = support_files.visualize_environment(environment, true);
         end
         
         function H = PlotMultirotor(multirotor)
@@ -163,7 +163,7 @@ classdef graphics
         end
         
         function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, ...
-                speed, show_info, show_horizon, show_fpv)
+                speed, show_info, show_horizon, fpv_cam)
             if nargin < 2
                 envronment = environment;
             end
@@ -180,15 +180,15 @@ classdef graphics
                 show_horizon = show_info;
             end
             if nargin < 7
-                show_fpv = show_info;
+                fpv_cam = [];
             end
                         
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, show_horizon, show_fpv, 0, '');
+                speed, show_info, show_horizon, fpv_cam, 0, '');
         end
         
         function RecordLoggedTrajectoryAnimation(filename, fps, multirotor, ...
-                envronment, zoom_level, speed, show_info, show_horizon, show_fpv)
+                envronment, zoom_level, speed, show_info, show_horizon, fpv_cam)
             if nargin < 4
                 envronment = environment;
             end
@@ -205,11 +205,11 @@ classdef graphics
                 show_horizon = show_info;
             end
             if nargin < 9
-                show_fpv = show_info;
+                fpv_cam = [];
             end
             
             support_files.animate_logged_traj(multirotor, envronment, zoom_level, ...
-                speed, show_info, show_horizon, show_fpv, fps, filename);
+                speed, show_info, show_horizon, fpv_cam, fps, filename);
         end
         
         function PrintDynamicManipulabilityAnalysis(res)

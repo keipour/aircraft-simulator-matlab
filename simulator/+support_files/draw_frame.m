@@ -1,7 +1,6 @@
-function [multirotorObjs, shadowObjs] = draw_frame(fig, curr_state, curr_time, ...
-    multirotorObjs, multirotor_data, shadowObjs, shadow_data, handles, ...
-    num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed, show_info, ...
-    show_horizon, show_fpv)
+function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, ...
+    plot_data, form_handles, num_of_zoom_levels, zoom_level, axis_limits, ...
+    min_zoom, speed, show_info, show_horizon, show_fpv, fpv_cam)
 
     figure(fig);
     
@@ -10,36 +9,40 @@ function [multirotorObjs, shadowObjs] = draw_frame(fig, curr_state, curr_time, .
     T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', curr_state.Position; 0, 0, 0, 1];
 
     % Draw the robot
-    multirotorObjs = transform_robot(T, multirotorObjs, multirotor_data);
+    transform_robot(T, plot_handles.Multirotor, plot_data.Multirotor);
 
     % Draw the shadow
-    shadowObjs = transform_shadow(T, shadowObjs, shadow_data);
+    transform_shadow(T, plot_handles.Shadow, plot_data.Shadow);
 
     set_frame_limits(num_of_zoom_levels, zoom_level, curr_state.Position, axis_limits, min_zoom);
 
     if show_horizon
-        handles.horizon.update(rpy(3), rpy(2), rpy(1));
+        form_handles.horizon.update(rpy(3), rpy(2), rpy(1));
     end
 
     if show_fpv
-        campos(handles.axfpvfig, curr_state.Position);
-        camtarget(handles.axfpvfig, curr_state.Position + T(1:3, 1));
-        camva(handles.axfpvfig, 120);
-        camup(handles.axfpvfig, -T(1:3, 3));
-        fpv_frame = frame2im(getframe(handles.axfpvfig));
-        imshow(fpv_frame, 'Parent', handles.axfpv);
+        copy_data_object_points(plot_handles.FPVMultirotor, plot_handles.Multirotor);
+        copy_data_object_points(plot_handles.FPVShadow, plot_handles.Shadow);
+        fpv_cam.UpdateState(T);
+        fpv_cam.CopyTo(form_handles.axfpv);
     end
 
-
     if show_info
-        update_frame_labels(handles, curr_time, zoom_level, speed, curr_state);
+        update_frame_labels(form_handles, curr_time, zoom_level, speed, curr_state);
     end
     
 end
 
 %% Helper functions
 
-function dataObjs = transform_robot(T, dataObjs, multirotor_data)
+function copy_data_object_points(destObjs, srcObjs)
+    for i = 1 : length(srcObjs)
+        set(destObjs(i), 'XData', srcObjs(i).XData, 'YData', srcObjs(i).YData, 'ZData', srcObjs(i).ZData);
+    end    
+end
+
+
+function transform_robot(T, dataObjs, multirotor_data)
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [multirotor_data{i, 1}, multirotor_data{i, 2}, multirotor_data{i, 3}]';
@@ -60,7 +63,7 @@ function dataObjs = transform_robot(T, dataObjs, multirotor_data)
     end
 end
 
-function dataObjs = transform_shadow(T, dataObjs, shadow_data)
+function transform_shadow(T, dataObjs, shadow_data)
     for i = 1 : length(dataObjs)
         if startsWith(dataObjs(i).Type, 'p') % patch
             data = [shadow_data{i, 1}, shadow_data{i, 2}, shadow_data{i, 3}]';
@@ -138,7 +141,7 @@ function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, limits,
     end
 end
 
-function update_frame_labels(handles, curr_time, zoom_level, speed, curr_state)
+function update_frame_labels(form_handles, curr_time, zoom_level, speed, curr_state)
 
     m_str1 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f\n\n%0.3f%c\n\n%0.3f%c\n\n%0.3f%c', ...
         curr_state.Position(1), curr_state.Position(2), curr_state.Position(3), ...
@@ -164,13 +167,13 @@ function update_frame_labels(handles, curr_time, zoom_level, speed, curr_state)
 
     %title(strtitle);
     
-    set(handles.mult1, 'String', m_str1);
-    set(handles.mult2, 'String', m_str2);
-    set(handles.mult3, 'String', m_str3);
-    set(handles.ee1, 'String', e_str1);
-    set(handles.ee2, 'String', e_str2);
-    set(handles.ee3, 'String', e_str3);
-    set(handles.anim1, 'String', a_str1);
-    set(handles.anim2, 'String', a_str2);
+    set(form_handles.mult1, 'String', m_str1);
+    set(form_handles.mult2, 'String', m_str2);
+    set(form_handles.mult3, 'String', m_str3);
+    set(form_handles.ee1, 'String', e_str1);
+    set(form_handles.ee2, 'String', e_str2);
+    set(form_handles.ee3, 'String', e_str3);
+    set(form_handles.anim1, 'String', a_str1);
+    set(form_handles.anim2, 'String', a_str2);
     
 end

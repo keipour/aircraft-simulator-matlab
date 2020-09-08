@@ -33,7 +33,7 @@ rpy = [0; 0; 0];
 omega = [0; 0; 0];
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
-sim.SetTotalTime(20);
+sim.SetTotalTime(10);
 
 %% Prepare the controller
 
@@ -60,5 +60,7 @@ graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang
 
 %% Animate the result
 
-graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true, false);
-%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true, true);
+fpv_cam = camera;
+fpv_cam.Offset = [-0.35; 0; -0.25];
+graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true, []);
+%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true, fpv_cam);
