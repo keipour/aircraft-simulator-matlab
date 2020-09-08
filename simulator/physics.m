@@ -90,6 +90,20 @@ classdef physics
             RNI = physics.GetRotationMatrixRadians(r, p, y);
         end
 
+        function RPY = GetRPYRadians(RNI)
+            %     [          cy*cz,          cy*sz,            -sy]
+            %     [ sy*sx*cz-sz*cx, sy*sx*sz+cz*cx,          cy*sx]
+            %     [ sy*cx*cz+sz*sx, sy*cx*sz-cz*sx,          cy*cx]
+
+            [yaw, pitch, roll] = threeaxisrot( RNI(1,2,:), RNI(1,1,:), -RNI(1,3,:), ...
+                RNI(2,3,:), RNI(3,3,:));
+            RPY = [roll; pitch; yaw];
+        end
+        
+        function RPY = GetRPYDegrees(RNI)
+            RPY = rad2deg(physics.GetRPYRadians(RNI));
+        end
+        
         function flag = CheckAllCollisions(set1, set2)
         % Check collision between two different sets of collision geometries
 
@@ -180,4 +194,13 @@ function inertia_tensor = point_mass_inertia(mass, x, y, z)
     inertia_tensor = [  Ixx     Ixy     Ixz
                         Ixy     Iyy     Iyz
                         Ixz     Iyz     Izz  ];
+end
+
+function [r1,r2,r3] = threeaxisrot(r11, r12, r21, r31, r32)
+    % find angles for rotations about X, Y, and Z axes
+    r1 = atan2( r11, r12 );
+    r21(r21 < -1) = -1;
+    r21(r21 > 1) = 1;
+    r2 = asin( r21 );
+    r3 = atan2( r31, r32 );
 end
