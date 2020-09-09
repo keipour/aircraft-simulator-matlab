@@ -65,7 +65,7 @@ classdef simulation < handle
                 rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
             end
             obj.UpdateAllStates(rotor_speeds_squared, time);
-            logger.Add(logger_signals.MeasuredStates, obj.Multirotor.State);
+            logger.Add(logger_signals.MeasuredStates, struct(obj.Multirotor.State));
         end
         
         function NextStepControlAllocation(obj, time)

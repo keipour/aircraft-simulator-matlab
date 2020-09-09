@@ -1,6 +1,6 @@
 classdef multirotor < handle
     properties
-        Rotors
+        Rotors cell
         Mass = 7.427;               % in Kg
         I                           % Inertia
         PayloadRadius = 0.15;       % in meters
@@ -15,8 +15,8 @@ classdef multirotor < handle
     properties (SetAccess=protected, GetAccess=public)
         NumOfRotors                 % Number of rotors
         TotalMass                   % Total mass including the arm
-        InitialState                % Initial state
-        State                       % The current state
+        InitialState state          % Initial state
+        State state                 % The current state
         I_inv                       % Inversion of I
         EndEffector arm             % Manipulator arm
         CollisionModel              % Model used for collision detection
@@ -46,8 +46,8 @@ classdef multirotor < handle
                 obj.Rotors{i}.RotationDirection = RotationDirections(i);
             end
             
-            obj.InitialState = state.Create(obj.NumOfRotors);
-            obj.State = state.Create(obj.NumOfRotors);
+            obj.InitialState = state(obj.NumOfRotors);
+            obj.State = state(obj.NumOfRotors);
             
             obj.UpdateStructure();
         end
@@ -225,8 +225,10 @@ classdef multirotor < handle
             obj.I = mult.I;
             obj.PayloadRadius = mult.PayloadRadius;
             obj.NumOfRotors = mult.NumOfRotors;
+            obj.InitialState = state();
             obj.InitialState = mult.InitialState;
-            obj.State = mult.State;
+            obj.State = state();
+            obj.State.CopyFrom(mult.State);
             obj.I_inv = mult.I_inv;
             obj.HasArm = mult.HasEndEffector();
             obj.TotalSpeedLimit = mult.TotalSpeedLimit;
@@ -314,7 +316,7 @@ classdef multirotor < handle
                 dt, is_collision, collision_normal)
             
             % Create the new state
-            new_state = state.Create(obj.NumOfRotors);
+            new_state = state(obj.NumOfRotors);
             
             % Get the total force
             force = wrench(4:6) + ext_wrench(4:6);
