@@ -20,12 +20,20 @@ classdef multirotor < handle
         I_inv                       % Inversion of I
         EndEffector arm             % Manipulator arm
         CollisionModel              % Model used for collision detection
+        DynamicsMethod multirotor_dynamics_methods % The dynamics formulations
     end
     
     properties (SetAccess=protected, GetAccess=protected)
         HasArm = false;
         TransformedCollisionModels
+
+        NE_L                        % L matrix in Newton-Euler dynamics formulation
+                                    % (related to body-fixed thrust forces)
+
+        NE_M                        % M matrix in Newton-Euler dynamics formulation
+                                    % (related to body-fixed thrust and reaction moments)
     end
+
     
     %% Public methods
     methods
@@ -49,6 +57,15 @@ classdef multirotor < handle
             obj.InitialState = state(obj.NumOfRotors);
             obj.State = state(obj.NumOfRotors);
             
+            % Set the dynamics formulation type
+            obj.DynamicsMethod = multirotor_dynamics_methods.NewtonEuler;
+            
+            % Update the structure
+            obj.UpdateStructure();
+        end
+        
+        function SetDynamicsMethod(obj, method)
+            obj.DynamicsMethod = method;
             obj.UpdateStructure();
         end
         
@@ -148,8 +165,13 @@ classdef multirotor < handle
             end
             
             % Calculate the time step
-            new_state = obj.CalcStateNewtonEuler(wrench, [zeros(3, 1); force_ext_I], ...
-                dt, is_collision, collision_normal);
+            switch obj.DynamicsMethod
+                case multirotor_dynamics_methods.NewtonEuler
+                    new_state = obj.CalcStateNewtonEuler(wrench, [zeros(3, 1); force_ext_I], ...
+                        dt, is_collision, collision_normal);
+                otherwise
+                    error('The specified dynamics method is not implemented yet.');
+            end
             
             % Save the force and moment data
             new_state.Force = wrench(4:6);
@@ -209,6 +231,8 @@ classdef multirotor < handle
             else
                 obj.TransformedCollisionModels = {mult_cm};
             end
+            
+            obj.InitializeDynamicsMethod();
         end
         
         function inertia_tensor = EstimateInertia(obj)
@@ -371,8 +395,44 @@ classdef multirotor < handle
             new_state.EulerRate = phi_dot;
         end
         
-        function UpdateStateEulerLagrange(obj, RotorSpeedsSquared, dt)
+        function new_state = CalcStateLagrange(obj, RotorSpeedsSquared, dt)
+            % Create the new state
+            new_state = state(obj.NumOfRotors);
+        end
+        
+        function InitializeDynamicsMethod(obj)
+            switch obj.DynamicsMethod
+                case multirotor_dynamics_methods.NewtonEuler
+                    obj.InitializeNewtonEulerMethod()
+                otherwise
+                    error('The specified dynamics method is not implemented yet.');
+            end
+        end
+        
+        function InitializeNewtonEulerMethod(obj)
+        % Initialize the NDI method
+        
+            % Calculate L matrix (related to body thrust forces)
+            obj.NE_L = zeros(3, obj.NumOfRotors);
+            for i = 1 : obj.NumOfRotors
+               obj.NE_L(:, i) = obj.Rotors{i}.GetThrustForce(1);
+            end
 
+            % Calculate G matrix (related to body reaction moments)
+            NE_G = zeros(3, obj.NumOfRotors);
+            for i = 1 : obj.NumOfRotors
+               NE_G(:, i) = obj.Rotors{i}.GetReactionMoment(1);
+            end
+            
+            % Calculate F matrix (related to body thrust moments)
+            NE_F = zeros(3, obj.NumOfRotors);
+            for i = 1 : obj.NumOfRotors
+                r = obj.Rotors{i}.Position;
+                F = obj.Rotors{i}.GetThrustForce(1);
+                NE_F(:, i) = cross(r, F);
+            end
+            
+            obj.NE_M = NE_F + NE_G;
         end
         
         function e_pos = CalcEndEffectorPosition(obj, m_pos, m_rpy_deg)

@@ -7,8 +7,8 @@ classdef control_allocation < handle
     end
     
     properties(SetAccess=protected, GetAccess=protected)
-       NDI_L                 % L matrix (related to body-fixed thrust forces)
-       NDI_M                 % M matrix (related to body-fixed thrust and reaction moments)
+        NDI_L                 % L matrix (related to body-fixed thrust forces)
+        NDI_M                 % M matrix (related to body-fixed thrust and reaction moments)
     end
 
     methods
