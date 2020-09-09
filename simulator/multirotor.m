@@ -41,8 +41,8 @@ classdef multirotor < handle
             obj.Rotors = cell(obj.NumOfRotors, 1);
             
             for i = 1 : obj.NumOfRotors
-                obj.Rotors{i} = rotor.Create();
-                obj.Rotors{i} = rotor.SetArmAngle(obj.Rotors{i}, ArmAngles(i));
+                obj.Rotors{i} = rotor();
+                obj.Rotors{i}.ArmAngle = ArmAngles(i);
                 obj.Rotors{i}.RotationDirection = RotationDirections(i);
             end
             
@@ -105,9 +105,9 @@ classdef multirotor < handle
             
             % Assign the values
             for i = 1 : obj.NumOfRotors
-                obj.Rotors{i} = rotor.SetInwardAngle(obj.Rotors{i}, RotorInwardAngles(i));
-                obj.Rotors{i} = rotor.SetSidewardAngle(obj.Rotors{i}, RotorSidewardAngles(i));
-                obj.Rotors{i} = rotor.SetDihedralAngle(obj.Rotors{i}, RotorDihedralAngles(i));
+                obj.Rotors{i}.InwardAngle = RotorInwardAngles(i);
+                obj.Rotors{i}.SidewardAngle = RotorSidewardAngles(i);
+                obj.Rotors{i}.DihedralAngle = RotorDihedralAngles(i);
             end
             
             % Update the structure
@@ -160,7 +160,7 @@ classdef multirotor < handle
             new_state.WindForce = wind_force;
             
             for i = 1 : obj.NumOfRotors
-                [rs, sat] = rotor.LimitRotorSpeed(obj.Rotors{i}, RotorSpeedsSquared(i));
+                [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
                 new_state.RotorSpeeds(i) = sqrt(rs);
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
             end
@@ -217,7 +217,10 @@ classdef multirotor < handle
         end
         
         function CopyFrom(obj, mult)
-            obj.Rotors = mult.Rotors;
+            obj.Rotors = cell(size(mult.Rotors));
+            for i = 1 : mult.NumOfRotors
+                obj.Rotors{i} = rotor(mult.Rotors{i});
+            end
             obj.Mass = mult.Mass;
             obj.I = mult.I;
             obj.PayloadRadius = mult.PayloadRadius;
@@ -405,9 +408,9 @@ classdef multirotor < handle
             FB = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 if nargin < 4 || get_maximum == false
-                    FB = FB + rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
+                    FB = FB + obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
                 else
-                    max_thrust = [0; 0; -norm(rotor.GetThrustForce(obj.Rotors{i}, obj.Rotors{i}.MaxrotorSpeedSquared))];
+                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxrotorSpeedSquared))];
                     FB = FB + max_thrust;
                 end
             end
@@ -438,7 +441,7 @@ classdef multirotor < handle
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                F = rotor.GetThrustForce(obj.Rotors{i}, RotorSpeedsSquared(i));
+                F = obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
                 M = M + cross(r, F);
             end
         end
@@ -446,7 +449,7 @@ classdef multirotor < handle
         function M = GetReactionMoment(obj, RotorSpeedsSquared)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               M = M + rotor.GetReactionMoment(obj.Rotors{i}, RotorSpeedsSquared(i));
+               M = M + obj.Rotors{i}.GetReactionMoment(RotorSpeedsSquared(i));
             end
         end
         

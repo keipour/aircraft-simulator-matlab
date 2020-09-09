@@ -86,20 +86,20 @@ classdef control_allocation < handle
             % Calculate L matrix (related to body thrust forces)
             obj.NDI_L = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
-               obj.NDI_L(:, i) = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
+               obj.NDI_L(:, i) = multirotor.Rotors{i}.GetThrustForce(1);
             end
 
             % Calculate G matrix (related to body reaction moments)
             NDI_G = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
-               NDI_G(:, i) = rotor.GetReactionMoment(multirotor.Rotors{i}, 1);
+               NDI_G(:, i) = multirotor.Rotors{i}.GetReactionMoment(1);
             end
             
             % Calculate F matrix (related to body thrust moments)
             NDI_F = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
                 r = multirotor.Rotors{i}.Position;
-                F = rotor.GetThrustForce(multirotor.Rotors{i}, 1);
+                F = multirotor.Rotors{i}.GetThrustForce(1);
                 NDI_F(:, i) = cross(r, F);
             end
             
