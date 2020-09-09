@@ -135,21 +135,15 @@ classdef multirotor < handle
             obj.State = new_state;
         end
         
-        function [wrench] = CalcForceWrench(obj, RotorSpeedsSquared)
-
-            % Calculate the current rotation matrix
+        function wrench = CalcGeneratedWrench(obj, rotor_speeds_squared)
             RBI = obj.GetRotationMatrix();
-
-            % Calculate the total force
-            force = obj.GetGravityForce() + ...
-                obj.GetThrustForce(RBI', RotorSpeedsSquared);
-
-            % Calculate the total moment
-            moment = obj.GetGravityMoment(RBI) + ...
-                obj.GetThrustMoment(RotorSpeedsSquared) + ...
-                obj.GetReactionMoment(RotorSpeedsSquared);
             
-            wrench = [moment; force];
+            F_x = [obj.GetGravityMoment(RBI) - cross(obj.State.Omega, obj.I * obj.State.Omega);
+                   obj.TotalMass * physics.Gravity];
+            
+            J_x = [obj.NE_M; RBI' * obj.NE_L];
+                        
+            wrench = F_x + J_x * rotor_speeds_squared;
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
@@ -167,7 +161,7 @@ classdef multirotor < handle
             % Calculate the time step
             switch obj.DynamicsMethod
                 case multirotor_dynamics_methods.NewtonEuler
-                    new_state = obj.CalcStateNewtonEuler(wrench, [zeros(3, 1); force_ext_I], ...
+                    new_state = obj.CalcStateNewtonEuler(wrench + [zeros(3, 1); force_ext_I], ...
                         dt, is_collision, collision_normal);
                 otherwise
                     error('The specified dynamics method is not implemented yet.');
@@ -254,6 +248,8 @@ classdef multirotor < handle
             obj.State = state();
             obj.State.CopyFrom(mult.State);
             obj.I_inv = mult.I_inv;
+            obj.NE_L = mult.NE_L;
+            obj.NE_M = mult.NE_M;
             obj.HasArm = mult.HasEndEffector();
             obj.TotalSpeedLimit = mult.TotalSpeedLimit;
             obj.VelocityLimits = mult.VelocityLimits;
@@ -336,20 +332,15 @@ classdef multirotor < handle
     %% Private Methods
     methods(Access=protected)
         
-        function new_state = CalcStateNewtonEuler(obj, wrench, ext_wrench, ...
+        function new_state = CalcStateNewtonEuler(obj, wrench, ...
                 dt, is_collision, collision_normal)
             
             % Create the new state
             new_state = state(obj.NumOfRotors);
             
-            % Get the total force
-            force = wrench(4:6) + ext_wrench(4:6);
-            moment = wrench(1:3) + ext_wrench(1:3);
-            
-            % Calculate the equations of motion
-            p_dotdot = obj.GetLinearAcceleration(force);
-            omega_dot = obj.GetAngularAcceleration(moment);
+            p_dotdot = wrench(4 : 6) / obj.TotalMass;
             phi_dot = obj.GetEulerRate();
+            omega_dot = obj.I_inv * wrench(1 : 3);
             
             % I assume approximately constant acceleration to update these
             % first before other variables

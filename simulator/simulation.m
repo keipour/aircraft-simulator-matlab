@@ -198,7 +198,7 @@ classdef simulation < handle
             eff_wind_area = obj.Multirotor.WindModel.CalcualteEffectiveArea(air_velocity, obj.Multirotor.State.RPY);
             wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
             
-            [wrench] = obj.Multirotor.CalcForceWrench(rotor_speeds_squared);
+            [wrench] = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
                 zeros(6, 1), wind_force, rotor_speeds_squared, dt, false, zeros(3, 1));
             
