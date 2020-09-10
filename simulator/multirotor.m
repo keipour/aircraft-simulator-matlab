@@ -32,6 +32,9 @@ classdef multirotor < handle
 
         NE_M                        % M matrix in Newton-Euler dynamics formulation
                                     % (related to body-fixed thrust and reaction moments)
+                                    
+        Ang_Acc_Manip_A             % The fixed part of the angular manipulability (A + Bu)
+        Ang_Acc_Manip_B             % The part dependent on rotor speeds of the angular manipulability
     end
 
     
@@ -136,6 +139,7 @@ classdef multirotor < handle
         end
         
         function wrench = CalcGeneratedWrench(obj, rotor_speeds_squared)
+            
             RBI = obj.GetRotationMatrix();
             
             F_x = [obj.GetGravityMoment(RBI) - cross(obj.State.Omega, obj.I * obj.State.Omega);
@@ -187,18 +191,21 @@ classdef multirotor < handle
             end
         end
         
-        function accel = CalculateAccelerationManipulability(obj, RotorSpeedsSquared, get_maximum)
+        function accel = CalculateAccelerationManipulability(obj, rotor_speeds_squared, get_maximum)
             if nargin < 3
                 get_maximum = false;
             end
-            accel = (obj.GetGravityForce() + ...
-                obj.GetThrustForce(eye(3), RotorSpeedsSquared, get_maximum)) / obj.TotalMass;
+            
+            if get_maximum
+                accel = (obj.GetGravityForce() + ...
+                    obj.GetThrustForce(eye(3), rotor_speeds_squared, get_maximum)) / obj.TotalMass;
+            else
+                accel = (obj.TotalMass * physics.Gravity + obj.NE_L * rotor_speeds_squared) / obj.TotalMass;
+            end
         end
         
-        function omega_dot = CalculateAngularAccelerationManipulability(obj, RotorSpeedsSquared)
-            moment = obj.GetGravityMoment(eye(3)) + obj.GetThrustMoment(RotorSpeedsSquared) + ...
-                obj.GetReactionMoment(RotorSpeedsSquared);
-            omega_dot = obj.GetAngularAcceleration(moment);
+        function omega_dot = CalculateAngularAccelerationManipulability(obj, rotor_speeds_squared)
+            omega_dot = obj.Ang_Acc_Manip_A + obj.Ang_Acc_Manip_B * rotor_speeds_squared;
         end
         
         function set.I(obj, value)
@@ -424,6 +431,10 @@ classdef multirotor < handle
             end
             
             obj.NE_M = NE_F + NE_G;
+            
+            % Update the manipulability matrices
+            obj.Ang_Acc_Manip_A = obj.I_inv * obj.GetGravityMoment(eye(3));
+            obj.Ang_Acc_Manip_B = obj.I_inv * obj.NE_M;
         end
         
         function e_pos = CalcEndEffectorPosition(obj, m_pos, m_rpy_deg)
