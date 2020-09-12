@@ -153,19 +153,19 @@ classdef multirotor < handle
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
                 wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal)
 
-            force_moment_ext_B = zeros(3, 1);
-            force_ext_I = wind_force;
+            ext_wrench = [zeros(3, 1); wind_force];
             if obj.HasArm
-                force_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(4:6);
-                moment_ext_B = obj.EndEffector.R_BE * tf_sensor_wrench(1:3);
-                force_moment_ext_B = cross(obj.EndEffector.EndEffectorPosition, force_ext_B);
-                force_ext_I = wind_force + obj.GetRotationMatrix()' * force_ext_B;
+                ee_wrench_matrix = [obj.EndEffector.R_BE, ...
+                    skewsym(obj.EndEffector.EndEffectorPosition) * obj.EndEffector.R_BE; ...
+                    zeros(3), obj.GetRotationMatrix()' * obj.EndEffector.R_BE];
+
+                ext_wrench = ext_wrench + ee_wrench_matrix * tf_sensor_wrench;
             end
             
             % Calculate the time step
             switch obj.DynamicsMethod
                 case multirotor_dynamics_methods.NewtonEuler
-                    new_state = obj.CalcStateNewtonEuler(wrench + [zeros(3, 1); force_ext_I], ...
+                    new_state = obj.CalcStateNewtonEuler(wrench + [zeros(3, 1); ext_wrench(4:6)], ...
                         dt, is_collision, collision_normal);
                 otherwise
                     error('The specified dynamics method is not implemented yet.');
