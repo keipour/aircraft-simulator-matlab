@@ -181,39 +181,44 @@ classdef simulation < handle
         end
     end
     
+    %% Private methods
+    
     methods (Access = private)
 
         function UpdateAllStates(obj, rotor_speeds_squared, time)
             
+            % Save the last time we updated the state
             persistent last_time;
             if isempty(last_time)
                 last_time = 0;
             end
             
+            % Calculate the delta-t from the last time we updated the state
             dt = time - last_time;
+
+            % Save the current time for the next loop iteration
             last_time = time;
             
-            % Calculate the applied wind_force
+            % Calculate the wind_force applied to the multirotor
             air_velocity = physics.GetAirVelocity(obj.Multirotor.State.Velocity, obj.Environment.AverageWind);
             eff_wind_area = obj.Multirotor.WindModel.CalcualteEffectiveArea(air_velocity, obj.Multirotor.State.RPY);
             wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
             
+            % Calculate the next state of the robot if there are no collisions
             [wrench] = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
                 zeros(6, 1), wind_force, rotor_speeds_squared, dt, false, zeros(3, 1));
             
-            % Check for collistion
+            % Check for collistion in the new potential state
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
-            
             collision = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
             if collision == true
-                % TODO: Determine the collision force vector direction properly
-                % TODO: Add moment handling
                 
                 wall_normal = [-1; 0; 0];
-                force_sensor = zeros(3, 1);
+                [vel_mat, force_mat] = get_free_contact_matrices(wall_normal);
 
+                force_sensor = zeros(3, 1);
                 if obj.Multirotor.HasEndEffector()
 
                     % Calculate the force sensor reading
@@ -232,8 +237,32 @@ classdef simulation < handle
                     wind_force, rotor_speeds_squared, dt, true, wall_normal);
             end
             
+            % Save the calculated next state
             obj.Multirotor.UpdateState(new_state);
         end
         
     end
+end
+
+%% Helper functions
+
+function [vel_mat, force_mat] = get_free_contact_matrices(normal)
+    base_vec = [0; 0; 1];
+    orth_vec1 = [0; 1; 0];
+    orth_vec2 = [1; 0; 0];
+    
+    R = vrrotvec2mat(vrrotvec([cos(pi/4); 0; cos(pi/4)], base_vec));
+    o1 = R' * orth_vec1;
+    o2 = R' * orth_vec2;
+    
+    
+    
+    Rot = blkdiag(R, R);
+
+    base_vel_mat = diag([0, 1, 1, 1, 1, 1]);
+    base_vel_mat = diag([1, 1, 0, 1, 1, 1]);
+    vel_mat = Rot * base_vel_mat;    
+
+    base_force_mat = eye(6) - base_vel_mat;
+    force_mat = Rot * base_force_mat;
 end
