@@ -240,7 +240,7 @@ classdef logger < handle
                 labels = {'Motor Saturations', 'Motor Saturations'};
 
             elseif contains_or(str, {'contact', 'colli'})
-                [data, times] = logger.GetContactStatus();
+                [data, times] = logger.GetCollisionStatus();
                 labels = {'Contact Status', 'Contact Status'};
 
             else
