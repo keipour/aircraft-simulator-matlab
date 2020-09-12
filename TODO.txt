@@ -16,6 +16,8 @@ Smaller changes:
 - Add wind gusts
 - Add wind field
 - Add proper motor model
+- Simulation: Determine the collision force vector direction properly based on the wall normals
+- Simulation: Add proper moment handling during contact
 
 Larger changes:
 - Refactoring the whole project for better folders etc.
