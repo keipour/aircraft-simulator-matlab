@@ -188,6 +188,7 @@ classdef multirotor < handle
             if obj.HasArm
                 new_state.EndEffectorPosition = obj.CalcEndEffectorPosition(new_state.Position, new_state.RPY);
                 new_state.EndEffectorVelocity = obj.CalcEndEffectorVelocity(new_state.Velocity, new_state.Omega, new_state.RPY);
+                new_state.EndEffectorOmega = new_state.Omega;
             end
         end
         
@@ -450,10 +451,10 @@ classdef multirotor < handle
             e_vel = m_vel + RBI' * cross(m_omega, obj.EndEffector.EndEffectorPosition);
         end
         
-        function e_rot = GetEndEffectorRotation(obj)
+        function R_IE = GetEndEffectorRotation(obj)
             obj.CheckEndEffector();
             RBI = obj.GetRotationMatrix();
-            e_rot = RBI' * obj.EndEffector.R_BR;
+            R_IE = RBI' * obj.EndEffector.R_BE;
         end
         
         function UpdateNumOfRotors(obj)
