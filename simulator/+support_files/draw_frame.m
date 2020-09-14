@@ -162,7 +162,7 @@ function update_frame_labels(form_handles, curr_time, zoom_level, speed, curr_st
     e_str3 = sprintf('%0.3f\n\n%0.3f\n\n%0.3f', curr_state.ForceSensor(1), ...
         curr_state.ForceSensor(2), curr_state.ForceSensor(3));
 
-    a_str1 = sprintf('%0.3f\n\n%d', curr_time, zoom_level);
+    a_str1 = sprintf('%0.3f\n\n%0.1f', curr_time, zoom_level);
     a_str2 = sprintf('%0.2fx\n\n%d', speed, curr_state.InCollision);
 
     %title(strtitle);

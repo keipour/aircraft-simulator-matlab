@@ -32,6 +32,8 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam);
     
     set(fig, 'WindowKeyPressFcn', @Key_Down);
+    zoom(fig, 'off');
+    set(fig,'WindowScrollWheelFcn',@Mouse_Scroll);
     %set(fig, 'KeyPressFcn', @Key_Down);
     
     if is_recording
@@ -96,11 +98,11 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
         elseif key_code == 43 || key_code == 61 % + key
             zoom_level = min(zoom_level + 1, num_of_zoom_levels);
         elseif key_code == 45 % - key
-            zoom_level = max(zoom_level - 1, 0);
+            zoom_level = zoom_level - 1;
         elseif key_code == 30 % up key
             speed = min(speed * 2, 16);
         elseif key_code == 31 % down key
-            speed = max(speed / 2, 1/16);
+            speed = max(speed / 2, 1/32);
         elseif key_code == 28 % left arrow key
             while ind > 1 && curr_time - 2 * speed <= t(ind)
                 ind = ind - 1;
@@ -119,6 +121,15 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
             delete(gcbf);
         end
     end
+
+    function Mouse_Scroll(~, event)
+        zoom_scroll_steps = 0.5;
+        if event.VerticalScrollCount > 0 % scroll down 
+            zoom_level = zoom_level - zoom_scroll_steps;
+        else % scroll up  
+            zoom_level = min(zoom_level + zoom_scroll_steps, num_of_zoom_levels);
+        end  
+    end 
 end
 
 %% Helper functions
