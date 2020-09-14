@@ -1,7 +1,5 @@
 Smaller changes:
-- Improve speed by checking in control allocator and multirotor if the input is the same as the last time
 - Allow contact at any point of the multirotor
-- Add moment estimation from contact point
 - Add force controller
 - Add moment controller
 - Add mixer-based control allocation
@@ -16,8 +14,8 @@ Smaller changes:
 - Add wind gusts
 - Add wind field
 - Add proper motor model
-- Simulation: Determine the collision force vector direction properly based on the wall normals
 - Simulation: Add proper moment handling during contact
+- Multirotor: Unified dynamics update for contact and non-contact modes
 
 Larger changes:
 - Refactoring the whole project for better folders etc.
@@ -26,3 +24,4 @@ Larger changes:
 - Add support for better graphics (e.g., Unity3D)
 - Improve real-time factor
 - Add simulink support
+- Add multilink arm support
