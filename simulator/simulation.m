@@ -205,7 +205,7 @@ classdef simulation < handle
             wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
             
             % Calculate the next state of the robot if there are no collisions
-            [wrench] = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
+            wrench = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
                 zeros(6, 1), wind_force, rotor_speeds_squared, dt, false, zeros(3, 1));
             
@@ -216,24 +216,31 @@ classdef simulation < handle
             if collision == true
                 
                 wall_normal = [-1; 0; 0];
-                [vel_mat, force_mat] = get_free_contact_matrices(wall_normal);
+                %wall_normal = [-cosd(30); 0; -sind(30)];
 
-                force_sensor = zeros(3, 1);
+                ft_sensor = zeros(6, 1);
                 if obj.Multirotor.HasEndEffector()
 
-                    % Calculate the force sensor reading
-                    collision_force = -dot(wrench(4:6), wall_normal);
-                    if collision_force < 0
-                        collision_force = 0;
-                    end
-
-                    collision_force_vec = collision_force * wall_normal;
+                    % Calculate the wrench resulting from the contact
+                    contact_wrench = - calculate_contact_force(wall_normal, ...
+                        wrench, obj.Multirotor.GetRotationMatrix());
+                    
+                    % Calculate the rotation from inertial to the sensor (end effector) frame
                     R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
-                    force_sensor = R_SI' * collision_force_vec;
+                    
+                    % Create the block diagonal rotation
+                    % Note: For some weird reason, in R2019b this method of creating block 
+                    % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
+                    % than using blkdiag function
+                    blk_rot = eye(6);
+                    blk_rot(1:3, 1:3) = obj.Multirotor.EndEffector.R_BE';
+                    blk_rot(4:6, 4:6) = R_SI';
+                    
+                    % Rotate the contact wrench to the force/torque sensor frame
+                    ft_sensor = blk_rot * contact_wrench;
                 end
                 
-                torque_sensor = zeros(3, 1);
-                new_state = obj.Multirotor.CalcNextState(wrench, [torque_sensor; force_sensor],...
+                new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...
                     wind_force, rotor_speeds_squared, dt, true, wall_normal);
             end
             
@@ -246,23 +253,31 @@ end
 
 %% Helper functions
 
-function [vel_mat, force_mat] = get_free_contact_matrices(normal)
-    base_vec = [0; 0; 1];
-    orth_vec1 = [0; 1; 0];
-    orth_vec2 = [1; 0; 0];
-    
-    R = vrrotvec2mat(vrrotvec([cos(pi/4); 0; cos(pi/4)], base_vec));
-    o1 = R' * orth_vec1;
-    o2 = R' * orth_vec2;
-    
-    
-    
-    Rot = blkdiag(R, R);
+function wrench_out = calculate_contact_force(contact_normal, wrench, rot_bi)
 
-    base_vel_mat = diag([0, 1, 1, 1, 1, 1]);
-    base_vel_mat = diag([1, 1, 0, 1, 1, 1]);
-    vel_mat = Rot * base_vel_mat;    
+    % Define the constraints in the contact frame
+    force_mat = diag([0, 0, 0, 1, 0, 0]);
+    force_constraints = [0, 0, 0, -1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
+    
+    % Find the rotation from the inertial to contact
+    rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
+    
+    % Find the rotation from the robot body to the contact frame
+    rot_cb = rot_ic' * rot_bi';
 
-    base_force_mat = eye(6) - base_vel_mat;
-    force_mat = Rot * base_force_mat;
+    % Create the block diagonal for twist and wrench rotations to the base frame
+    % Note: For some weird reason, in R2019b this method of creating block 
+    % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
+    % than using blkdiag function
+    blk_c = eye(6);
+    blk_c(1:3, 1:3) = rot_cb;
+    blk_c(4:6, 4:6) = rot_ic';
+    blk_c_rev = eye(6);
+    blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
+    blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
+    
+    wrench_c = blk_c * wrench;
+    wrench_free = force_mat * wrench_c;
+    wrench_free(wrench_c .* force_constraints < 0) = 0;
+    wrench_out = blk_c_rev * wrench_free;
 end
