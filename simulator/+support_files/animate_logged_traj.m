@@ -31,10 +31,14 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     [fig, form_handles, plot_handles, plot_data] = support_files.create_frame_figure...
         (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam);
     
+    set(fig, 'KeyPressFcn', []);
     set(fig, 'WindowKeyPressFcn', @Key_Down);
-    zoom(fig, 'off');
     set(fig,'WindowScrollWheelFcn',@Mouse_Scroll);
-    %set(fig, 'KeyPressFcn', @Key_Down);
+    
+    % This is to restore the rotation capability in R2018b and later which 
+    % is disabled by 'WindowScrollWheelFcn'. Needs testing in older
+    % versions of MATLAB as well.
+    enableDefaultInteractivity(form_handles.axanim);
     
     if is_recording
         open(video_writer);
@@ -51,6 +55,20 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
             break
         end
         
+        % Keep the keyboard hotkeys on even when the figure tools are selected.
+        % Note: This is from undocumented MATLAB and may change in releases
+        % after R2019b. 
+        % Source: http://undocumentedmatlab.com/articles/enabling-user-callbacks-during-zoom-pan
+        hManager = uigetmodemanager(fig);
+        try
+            set(hManager.WindowListenerHandles, 'Enable', 'off');  % HG1
+        catch
+            [hManager.WindowListenerHandles.Enabled] = deal(false);  % HG2
+        end
+        set(fig, 'KeyPressFcn', []);
+        set(fig, 'WindowKeyPressFcn', @Key_Down);
+        
+        % Get the current time and state for this iteration
         curr_time = t(ind);
         curr_state = states{ind};
         
@@ -124,11 +142,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
 
     function Mouse_Scroll(~, event)
         zoom_scroll_steps = 0.5;
-        if event.VerticalScrollCount > 0 % scroll down 
-            zoom_level = zoom_level - zoom_scroll_steps;
-        else % scroll up  
-            zoom_level = min(zoom_level + zoom_scroll_steps, num_of_zoom_levels);
-        end  
+        zoom_level = min(zoom_level - event.VerticalScrollCount * zoom_scroll_steps, num_of_zoom_levels);
     end 
 end
 
