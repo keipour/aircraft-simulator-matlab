@@ -105,6 +105,7 @@ classdef multirotor < handle
             if obj.HasArm
                 obj.State.EndEffectorPosition = obj.CalcEndEffectorPosition(obj.State.Position, obj.State.RPY);
                 obj.State.EndEffectorVelocity = obj.CalcEndEffectorVelocity(obj.State.Velocity, obj.State.Omega, obj.State.RPY);
+                obj.State.EndEffectorOmega = obj.State.Omega;
             end
         end
         
@@ -355,20 +356,36 @@ classdef multirotor < handle
             new_state.Acceleration = p_dotdot;
             new_state.AngularAcceleration = omega_dot;
 
+            % Update the other state variables
+            new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
+            new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
+            new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
+            new_state.Omega = obj.State.Omega + new_state.AngularAcceleration * dt;
+            new_state.Omega = check_limits(new_state.Omega, obj.OmegaLimits);
+            new_state.Position = obj.State.Position + 0.5 * new_state.Acceleration * dt * dt + ...
+                    obj.State.Velocity * dt;
+            new_state.EulerRate = phi_dot;
+            new_state.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
+
             % If there is a collision
             if is_collision
                 % I assume no bouncing due to the impact and no impulse
                 % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
                 % We assume that the collision happened at the end effector
                 % if it has end effector
+                
                 if obj.HasArm
-                    new_state.EndEffectorVelocity = obj.State.EndEffectorVelocity + new_state.Acceleration * dt;
-                    vel_vector_normal = dot(new_state.EndEffectorVelocity, collision_normal) * collision_normal;
-                    new_state.EndEffectorVelocity = new_state.EndEffectorVelocity - vel_vector_normal;
-                    new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
                     RBI = obj.GetRotationMatrix();
+                    ee_vel = obj.CalcEndEffectorVelocity(...
+                        new_state.Velocity, new_state.Omega, obj.State.RPY);
+                    twist = [new_state.Omega * dt; ee_vel];
+                    contact_twist = calculate_contact_twist(collision_normal, twist, RBI);
+                    new_state.EndEffectorOmega = contact_twist(1:3);
+                    new_state.EndEffectorVelocity = contact_twist(4:6);
+                    new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
                     new_state.Position = new_state.EndEffectorPosition - RBI' * obj.EndEffector.EndEffectorPosition;
                     new_state.Velocity = (new_state.Position - obj.State.Position) / dt;
+                    new_state.Omega = new_state.EndEffectorOmega;
                 else
                     new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
                     vel_vector_normal = dot(new_state.Velocity, collision_normal) * collision_normal;
@@ -377,21 +394,7 @@ classdef multirotor < handle
                     new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
                     new_state.Position = obj.State.Position + new_state.Velocity * dt;
                 end
-            else
-                new_state.Position = obj.State.Position + 0.5 * new_state.Acceleration * dt * dt + ...
-                    obj.State.Velocity * dt;
-
-                new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
-                new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
-                new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
             end
-            
-            % Update the rest of the state
-            new_state.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
-            new_state.Omega = obj.State.Omega + new_state.AngularAcceleration * dt;
-            new_state.Omega = check_limits(new_state.Omega, obj.OmegaLimits);
-
-            new_state.EulerRate = phi_dot;
         end
         
         function new_state = CalcStateLagrange(obj, RotorSpeedsSquared, dt)
@@ -573,4 +576,33 @@ end
 
 function X = skewsym(x)
     X = [0 -x(3) x(2) ; x(3) 0 -x(1) ; -x(2) x(1) 0 ];
+end
+
+function twist_out = calculate_contact_twist(contact_normal, twist, rot_bi)
+
+    % Define the constraints in the contact frame
+    twist_mat = diag([1, 1, 1, 0, 1, 1]);
+    twist_constraints = [0, 0, 0, 1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
+    
+    % Find the rotation from the inertial to contact
+    rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
+    
+    % Find the rotation from the robot body to the contact frame
+    rot_cb = rot_ic' * rot_bi';
+
+    % Create the block diagonal for twist and wrench rotations to the base frame
+    % Note: For some weird reason, in R2019b this method of creating block 
+    % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
+    % than using blkdiag function
+    blk_c = eye(6);
+    blk_c(1:3, 1:3) = rot_cb;
+    blk_c(4:6, 4:6) = rot_ic';
+    blk_c_rev = eye(6);
+    blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
+    blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
+    
+    twist_c = blk_c * twist;
+    twist_free = twist_mat * twist_c;
+    twist_free(twist_c .* twist_constraints < 0) = 0;
+    twist_out = blk_c_rev * twist_free;
 end

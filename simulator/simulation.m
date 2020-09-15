@@ -222,7 +222,7 @@ classdef simulation < handle
                 if obj.Multirotor.HasEndEffector()
 
                     % Calculate the wrench resulting from the contact
-                    contact_wrench = - calculate_contact_force(wall_normal, ...
+                    contact_wrench = - calculate_contact_wrench(wall_normal, ...
                         wrench, obj.Multirotor.GetRotationMatrix());
                     
                     % Calculate the rotation from inertial to the sensor (end effector) frame
@@ -253,11 +253,11 @@ end
 
 %% Helper functions
 
-function wrench_out = calculate_contact_force(contact_normal, wrench, rot_bi)
+function wrench_out = calculate_contact_wrench(contact_normal, wrench, rot_bi)
 
     % Define the constraints in the contact frame
-    force_mat = diag([0, 0, 0, 1, 0, 0]);
-    force_constraints = [0, 0, 0, -1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
+    wrench_mat = diag([0, 0, 0, 1, 0, 0]);
+    wrench_constraints = [0, 0, 0, -1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
     
     % Find the rotation from the inertial to contact
     rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
@@ -277,7 +277,7 @@ function wrench_out = calculate_contact_force(contact_normal, wrench, rot_bi)
     blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
     
     wrench_c = blk_c * wrench;
-    wrench_free = force_mat * wrench_c;
-    wrench_free(wrench_c .* force_constraints < 0) = 0;
+    wrench_free = wrench_mat * wrench_c;
+    wrench_free(wrench_c .* wrench_constraints < 0) = 0;
     wrench_out = blk_c_rev * wrench_free;
 end
