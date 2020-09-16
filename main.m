@@ -18,7 +18,7 @@ m = robots.tilted_hex(true);
 
 % Add a wall and the ground to the environment
 e = environment;
-e.AddCuboidObject([15; 10; -2.5], [1; 10; 5], 0);
+e.AddCuboidObject([15; 10; -2.5], [2; 10; 5], 0);
 e.AddGroundPlane([-100; 100], [-100; 100]);
 e.AverageWind = [0; 0; 0];
 
@@ -49,12 +49,13 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 %sim.SimulateAttitudeResponse([0; 0; -90], true);
 
 % Position response
-figure;
-sim.SimulatePositionResponse([17; 8; -2], 0, true);
+%figure;
+%sim.SimulatePositionResponse([17; 8; -2], -45, true);
 
 % Trajectory following
 %traj = [12, 12, -4, 0; 12, 16, -3, 90];
-%sim.SimulateTrajectory(traj, 0.25);
+traj = [17, 8, -2, 0];
+sim.SimulateTrajectory(traj, 0.25);
 
 %% Draw Additional plots
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind'}, true);

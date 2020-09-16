@@ -166,13 +166,13 @@ classdef multirotor < handle
             % Calculate the time step
             switch obj.DynamicsMethod
                 case multirotor_dynamics_methods.NewtonEuler
-                    new_state = obj.CalcStateNewtonEuler(wrench + [zeros(3, 1); ext_wrench(4:6)], ...
+                    new_state = obj.CalcStateNewtonEuler(wrench + ext_wrench, ...
                         dt, is_collision, collision_normal);
                 otherwise
                     error('The specified dynamics method is not implemented yet.');
             end
             
-            % Save the force and moment data
+            % Save the rest of the state variables not filled before
             new_state.Force = wrench(4:6);
             new_state.Moment = wrench(1:3);
             new_state.ForceSensor = tf_sensor_wrench(4:6);
@@ -184,12 +184,6 @@ classdef multirotor < handle
                 [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
                 new_state.RotorSpeeds(i) = sqrt(rs);
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
-            end
-            
-            if obj.HasArm
-                new_state.EndEffectorPosition = obj.CalcEndEffectorPosition(new_state.Position, new_state.RPY);
-                new_state.EndEffectorVelocity = obj.CalcEndEffectorVelocity(new_state.Velocity, new_state.Omega, new_state.RPY);
-                new_state.EndEffectorOmega = new_state.Omega;
             end
         end
         
@@ -341,8 +335,7 @@ classdef multirotor < handle
     %% Private Methods
     methods(Access=protected)
         
-        function new_state = CalcStateNewtonEuler(obj, wrench, ...
-                dt, is_collision, collision_normal)
+        function new_state = CalcStateNewtonEuler(obj, wrench, dt, is_collision, collision_normal)
             
             % Create the new state
             new_state = state(obj.NumOfRotors);
@@ -351,40 +344,40 @@ classdef multirotor < handle
             phi_dot = obj.GetEulerRate();
             omega_dot = obj.I_inv * wrench(1 : 3);
             
-            % I assume approximately constant acceleration to update these
-            % first before other variables
+            % I assume approximately constant acceleration
             new_state.Acceleration = p_dotdot;
             new_state.AngularAcceleration = omega_dot;
+            new_state.EulerRate = phi_dot;
 
-            % Update the other state variables
-            new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
+            new_state.Velocity = obj.State.Velocity + obj.State.Acceleration * dt;
             new_state.Velocity = check_limits(new_state.Velocity, obj.VelocityLimits);
             new_state.Velocity = check_limits(new_state.Velocity, obj.TotalSpeedLimit);
-            new_state.Omega = obj.State.Omega + new_state.AngularAcceleration * dt;
+            new_state.Omega = obj.State.Omega + obj.State.AngularAcceleration * dt;
             new_state.Omega = check_limits(new_state.Omega, obj.OmegaLimits);
-            new_state.Position = obj.State.Position + 0.5 * new_state.Acceleration * dt * dt + ...
-                    obj.State.Velocity * dt;
-            new_state.EulerRate = phi_dot;
+            new_state.Position = obj.State.Position + 0.5 * obj.State.Acceleration * dt * dt + obj.State.Velocity * dt;
             new_state.RPY = wrapTo180(obj.State.RPY + obj.State.EulerRate * dt);
 
+            % Update the end effector's state
+            if obj.HasArm
+                new_state.EndEffectorPosition = obj.CalcEndEffectorPosition(new_state.Position, new_state.RPY);
+                new_state.EndEffectorVelocity = obj.CalcEndEffectorVelocity(new_state.Velocity, new_state.Omega, new_state.RPY);
+                new_state.EndEffectorOmega = new_state.Omega;
+            end
+            
             % If there is a collision
             if is_collision
                 % I assume no bouncing due to the impact and no impulse
                 % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
                 % We assume that the collision happened at the end effector
                 % if it has end effector
-                
+                                
                 if obj.HasArm
                     RBI = obj.GetRotationMatrix();
-                    ee_vel = obj.CalcEndEffectorVelocity(...
-                        new_state.Velocity, new_state.Omega, obj.State.RPY);
-                    twist = [new_state.Omega * dt; ee_vel];
+                    twist = [new_state.EndEffectorOmega; new_state.EndEffectorVelocity];
                     contact_twist = calculate_contact_twist(collision_normal, twist, RBI);
                     new_state.EndEffectorOmega = contact_twist(1:3);
                     new_state.EndEffectorVelocity = contact_twist(4:6);
-                    new_state.EndEffectorPosition = obj.State.EndEffectorPosition + new_state.EndEffectorVelocity * dt;
-                    new_state.Position = new_state.EndEffectorPosition - RBI' * obj.EndEffector.EndEffectorPosition;
-                    new_state.Velocity = (new_state.Position - obj.State.Position) / dt;
+                    new_state.Velocity = obj.CalcRobotVelocityFromEndEffector(new_state.EndEffectorVelocity, new_state.EndEffectorOmega, new_state.RPY);
                     new_state.Omega = new_state.EndEffectorOmega;
                 else
                     new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
@@ -452,6 +445,13 @@ classdef multirotor < handle
             obj.CheckEndEffector();
             RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
             e_vel = m_vel + RBI' * cross(m_omega, obj.EndEffector.EndEffectorPosition);
+        end
+        
+        function m_vel = CalcRobotVelocityFromEndEffector(obj, e_vel, e_omega, m_rpy_deg)
+        % Reference: https://www.mdpi.com/2076-3417/9/11/2230
+            obj.CheckEndEffector();
+            RBI = physics.GetRotationMatrixDegrees(m_rpy_deg(1), m_rpy_deg(2), m_rpy_deg(3));
+            m_vel = e_vel - RBI' * cross(e_omega, obj.EndEffector.EndEffectorPosition);
         end
         
         function R_IE = GetEndEffectorRotation(obj)
