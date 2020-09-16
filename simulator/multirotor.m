@@ -372,9 +372,10 @@ classdef multirotor < handle
                 % if it has end effector
                                 
                 if obj.HasArm
-                    RBI = obj.GetRotationMatrix();
                     twist = [new_state.EndEffectorOmega; new_state.EndEffectorVelocity];
-                    contact_twist = calculate_contact_twist(collision_normal, twist, RBI);
+                    contact_twist = physics.ApplyContactConstraints...
+                        (twist, collision_normal, diag([1, 1, 1, 0, 1, 1]), ...
+                        [0; 0; 0; 1; 0; 0], [obj.GetRotationMatrix()'; eye(3)]);
                     new_state.EndEffectorOmega = contact_twist(1:3);
                     new_state.EndEffectorVelocity = contact_twist(4:6);
                     new_state.Velocity = obj.CalcRobotVelocityFromEndEffector(new_state.EndEffectorVelocity, new_state.EndEffectorOmega, new_state.RPY);
@@ -576,33 +577,4 @@ end
 
 function X = skewsym(x)
     X = [0 -x(3) x(2) ; x(3) 0 -x(1) ; -x(2) x(1) 0 ];
-end
-
-function twist_out = calculate_contact_twist(contact_normal, twist, rot_bi)
-
-    % Define the constraints in the contact frame
-    twist_mat = diag([1, 1, 1, 0, 1, 1]);
-    twist_constraints = [0, 0, 0, 1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
-    
-    % Find the rotation from the inertial to contact
-    rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
-    
-    % Find the rotation from the robot body to the contact frame
-    rot_cb = rot_ic' * rot_bi';
-
-    % Create the block diagonal for twist and wrench rotations to the base frame
-    % Note: For some weird reason, in R2019b this method of creating block 
-    % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
-    % than using blkdiag function
-    blk_c = eye(6);
-    blk_c(1:3, 1:3) = rot_cb;
-    blk_c(4:6, 4:6) = rot_ic';
-    blk_c_rev = eye(6);
-    blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
-    blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
-    
-    twist_c = blk_c * twist;
-    twist_free = twist_mat * twist_c;
-    twist_free(twist_c .* twist_constraints < 0) = 0;
-    twist_out = blk_c_rev * twist_free;
 end

@@ -97,8 +97,16 @@ classdef simulation < handle
                 return;
             end
             pos_yaw_des = last_commands.DesiredPositionYaw.Data;
-            [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
-                pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], time);
+            
+            if ~obj.Multirotor.State.InCollision
+                [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
+                    pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], time);
+            else
+                vel_mat = diag([0, 1, 1]);
+                force_constraint = [-1; 0; 0];
+                [lin_accel, rpy_des] = obj.Controller.ControlForce(obj.Multirotor, ...
+                    5, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], vel_mat, force_constraint, time);
+            end
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
             logger.Add(logger_signals.DesiredRPY, rpy_des);
@@ -169,7 +177,7 @@ classdef simulation < handle
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
         
-        function res = SimulateTrajectory(obj, traj_des, radius)
+        function SimulateTrajectory(obj, traj_des, radius)
         % Simulate the response to a desired attitude input
             
             obj.Reset();
@@ -223,8 +231,9 @@ classdef simulation < handle
                 if obj.Multirotor.HasEndEffector()
 
                     % Calculate the wrench resulting from the contact
-                    contact_wrench = - calculate_contact_wrench(wall_normal, ...
-                        wrench, obj.Multirotor.GetRotationMatrix());
+                    contact_wrench = - physics.ApplyContactConstraints...
+                        (wrench, wall_normal, diag([0, 0, 0, 1, 0, 0]), ...
+                        [0; 0; 0; -1; 0; 0], [obj.Multirotor.GetRotationMatrix()'; eye(3)]);
                     
                     % Calculate the rotation from inertial to the sensor (end effector) frame
                     R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
@@ -250,35 +259,4 @@ classdef simulation < handle
         end
         
     end
-end
-
-%% Helper functions
-
-function wrench_out = calculate_contact_wrench(contact_normal, wrench, rot_bi)
-
-    % Define the constraints in the contact frame
-    wrench_mat = diag([0, 0, 0, 1, 0, 0]);
-    wrench_constraints = [0, 0, 0, -1, 0, 0]'; % 0: no constraint, 1: can only be positive, -1: can only be negative
-    
-    % Find the rotation from the inertial to contact
-    rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
-    
-    % Find the rotation from the robot body to the contact frame
-    rot_cb = rot_ic' * rot_bi';
-
-    % Create the block diagonal for twist and wrench rotations to the base frame
-    % Note: For some weird reason, in R2019b this method of creating block 
-    % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
-    % than using blkdiag function
-    blk_c = eye(6);
-    blk_c(1:3, 1:3) = rot_cb;
-    blk_c(4:6, 4:6) = rot_ic';
-    blk_c_rev = eye(6);
-    blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
-    blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
-    
-    wrench_c = blk_c * wrench;
-    wrench_free = wrench_mat * wrench_c;
-    wrench_free(wrench_c .* wrench_constraints < 0) = 0;
-    wrench_out = blk_c_rev * wrench_free;
 end
