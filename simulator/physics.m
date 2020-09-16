@@ -158,6 +158,41 @@ classdef physics
             f = 1/2 * physics.AirDensity * (air_vel.^2) * eff_area;
         end
         
+        function vec_out = ApplyContactConstraints(vec_in, contact_normal, free_mat, constraint_vec, rot_to_i)
+        % In the constraint vector, for each element of input vector in the contact frame we apply: 
+        % 0: no constraint, 1: can only be positive, -1: can only be negative
+        % rot_to_i is the vertically stacked rotation matrices to transform
+        % the input vector to the inertial frame (e.g. [rot_ib; eye(3)] for
+        % vec_in = [omega_b; velocity_i] input)
+
+            % Find the rotation from the inertial to contact
+            rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
+
+            % Create the block diagonal for rotations to the contact frame
+            % Note: 
+            % For some weird reason, in R2019b this method of creating block 
+            % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
+            % than using blkdiag function
+            blk_c = eye(6);
+            blk_c(1:3, 1:3) = rot_ic' * rot_to_i(1:3, :);
+            blk_c(4:6, 4:6) = rot_ic' * rot_to_i(4:6, :);
+            blk_c_rev = eye(6);
+            blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
+            blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
+
+            % The input vector transformed to the contact frame
+            vec_c = blk_c * vec_in;
+
+            % The free vector applied, which only keeps the
+            % free-to-move directions and zeros the rest
+            vec_free_c = free_mat * vec_c;
+
+            % Apply the constraint matrix
+            vec_free_c(vec_c .* constraint_vec < 0) = 0;
+
+            % Transform the vector back to the original frame
+            vec_out = blk_c_rev * vec_free_c;
+        end
     end
 end
 
