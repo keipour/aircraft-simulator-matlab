@@ -16,6 +16,8 @@ Smaller changes:
 - Add proper motor model
 - Simulation: Add proper moment handling during contact
 - Multirotor: Unified dynamics update for contact and non-contact modes
+- Replace time with dt in the controllers
+- Multi-point collision
 
 Larger changes:
 - Refactoring the whole project for better folders etc.
