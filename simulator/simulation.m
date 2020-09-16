@@ -86,7 +86,7 @@ classdef simulation < handle
                 return;
             end
             rpy_des = last_commands.DesiredRPY.Data;
-            euler_accel = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, time);
+            euler_accel = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, [], [], time);
             last_commands.DesiredEulerAcceleration.Set(euler_accel, time);
             logger.Add(logger_signals.DesiredEulerAcceleration, euler_accel);
         end
@@ -97,7 +97,8 @@ classdef simulation < handle
                 return;
             end
             pos_yaw_des = last_commands.DesiredPositionYaw.Data;
-            [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, pos_yaw_des(1 : 3), pos_yaw_des(4), time);
+            [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
+                pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], time);
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
             logger.Add(logger_signals.DesiredRPY, rpy_des);

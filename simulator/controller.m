@@ -16,12 +16,12 @@ classdef controller < handle
             rotor_speeds_squared = obj.ControlAllocation.CalcRotorSpeeds(multirotor, lin_acc_des, euler_acc_des);
         end
         
-        function euler_accel = ControlAttitude(obj, multirotor, rpy_des, dt)
-            euler_accel = obj.AttitudeController.CalculateControlCommand(multirotor, rpy_des, dt);
+        function euler_accel = ControlAttitude(obj, multirotor, rpy_des, rpy_dot_des, eul_acc_des, dt)
+            euler_accel = obj.AttitudeController.CalculateControlCommand(multirotor, rpy_des, rpy_dot_des, eul_acc_des, dt);
         end
         
-        function [lin_accel, rpy_des] = ControlPosition(obj, multirotor, pos_des, yaw_des, dt)
-            lin_accel = obj.PositionController.CalculateControlCommand(multirotor, pos_des, dt);
+        function [lin_accel, rpy_des] = ControlPosition(obj, multirotor, pos_des, yaw_des, vel_des, acc_des, dt)
+            lin_accel = obj.PositionController.CalculateControlCommand(multirotor, pos_des, vel_des, acc_des, dt);
             rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
         end
         

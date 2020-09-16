@@ -8,10 +8,17 @@ classdef position_controller < pid_controller
     
     methods
 
-        function lin_accel = CalculateControlCommand(obj, multirotor, pos_des, time)
+        function lin_accel = CalculateControlCommand(obj, multirotor, pos_des, vel_des, acc_des, time)
         % Calculates PID response using this formula:
-        % P * err + D * -velocity + I * error_integral
+        % out = acc_des +  D * vel_err + P * ang_err + I * error_integral
             
+            if isempty(vel_des)
+                vel_des = zeros(3, 1);
+            end
+            if isempty(acc_des)
+                acc_des = zeros(3, 1);
+            end
+        
             % Calculate time step
             dt = time - obj.LastTime;
         
@@ -19,13 +26,13 @@ classdef position_controller < pid_controller
             pos_err = pos_des - multirotor.State.Position;
             
             % Calculate the velocity error
-            vel_err = 0 - multirotor.State.Velocity;
+            vel_err = vel_des - multirotor.State.Velocity;
             
             % Update the error integral
             obj.ErrorIntegral = obj.ErrorIntegral + pos_err * dt;
             
             % Calculate the PID result
-            lin_accel = obj.P * pos_err + ...
+            lin_accel = acc_des + obj.P * pos_err + ...
                 obj.D * vel_err + obj.I * obj.ErrorIntegral;
 
             % Apply the velocity limits
@@ -79,7 +86,7 @@ classdef position_controller < pid_controller
             rpy_des(2) = -asind(x_axis(3));
         end
         
-        function rpy_des = CalculateZeroTiltAttitude(acc_cmd, yaw_des)
+        function rpy_des = CalculateZeroTiltAttitude(~, yaw_des)
             rpy_des = [0; 0; yaw_des];
         end
     end

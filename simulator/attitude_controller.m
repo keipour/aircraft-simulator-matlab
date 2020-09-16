@@ -7,10 +7,17 @@ classdef attitude_controller < pid_controller
     
     methods
 
-        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, time)
+        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, rpy_dot_des, eul_acc_des, time)
         % Calculates PID response using this formula:
-        % P * err + D * -velocity + I * error_integral
+        % out = acc_des +  D * vel_err + P * ang_err + I * error_integral
             
+            if isempty(rpy_dot_des)
+                rpy_dot_des = zeros(3, 1);
+            end
+            if isempty(eul_acc_des)
+                eul_acc_des = zeros(3, 1);
+            end
+        
             % Calculate time step
             dt = time - obj.LastTime;
         
@@ -18,13 +25,13 @@ classdef attitude_controller < pid_controller
             rpy_err = wrapToPi(deg2rad(rpy_des - multirotor.State.RPY));
             
             % Calculate the rate in radians
-            rpy_dot_err = deg2rad(0 - multirotor.State.EulerRate);
+            rpy_dot_err = deg2rad(rpy_dot_des - multirotor.State.EulerRate);
             
             % Update the error integral
             obj.ErrorIntegral = obj.ErrorIntegral + rpy_err * dt;
             
             % Calculate the PID result
-            euler_accel = obj.P * rpy_err + ...
+            euler_accel = eul_acc_des + obj.P * rpy_err + ...
                 obj.D * rpy_dot_err + obj.I * obj.ErrorIntegral;
             
             % Apply the euler rate limits
@@ -39,7 +46,6 @@ classdef attitude_controller < pid_controller
             
             % Update the time of the last call
             obj.LastTime = time;
-
         end
         
     end
