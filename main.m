@@ -26,14 +26,16 @@ e.AverageWind = [0; 0; 0];
 
 sim = simulation(m, controller(m), e);
 
-sim.SetTotalTime(20);
+sim.SetTotalTime(10);
 
 %% Prepare the controller
 
 sim.Controller.AttitudeController.SetPID(60, 0, 20);
 sim.Controller.PositionController.SetPID(3, 0, 7);
+
 sim.Controller.HMFCController.ForceController.SetPID(1, 0, 3);
-sim.Controller.HMFCController.PositionController.SetPID(3, 0, 7);
+sim.Controller.HMFCController.PositionController.SetPID(5, 0, 7);
+
 sim.Controller.SetAttitudeStrategy(attitude_strategies.ZeroTilt);
 
 %% Initial multirotor state
@@ -56,7 +58,7 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Trajectory following
 %traj = [12, 12, -4, 0; 12, 16, -3, 90];
-traj = [17, 8, -2, 0];
+traj = [15, 8, -2, 0];
 sim.SimulateTrajectory(traj, 0.25);
 
 %% Draw Additional plots

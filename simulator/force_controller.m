@@ -10,9 +10,12 @@ classdef force_controller < pid_controller
 
         function lin_accel = CalculateControlCommand(obj, mult, force_des, ~, ~, time)
 
-            persistent last_force
+            persistent last_force last_lin_accel
             if isempty(last_force)
                 last_force = mult.State.Force;
+            end
+            if isempty(last_lin_accel)
+                last_lin_accel = zeros(3, 1);
             end
             
             % Calculate time step
@@ -37,12 +40,13 @@ classdef force_controller < pid_controller
             obj.LimitErrorIntegral(force_accel, force_err, force_rate_err);
             
             % Limit the output
-            lin_accel = obj.LimitOutput(mult.State.Force / mult.TotalMass + force_accel * dt);
+            lin_accel = obj.LimitOutput(last_lin_accel + force_accel * dt);
 
             % Update the time of the last call
             obj.LastTime = time;
             
             last_force = mult.State.Force;
+            last_lin_accel = lin_accel;
         end
     end
     
