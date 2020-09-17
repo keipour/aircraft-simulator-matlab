@@ -7,7 +7,7 @@ classdef attitude_controller < pid_controller
     
     methods
 
-        function euler_accel = CalculateControlCommand(obj, multirotor, rpy_des, rpy_dot_des, eul_acc_des, time)
+        function euler_accel = CalculateControlCommand(obj, mult, rpy_des, rpy_dot_des, eul_acc_des, time)
         % Calculates PID response using this formula:
         % out = acc_des +  D * vel_err + P * ang_err + I * error_integral
             
@@ -22,10 +22,10 @@ classdef attitude_controller < pid_controller
             dt = time - obj.LastTime;
         
             % Calculate the error in radians
-            rpy_err = wrapToPi(deg2rad(rpy_des - multirotor.State.RPY));
+            rpy_err = wrapToPi(deg2rad(rpy_des - mult.State.RPY));
             
             % Calculate the rate in radians
-            rpy_dot_err = deg2rad(rpy_dot_des - multirotor.State.EulerRate);
+            rpy_dot_err = deg2rad(rpy_dot_des - mult.State.EulerRate);
             
             % Update the error integral
             obj.ErrorIntegral = obj.ErrorIntegral + rpy_err * dt;
@@ -36,7 +36,7 @@ classdef attitude_controller < pid_controller
             
             % Apply the euler rate limits
             euler_accel = pid_controller.ApplyRateLimits(obj.P, obj.D, rpy_err, ...
-                deg2rad(multirotor.State.EulerRate), euler_accel, deg2rad(obj.RateLimits), true);
+                deg2rad(mult.State.EulerRate), euler_accel, deg2rad(obj.RateLimits), true);
             
             % Limit the error integral (anti-windup)
             obj.LimitErrorIntegral(euler_accel, rpy_err, rpy_dot_err)

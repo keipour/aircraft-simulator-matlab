@@ -104,7 +104,7 @@ classdef simulation < handle
             else
                 vel_mat = diag([0, 1, 1]);
                 force_constraint = [-1; 0; 0];
-                [lin_accel, rpy_des] = obj.Controller.ControlForce(obj.Multirotor, ...
+                [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
                     5, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], vel_mat, force_constraint, time);
             end
             last_commands.DesiredRPY.Set(rpy_des, time);

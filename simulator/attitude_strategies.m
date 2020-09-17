@@ -1,4 +1,4 @@
-classdef attitude_types
+classdef attitude_strategies
    enumeration
       Full, ZeroTilt
    end

@@ -1,14 +1,17 @@
 classdef position_controller < pid_controller
 
     properties
-        AttitudeType attitude_types = attitude_types.Full;
         RateLimits = [7; 7; 9]; % in m/s
         OutputMax = [1; 1; 6]; % in m/s^2
     end
     
+    properties (SetAccess = private, GetAccess = public)
+        AttitudeStrategy attitude_strategies = attitude_strategies.Full;
+    end
+    
     methods
 
-        function lin_accel = CalculateControlCommand(obj, multirotor, pos_des, vel_des, acc_des, time)
+        function lin_accel = CalculateControlCommand(obj, mult, pos_des, vel_des, acc_des, time)
         % Calculates PID response using this formula:
         % out = acc_des +  D * vel_err + P * ang_err + I * error_integral
             
@@ -23,10 +26,10 @@ classdef position_controller < pid_controller
             dt = time - obj.LastTime;
         
             % Calculate the error
-            pos_err = pos_des - multirotor.State.Position;
+            pos_err = pos_des - mult.State.Position;
             
             % Calculate the velocity error
-            vel_err = vel_des - multirotor.State.Velocity;
+            vel_err = vel_des - mult.State.Velocity;
             
             % Update the error integral
             obj.ErrorIntegral = obj.ErrorIntegral + pos_err * dt;
@@ -37,7 +40,7 @@ classdef position_controller < pid_controller
 
             % Apply the velocity limits
             lin_accel = pid_controller.ApplyRateLimits(obj.P, obj.D, pos_err, ...
-                multirotor.State.Velocity, lin_accel, obj.RateLimits, false);
+                mult.State.Velocity, lin_accel, obj.RateLimits, false);
 
             % Limit the error integral (anti-windup)
             obj.LimitErrorIntegral(lin_accel, pos_err, vel_err);
@@ -53,11 +56,18 @@ classdef position_controller < pid_controller
         % Calculate the desired attitude to achieve the input acceleration
         % The desired attitude aligns the required force direction
         % (acceleration - gravity) with the Z axis. FRD frame is used here.
-            if obj.AttitudeType == attitude_types.Full
+            if obj.AttitudeStrategy == attitude_strategies.Full
                 rpy_des = position_controller.CalculateFullAttitude(acc_cmd, yaw_des);
-            elseif obj.AttitudeType == attitude_types.ZeroTilt
+            elseif obj.AttitudeStrategy == attitude_strategies.ZeroTilt
                 rpy_des = position_controller.CalculateZeroTiltAttitude(acc_cmd, yaw_des);
             end
+        end
+
+        function SetAttitudeStrategy(obj, attitude_strategy)
+            if ~isa(attitude_strategy, 'attitude_strategies')
+                error('Position Controller: Input attitude strategy must be from attitude_strategies enum.');
+            end
+            obj.AttitudeStrategy = attitude_strategy;
         end
 
     end

@@ -1,49 +1,34 @@
-classdef hmfc_controller < pid_controller
+classdef hmfc_controller < handle
 
     properties
-        RateLimits = [7; 7; 9]; % in m/s
-        OutputMax = [1; 1; 6]; % in m/s^2
+        PositionController position_controller
+        ForceController force_controller
     end
     
     methods
-
-        function lin_accel = CalculateControlCommand(obj, multirotor, force_des, ~, ~, time)
-
-            persistent last_force
-            if isempty(last_force)
-                last_force = multirotor.State.Force;
-            end
-            
-            % Calculate time step
-            dt = time - obj.LastTime;
-        
-            % Calculate the error
-            force_err = force_des - multirotor.State.Force;
-            
-            % Calculate the velocity error
-            force_rate_err = 0 - (multirotor.State.Force - last_force);
-            
-            % Update the error integral
-            obj.ErrorIntegral = obj.ErrorIntegral + force_err * dt;
-            
-            % Calculate the PID result
-            force_accel = obj.P * force_err + obj.D * force_rate_err + obj.I * obj.ErrorIntegral;
-
-            % Limit the error integral (anti-windup)
-            obj.LimitErrorIntegral(force_accel, force_err, force_rate_err);
-            
-            % Limit the output
-            lin_accel = obj.LimitOutput(multirotor.State.Force / multirotor.TotalMass + force_accel * dt);
-
-            % Update the time of the last call
-            obj.LastTime = time;
-            
-            last_force = multirotor.State.Force;
+        function obj = hmfc_controller()
+            obj.PositionController = position_controller;
+            obj.ForceController = force_controller;
         end
+        
+        function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, ...
+                force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt)
+
+            motion_lin_accel = obj.PositionController.CalculateControlCommand(mult, pos_des, vel_des, acc_des, dt);
+            force_lin_accel = obj.ForceController.CalculateControlCommand(mult, force_des, [], [], dt);
+
+            lin_accel = hmfc_controller.CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint);
+            rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
+        end
+        
+        function SetAttitudeStrategy(obj, attitude_strategy)
+            obj.PositionController.SetAttitudeStrategy(attitude_strategy);
+        end
+
     end
     
     methods (Static)
-        function lin_accel = CombineForceAndMotion(force_lin_accel, motion_lin_accel, vel_mat, force_constraint)
+        function lin_accel = CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint)
             lin_accel = motion_lin_accel;
             if motion_lin_accel(1) > 0
                 lin_accel(1) = force_lin_accel(1);
@@ -51,5 +36,6 @@ classdef hmfc_controller < pid_controller
         end
     end
     
+
 end
 
