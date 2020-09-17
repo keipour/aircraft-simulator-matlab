@@ -18,7 +18,7 @@ m = robots.tilted_hex(true);
 
 % Add a wall and the ground to the environment
 e = environment;
-e.AddCuboidObject([15; 10; -2.5], [2; 10; 5], 0);
+e.AddCuboidObject([15; 10; -2.5], [2; 10; 5], [0; 0; 0]);
 e.AddGroundPlane([-100; 100], [-100; 100]);
 e.AverageWind = [0; 0; 0];
 
