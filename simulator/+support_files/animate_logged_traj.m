@@ -13,8 +13,8 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     video_writer = [];
     if ~isempty(video_filename)
         is_recording = true;
-        video_writer = VideoWriter(video_filename);
-        video_writer.Quality = 100;
+        video_writer = VideoWriter(video_filename, 'Uncompressed AVI');
+        % video_writer.Quality = 100;
         if video_fps > 0
             video_writer.FrameRate = video_fps;
         else
@@ -89,6 +89,9 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
             if strcmp(ex.identifier, 'images:imshow:invalidAxes')
                 break;
             end
+            if is_recording
+                break;
+            end
             rethrow(ex)
         end
         
@@ -99,6 +102,21 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     
     if is_recording
         close(video_writer);
+        
+        % Convert to mp4 if ffmpeg is available
+        try
+            ret_val = 1;
+            if isunix % for Linux
+                [ret_val, ~] = system(sprintf('ffmpeg -i %s -y -an -c:v libx264 -crf 0 -preset slow %s', [video_filename '.avi'], [video_filename '.mp4']));
+            elseif ispc % for Windows
+                [ret_val, ~] = system(sprintf('ffmpeg.exe -i %s -y -an -c:v libx264 -crf 0 -preset slow %s', [video_filename '.avi'], [video_filename '.mp4']));
+            end
+            if ret_val ~= 0
+                warning('ffmpeg command not found or not properly called. The AVI video not converted to MP4');
+            end
+        catch
+            warning('Error converting the AVI video to MP4');
+        end
     end
     
     if isfield(form_handles,'fpvfig') && ishghandle(form_handles.fpvfig)
