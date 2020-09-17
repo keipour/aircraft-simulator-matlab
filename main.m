@@ -33,8 +33,8 @@ sim.SetTotalTime(10);
 sim.Controller.AttitudeController.SetPID(60, 0, 20);
 sim.Controller.PositionController.SetPID(3, 0, 7);
 
-sim.Controller.HMFCController.ForceController.SetPID(1, 0, 3);
-sim.Controller.HMFCController.PositionController.SetPID(5, 0, 7);
+sim.Controller.HMFController.ForceController.SetPID(1, 0, 3);
+sim.Controller.HMFController.PositionController.SetPID(5, 0, 7);
 
 sim.Controller.SetAttitudeStrategy(attitude_strategies.ZeroTilt);
 
@@ -63,6 +63,7 @@ last_commands.DesiredContactForce.Set([5; 0; 0], 0);
 sim.SimulateTrajectory(traj, 0.25);
 
 %% Draw Additional plots
+
 %graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind'}, true);
 
 %% Animate the result

@@ -3,7 +3,7 @@ classdef controller < handle
         ControlAllocation control_allocation
         AttitudeController attitude_controller
         PositionController position_controller
-        HMFCController hmfc_controller
+        HMFController hmf_controller
     end
     
     methods
@@ -11,7 +11,7 @@ classdef controller < handle
             obj.ControlAllocation = control_allocation(mult);
             obj.AttitudeController = attitude_controller;
             obj.PositionController = position_controller;
-            obj.HMFCController = hmfc_controller;
+            obj.HMFController = hmf_controller;
         end
         
         function rotor_speeds_squared = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
@@ -28,7 +28,7 @@ classdef controller < handle
         end
         
         function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt)
-            [lin_accel, rpy_des] = obj.HMFCController.ControlMotionAndForce(mult, ...
+            [lin_accel, rpy_des] = obj.HMFController.ControlMotionAndForce(mult, ...
                 force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt);
         end
         
@@ -39,7 +39,7 @@ classdef controller < handle
         
         function SetAttitudeStrategy(obj, attitude_strategy)
             obj.PositionController.SetAttitudeStrategy(attitude_strategy);
-            obj.HMFCController.SetAttitudeStrategy(attitude_strategy);
+            obj.HMFController.SetAttitudeStrategy(attitude_strategy);
         end
     end
 end

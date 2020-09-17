@@ -1,4 +1,4 @@
-classdef hmfc_controller < handle
+classdef hmf_controller < handle
 
     properties
         PositionController position_controller
@@ -6,7 +6,7 @@ classdef hmfc_controller < handle
     end
     
     methods
-        function obj = hmfc_controller()
+        function obj = hmf_controller()
             obj.PositionController = position_controller;
             obj.ForceController = force_controller;
         end
@@ -17,7 +17,7 @@ classdef hmfc_controller < handle
             motion_lin_accel = obj.PositionController.CalculateControlCommand(mult, pos_des, vel_des, acc_des, dt);
             force_lin_accel = obj.ForceController.CalculateControlCommand(mult, force_des, [], [], dt);
 
-            lin_accel = hmfc_controller.CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint);
+            lin_accel = hmf_controller.CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint);
             rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
         end
         
