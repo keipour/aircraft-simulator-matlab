@@ -98,15 +98,31 @@ classdef simulation < handle
             end
             pos_yaw_des = last_commands.DesiredPositionYaw.Data;
             
-            if ~obj.Multirotor.State.InCollision
-                [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
-                    pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], time);
-            else
-                vel_mat = diag([0, 1, 1]);
-                force_constraint = [-1; 0; 0];
-                [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
-                    5, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], vel_mat, force_constraint, time);
+            [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
+                pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], time);
+
+            last_commands.DesiredRPY.Set(rpy_des, time);
+            last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
+            logger.Add(logger_signals.DesiredRPY, rpy_des);
+            logger.Add(logger_signals.DesiredLinearAcceleration, lin_accel);
+        end
+        
+        function NextStepHMFController(obj, time)
+        % Calculate the multirotor command for a desired motion and force
+            if ~last_commands.DesiredPositionYaw.IsInitialized()
+                return;
             end
+            if ~last_commands.DesiredContactForce.IsInitialized()
+                return;
+            end
+            pos_yaw_des = last_commands.DesiredPositionYaw.Data;
+            force_des = last_commands.DesiredContactForce.Data;
+            
+            vel_mat = diag([0, 1, 1]);
+            force_constraint = [-1; 0; 0];
+            [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
+                force_des, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], vel_mat, force_constraint, time);
+
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
             logger.Add(logger_signals.DesiredRPY, rpy_des);
@@ -135,7 +151,11 @@ classdef simulation < handle
                 end
                 obj.NextStepPlant(time);
             elseif module == obj.Timer.PosControllerIndex && last_commands.DesiredPositionYaw.IsInitialized()
-                obj.NextStepPositionController(time);
+                if last_commands.DesiredContactForce.IsInitialized() && obj.Multirotor.State.InCollision
+                    obj.NextStepHMFController(time);
+                else
+                    obj.NextStepPositionController(time);
+                end
             elseif module == obj.Timer.AttControllerIndex && last_commands.DesiredRPY.IsInitialized()
                 obj.NextStepAttitudeController(time);
             elseif module == obj.Timer.TrajControllerIndex && obj.TrajectoryController.IsInitialized()

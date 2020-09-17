@@ -5,10 +5,11 @@ classdef logger_signals < handle
         DesiredLinearAcceleration = 3;
         DesiredRPY = 4;
         DesiredPositionYaw = 5;
-        RotorSpeedsSquaredCommand = 6;
+        DesiredContactForce = 6; % in the contact frame assuming X is perpendicular
+        RotorSpeedsSquaredCommand = 7;
 
         % Set it to the largest number
-        Max = 6;
+        Max = 7;
     end
 end
 
