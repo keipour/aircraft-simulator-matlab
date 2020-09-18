@@ -64,7 +64,10 @@ classdef simulation < handle
             if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
                 rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
             end
-            obj.UpdateAllStates(rotor_speeds_squared, time);
+            [contact_status, contact_normal] = obj.UpdateAllStates(rotor_speeds_squared, time);
+            if contact_status == true
+                last_commands.ContactNormal.Set(contact_normal, time);
+            end
             logger.Add(logger_signals.MeasuredStates, struct(obj.Multirotor.State));
         end
         
@@ -111,17 +114,20 @@ classdef simulation < handle
         % Calculate the multirotor command for a desired motion and force
             
             if ~last_commands.DesiredPositionYaw.IsInitialized() ...
-                || ~last_commands.DesiredContactForce.IsInitialized()
+                || ~last_commands.DesiredContactForce.IsInitialized() ...
+                || ~last_commands.ContactNormal.IsInitialized()
                 return;
             end
             
             pos_yaw_des = last_commands.DesiredPositionYaw.Data;
             force_des = last_commands.DesiredContactForce.Data;
+            contact_normal = last_commands.ContactNormal.Data;
             
             vel_mat = diag([0, 1, 1]);
             force_constraint = [-1; 0; 0];
             [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
-                force_des, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], [-1; 0; 0], vel_mat, force_constraint, time);
+                force_des, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], contact_normal, ...
+                vel_mat, force_constraint, time);
 
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
@@ -214,7 +220,7 @@ classdef simulation < handle
     
     methods (Access = private)
 
-        function UpdateAllStates(obj, rotor_speeds_squared, time)
+        function [contact_status, contact_normal] = UpdateAllStates(obj, rotor_speeds_squared, time)
             
             % Save the last time we updated the state
             persistent last_time;
@@ -242,18 +248,19 @@ classdef simulation < handle
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
             [~, col_ind] = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
+            contact_normal = [];
             if col_ind > 0
                 
-                wall_normal = obj.Environment.Objects{col_ind}.Normal;
-                %wall_normal = [-1; 0; 0];
-                %wall_normal = [-cosd(30); 0; -sind(30)];
+                contact_normal = obj.Environment.Objects{col_ind}.Normal;
+                %contact_normal = [-1; 0; 0];
+                %contact_normal = [-cosd(30); 0; -sind(30)];
 
                 ft_sensor = zeros(6, 1);
                 if obj.Multirotor.HasEndEffector()
 
                     % Calculate the wrench resulting from the contact
                     contact_wrench = - physics.ApplyContactConstraints...
-                        (wrench, wall_normal, diag([0, 0, 0, 1, 0, 0]), ...
+                        (wrench, contact_normal, diag([0, 0, 0, 1, 0, 0]), ...
                         [0; 0; 0; -1; 0; 0], [obj.Multirotor.GetRotationMatrix()'; eye(3)]);
                     
                     % Calculate the rotation from inertial to the sensor (end effector) frame
@@ -272,8 +279,10 @@ classdef simulation < handle
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...
-                    wind_force, rotor_speeds_squared, dt, true, wall_normal);
+                    wind_force, rotor_speeds_squared, dt, true, contact_normal);
             end
+            
+            contact_status = col_ind > 0;
             
             % Save the calculated next state
             obj.Multirotor.UpdateState(new_state);

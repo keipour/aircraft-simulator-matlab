@@ -7,6 +7,7 @@ classdef last_commands < handle
         DesiredPositionYaw support_files.data_field = support_files.data_field;
         DesiredContactForce support_files.data_field = support_files.data_field;
         RotorSpeedsSquaredCommand support_files.data_field = support_files.data_field;
+        ContactNormal support_files.data_field = support_files.data_field;
     end
     
     methods (Static)
@@ -17,6 +18,7 @@ classdef last_commands < handle
             last_commands.DesiredPositionYaw.Reset();
             last_commands.DesiredContactForce.Reset();
             last_commands.RotorSpeedsSquaredCommand.Reset();
+            last_commands.ContactNormal.Reset();
         end
     end
     
