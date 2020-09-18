@@ -10,7 +10,7 @@ classdef environment < handle
     end
     
     methods
-        function AddCuboidObject(obj, center, sizes, rpy, color)
+        function obj_handle = AddCuboidObject(obj, center, sizes, rpy, color)
             if nargin < 5
                 color = [];
             end
@@ -27,10 +27,11 @@ classdef environment < handle
             o.Geometry = bx;
             o.Normal = rot_mat * [-1; 0; 0];
             o.Friction = 0.1;
-            obj.AddObject(o);
+            o.Texture = {};
+            obj_handle = obj.AddObject(o);
         end
         
-        function AddGroundPlane(obj, xlimits, ylimits, color)
+        function obj_handle = AddGroundPlane(obj, xlimits, ylimits, color)
 
             ground_depth = 0.001;
 
@@ -53,13 +54,43 @@ classdef environment < handle
             o.Geometry = bx;
             o.Normal = [0; 0; -1];
             o.Friction = 0.1;
-            obj.AddObject(o);
+            o.Texture = {};
+            obj_handle = obj.AddObject(o);
         end
         
-        function AddObject(obj, object)
-            obj.Objects{length(obj.Objects)+1} = object;
+        function obj_handle = AddObject(obj, object)
+            obj_handle = length(obj.Objects) + 1;
+            obj.Objects{obj_handle} = object;
             obj.CollisionModels{length(obj.CollisionModels)+1} = object.Geometry;
+        end
+        
+        function AddTextureToObject(obj, obj_handle, filename, img_scale, patch_size)
+
+            geom = obj.Objects{obj_handle}.Geometry;
+            scaled_img = imresize(imread(filename), img_scale);
+            
+            if obj.Objects{obj_handle}.Type == 1 % Ground
+                p_rows = ceil(geom.X / patch_size);
+                p_cols = ceil(geom.Y / patch_size);
+                obj.Objects{obj_handle}.Texture.Top = repmat(scaled_img, p_rows, p_cols);
+            else
+                p_rows = geom.X / patch_size;
+                p_cols = geom.Y / patch_size;
+                p_hgt = geom.Z / patch_size;
+
+                rotated_img = imrotate(scaled_img, -90);
+                obj.Objects{obj_handle}.Texture.Front = repeat_image(rotated_img, p_hgt, p_cols);
+                obj.Objects{obj_handle}.Texture.Top = repeat_image(rotated_img, p_cols, p_rows);
+                obj.Objects{obj_handle}.Texture.Side = repeat_image(scaled_img, p_hgt, p_rows);
+            end
         end
     end
 end
 
+%% Helper functions
+
+function img = repeat_image(img, n, m)
+    sz = size(img);
+    img = repmat(img, ceil(n), ceil(m), 1);
+    img = img(1 : ceil(n*sz(1)), 1 : ceil(m*sz(2)), :);
+end

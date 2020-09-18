@@ -9,8 +9,6 @@ function H = visualize_environment(e, plot_only)
     end
 
     % Visualization settings
-    ground_color = [0.5, 0.85, 0.85];
-    obstacle_color = [0, 0, 0.8];
     plot_title = 'Your Cool Environment';
     lighting_on = ~plot_only; % turn on the special lighting
 
@@ -19,14 +17,48 @@ function H = visualize_environment(e, plot_only)
     for i = 1 : length(e.Objects)
         o = e.Objects{i};
         hold on
-        [~,patchObj] = show(o.Geometry);
-        patchObj.EdgeColor = 'none';
-        if o.Type == 0
-            patchObj.FaceColor = obstacle_color;
-        elseif o.Type == 1
-            patchObj.FaceColor = ground_color;
+        if isempty(o.Texture)
+            [~,g_handle] = show(o.Geometry);
+            g_handle.EdgeColor = 'none';
+            g_handle.FaceColor = o.Color;
+        else
+            g = o.Geometry;
+            % Inflate it just a bit
+            XI = g.X + 1e-4;
+            YI = g.Y + 1e-4;
+            ZI = g.Z + 1e-4;
+            top_left_front =     [-XI / 2;   -YI / 2;   -ZI / 2;   1];
+            bottom_left_front =  [-XI / 2;   -YI / 2;    ZI / 2;   1];
+            top_right_front =    [-XI / 2;    YI / 2;   -ZI / 2;   1];
+            bottom_right_front = [-XI / 2;    YI / 2;    ZI / 2;   1];
+            top_left_back =      [ XI / 2;   -YI / 2;   -ZI / 2;   1];
+            bottom_left_back =   [ XI / 2;   -YI / 2;    ZI / 2;   1];
+            top_right_back =     [ XI / 2;    YI / 2;   -ZI / 2;   1];
+            bottom_right_back =  [ XI / 2;    YI / 2;    ZI / 2;   1];
+            if o.Type == 0 % cuboid object
+                %set(gcf,'Renderer','OpenGL');
+                g_handle = [];
+                [X, Y, Z] = get_transformed_meshgrid(bottom_right_front, top_left_front, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Front)];
+                [X, Y, Z] = get_transformed_meshgrid(top_right_back, bottom_left_back, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Front)];
+                [X, Y, Z] = get_transformed_meshgrid(top_right_back, top_left_front, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Top)];
+                [X, Y, Z] = get_transformed_meshgrid(bottom_right_back, bottom_left_front, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Top)];
+                [X, Y, Z] = get_transformed_meshgrid(bottom_right_front, top_right_back, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Side)];
+                [X, Y, Z] = get_transformed_meshgrid(bottom_left_front, top_left_back, g.Pose);
+                g_handle = [g_handle; warp(X, Y, Z, o.Texture.Side)];
+            elseif o.Type == 1 % Ground
+                g = o.Geometry;
+                tlf = g.Pose * top_left_front;
+                trb = g.Pose * top_right_back;
+                [X, Y, Z] = meshgrid(tlf(1) : g.X / 2 : trb(1), tlf(2) : g.Y / 2 : trb(2), 0 : g.Z / 2 : 0);
+                g_handle = warp(X, Y, Z, o.Texture.Top);
+            end
         end
-        H = [H; patchObj];
+        H = [H; g_handle];
     end
 
     % Make the plot more presentable
@@ -55,3 +87,25 @@ function H = visualize_environment(e, plot_only)
     hold off
 end
 
+%% Helper functions
+
+function [X, Y, Z] = get_transformed_meshgrid(pt1, pt2, T)
+
+    % Create the ranges
+    x = [pt1(1), pt2(1)];
+    y = [pt1(2), pt2(2)];
+    z = [pt1(3), pt2(3)];
+    
+    % Create the meshgrid
+    [Xq, Yq, Zq] = meshgrid(x, y, z);
+    
+    % Transform the meshgrid
+    XYZ = [Xq(:) Yq(:) Zq(:) ones(size(Xq(:)))];
+    rotXYZ = XYZ * T';
+    
+    % Reshape the result to the original size
+    X = reshape(rotXYZ(:, 1), size(Xq, 1), []);
+    Y = reshape(rotXYZ(:, 2), size(Yq, 1), []);
+    Z = reshape(rotXYZ(:, 3), size(Zq, 1), []);
+    
+end
