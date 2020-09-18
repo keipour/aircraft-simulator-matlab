@@ -27,9 +27,10 @@ classdef controller < handle
             rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
         end
         
-        function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt)
+        function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, force_des, pos_des, yaw_des, vel_des, acc_des, ...
+                contact_normal, vel_mat, force_constraint, dt)
             [lin_accel, rpy_des] = obj.HMFController.ControlMotionAndForce(mult, ...
-                force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt);
+                force_des, pos_des, yaw_des, vel_des, acc_des, contact_normal, vel_mat, force_constraint, dt);
         end
         
         function Reset(obj)

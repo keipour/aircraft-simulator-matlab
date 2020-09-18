@@ -104,14 +104,16 @@ classdef physics
             RPY = rad2deg(physics.GetRPYRadians(RNI));
         end
         
-        function flag = CheckAllCollisions(set1, set2)
+        function [set1_ind, set2_ind] = CheckAllCollisions(set1, set2)
         % Check collision between two different sets of collision geometries
 
-            flag = false;
+            set1_ind = 0;
+            set2_ind = 0;
             for i = 1 : length(set1)
                 for j = 1 : length(set2)
                     if physics.CheckCollision(set1{i}, set2{j})
-                        flag = true;
+                        set1_ind = i;
+                        set2_ind = j;
                         return;
                     end
                 end 
@@ -169,17 +171,24 @@ classdef physics
             rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
 
             % Create the block diagonal for rotations to the contact frame
-            % Note: 
-            % For some weird reason, in R2019b this method of creating block 
-            % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
-            % than using blkdiag function
-            blk_c = eye(6);
-            blk_c(1:3, 1:3) = rot_ic' * rot_to_i(1:3, :);
-            blk_c(4:6, 4:6) = rot_ic' * rot_to_i(4:6, :);
-            blk_c_rev = eye(6);
-            blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
-            blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
-
+            blk_c = [];
+            blk_c_rev = [];
+            if size(rot_to_i, 1) == 3
+                blk_c = rot_ic' * rot_to_i;
+                blk_c_rev = blk_c';
+            elseif size(rot_to_i, 1) == 6
+                % Note: 
+                % For some weird reason, in R2019b this method of creating block 
+                % diagonals is faster than [a, zero(3); zero(3), b] and much faster 
+                % than using blkdiag function
+                blk_c = eye(6);
+                blk_c(1:3, 1:3) = rot_ic' * rot_to_i(1:3, :);
+                blk_c(4:6, 4:6) = rot_ic' * rot_to_i(4:6, :);
+                blk_c_rev = eye(6);
+                blk_c_rev(1:3, 1:3) = blk_c(1:3, 1:3)';
+                blk_c_rev(4:6, 4:6) = blk_c(4:6, 4:6)';
+            end
+            
             % The input vector transformed to the contact frame
             vec_c = blk_c * vec_in;
 

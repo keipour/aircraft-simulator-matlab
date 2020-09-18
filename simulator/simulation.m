@@ -109,19 +109,19 @@ classdef simulation < handle
         
         function NextStepHMFController(obj, time)
         % Calculate the multirotor command for a desired motion and force
-            if ~last_commands.DesiredPositionYaw.IsInitialized()
+            
+            if ~last_commands.DesiredPositionYaw.IsInitialized() ...
+                || ~last_commands.DesiredContactForce.IsInitialized()
                 return;
             end
-            if ~last_commands.DesiredContactForce.IsInitialized()
-                return;
-            end
+            
             pos_yaw_des = last_commands.DesiredPositionYaw.Data;
             force_des = last_commands.DesiredContactForce.Data;
             
             vel_mat = diag([0, 1, 1]);
             force_constraint = [-1; 0; 0];
             [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
-                force_des, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], vel_mat, force_constraint, time);
+                force_des, pos_yaw_des(1 : 3), pos_yaw_des(4), [], [], [-1; 0; 0], vel_mat, force_constraint, time);
 
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);
@@ -240,11 +240,12 @@ classdef simulation < handle
             
             % Check for collistion in the new potential state
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
-            collision = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
+            [~, col_ind] = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
-            if collision == true
+            if col_ind > 0
                 
-                wall_normal = [-1; 0; 0];
+                wall_normal = obj.Environment.Objects{col_ind}.Normal;
+                %wall_normal = [-1; 0; 0];
                 %wall_normal = [-cosd(30); 0; -sind(30)];
 
                 ft_sensor = zeros(6, 1);

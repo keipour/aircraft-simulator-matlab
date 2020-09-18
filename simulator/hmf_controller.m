@@ -12,12 +12,13 @@ classdef hmf_controller < handle
         end
         
         function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, ...
-                force_des, pos_des, yaw_des, vel_des, acc_des, vel_mat, force_constraint, dt)
+                force_des, pos_des, yaw_des, vel_des, acc_des, contact_normal, vel_mat, force_constraint, dt)
 
             motion_lin_accel = obj.PositionController.CalculateControlCommand(mult, pos_des, vel_des, acc_des, dt);
             force_lin_accel = obj.ForceController.CalculateControlCommand(mult, force_des, [], [], dt);
 
-            lin_accel = hmf_controller.CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint);
+            lin_accel = hmf_controller.CombineMotionAndForce(force_lin_accel, ...
+                motion_lin_accel, contact_normal, vel_mat, force_constraint);
             rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
         end
         
@@ -28,11 +29,17 @@ classdef hmf_controller < handle
     end
     
     methods (Static)
-        function lin_accel = CombineMotionAndForce(force_lin_accel, motion_lin_accel, vel_mat, force_constraint)
-            lin_accel = motion_lin_accel;
-            if motion_lin_accel(1) > 0
-                lin_accel(1) = force_lin_accel(1);
-            end
+        function lin_accel = CombineMotionAndForce(force_lin_accel, motion_lin_accel, contact_normal, vel_mat, force_constraint)
+
+            % Apply the constraints for the force
+            force_lin_accel_con = physics.ApplyContactConstraints(force_lin_accel, ...
+                contact_normal, eye(3) - vel_mat, force_constraint, eye(3));
+
+            % Apply the constraints for the motion
+            motion_lin_accel_con = physics.ApplyContactConstraints(motion_lin_accel, ...
+                contact_normal, vel_mat, ones(3, 1) - force_constraint, eye(3));
+
+            lin_accel = force_lin_accel_con + motion_lin_accel_con;
         end
     end
     
