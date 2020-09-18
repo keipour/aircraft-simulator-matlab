@@ -10,25 +10,23 @@ addpath('simulator');
 %m = robots.quadrotor();
 m = robots.tilted_hex(true);
 
+%% Visualize the robot
+
 %m.Visualize();
 %m.VisualizeAxes();
 %m.AnalyzeDynamicManipulability(2, 2);
 
-%% Define the environment
+%% Define the world
 
-% Add a wall and the ground to the environment
-e = environment;
-h = e.AddCuboidObject([15; 10; -2.5 - 1e-4], [2; 10; 5], [0; 0; 0]);
-e.AddTextureToObject(h, 'wall.jpg', 0.25, 1);
-h = e.AddGroundPlane([-10; 30], [-10; 30]);
-e.AddTextureToObject(h, 'grass.jpg', 0.12, 8);
-e.AverageWind = [0; 0; 0];
+average_wind = [];
+%e = worlds.empty_world(average_wind, true);
+e = worlds.straight_wall(average_wind, false);
 
 %% Prepare the simulation
 
 sim = simulation(m, controller(m), e);
 
-sim.SetTotalTime(5);
+sim.SetTotalTime(10);
 
 %% Prepare the controller
 
