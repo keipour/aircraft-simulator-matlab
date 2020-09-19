@@ -37,7 +37,7 @@ classdef hmf_controller < handle
 
             % Apply the constraints for the motion
             motion_lin_accel_con = physics.ApplyContactConstraints(motion_lin_accel, ...
-                contact_normal, vel_mat, ones(3, 1) - force_constraint, eye(3));
+                contact_normal, vel_mat, -force_constraint, eye(3));
 
             lin_accel = force_lin_accel_con + motion_lin_accel_con;
         end
