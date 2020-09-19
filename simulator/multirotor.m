@@ -337,6 +337,11 @@ classdef multirotor < handle
         
         function new_state = CalcStateNewtonEuler(obj, wrench, dt, is_collision, collision_normal)
             
+            persistent last_collision_status
+            if isempty(last_collision_status)
+                last_collision_status = false;
+            end
+            
             % Create the new state
             new_state = state(obj.NumOfRotors);
             
@@ -365,7 +370,7 @@ classdef multirotor < handle
             end
             
             % If there is a collision
-            if is_collision
+            if is_collision && ~last_collision_status
                 % I assume no bouncing due to the impact and no impulse
                 % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
                 % We assume that the collision happened at the end effector
@@ -380,7 +385,6 @@ classdef multirotor < handle
                     new_state.EndEffectorVelocity = contact_twist(4:6);
                     new_state.Velocity = obj.CalcRobotVelocityFromEndEffector(new_state.EndEffectorVelocity, new_state.EndEffectorOmega, new_state.RPY);
                     new_state.Omega = new_state.EndEffectorOmega;
-
 %                     new_state.Acceleration = (new_state.Velocity - obj.State.Velocity) / dt;
 %                     new_state.AngularAcceleration = (new_state.Omega - obj.State.Omega) / dt;
                 else
@@ -392,6 +396,8 @@ classdef multirotor < handle
                     new_state.Position = obj.State.Position + new_state.Velocity * dt;
                 end
             end
+            
+            last_collision_status = is_collision;
         end
         
         function new_state = CalcStateLagrange(obj, RotorSpeedsSquared, dt)
