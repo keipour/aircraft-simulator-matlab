@@ -7,7 +7,7 @@ addpath('simulator');
 
 %% Define the hardware architecture
 %m = robots.floating_hex();
-%m = robots.quadrotor();
+%m = robots.quadrotor(true);
 m = robots.tilted_hex(true);
 
 %% Visualize the robot
@@ -21,7 +21,7 @@ m = robots.tilted_hex(true);
 average_wind = [];
 %e = worlds.empty_world(average_wind, true);
 e = worlds.straight_wall(average_wind, false);
-%e = worlds.sloped_wall_30_deg(average_wind, false);
+%e = worlds.sloped_wall_20_deg(average_wind, false);
 
 %% Prepare the simulation
 
@@ -31,7 +31,7 @@ sim.SetTotalTime(12);
 
 %% Prepare the controller
 
-sim.Controller.AttitudeController.SetPID(60, 0, 20);
+sim.Controller.AttitudeController.SetPID(60, 5, 20);
 sim.Controller.PositionController.SetPID(3, 0, 7);
 
 sim.Controller.HMFController.ForceController.SetPID(1, 0, 3);
