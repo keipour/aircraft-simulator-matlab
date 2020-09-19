@@ -8,11 +8,17 @@ classdef force_controller < pid_controller
     
     methods
 
-        function lin_accel = CalculateControlCommand(obj, mult, force_des, ~, ~, time)
+        function lin_accel = CalculateControlCommand(obj, mult, force_des, contact_normal, free_force_mat, time)
+
+            % Find the rotation from the inertial to contact
+            rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
+            
+            % Take the current force to the contact frame
+            curr_force = rot_ic' * mult.State.Force;
 
             persistent last_force last_lin_accel
             if isempty(last_force)
-                last_force = mult.State.Force;
+                last_force = curr_force;
             end
             if isempty(last_lin_accel)
                 last_lin_accel = zeros(3, 1);
@@ -20,12 +26,13 @@ classdef force_controller < pid_controller
             
             % Calculate time step
             dt = time - obj.LastTime;
-        
+
             % Calculate the error
-            force_err = force_des - mult.State.Force;
+            force_err = -force_des - curr_force;
             
             % Calculate the difference error
-            force_rate_err = 0 - (mult.State.Force - last_force);
+            force_rate_err = 0 - (curr_force - last_force);
+
             % Don't use the rate if it is larger than a threshold
             force_rate_err(abs(force_rate_err) > 1) = 0;
                 
@@ -39,14 +46,18 @@ classdef force_controller < pid_controller
             % Limit the error integral (anti-windup)
             obj.LimitErrorIntegral(force_accel, force_err, force_rate_err);
             
-            % Limit the output
-            lin_accel = obj.LimitOutput(last_lin_accel + force_accel * dt);
+            % Calculate the output in the contact frame
+            lin_accel_c = last_lin_accel + force_accel * dt;
+            
+            % Convert the relevant parts of output back to the inertial space
+            lin_accel = rot_ic * free_force_mat * lin_accel_c;
+            lin_accel = obj.LimitOutput(lin_accel);
 
             % Update the time of the last call
             obj.LastTime = time;
             
-            last_force = mult.State.Force;
-            last_lin_accel = lin_accel;
+            last_force = curr_force;
+            last_lin_accel = rot_ic' * lin_accel;
         end
     end
     

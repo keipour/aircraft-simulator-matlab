@@ -380,6 +380,9 @@ classdef multirotor < handle
                     new_state.EndEffectorVelocity = contact_twist(4:6);
                     new_state.Velocity = obj.CalcRobotVelocityFromEndEffector(new_state.EndEffectorVelocity, new_state.EndEffectorOmega, new_state.RPY);
                     new_state.Omega = new_state.EndEffectorOmega;
+
+%                     new_state.Acceleration = (new_state.Velocity - obj.State.Velocity) / dt;
+%                     new_state.AngularAcceleration = (new_state.Omega - obj.State.Omega) / dt;
                 else
                     new_state.Velocity = obj.State.Velocity + new_state.Acceleration * dt;
                     vel_vector_normal = dot(new_state.Velocity, collision_normal) * collision_normal;

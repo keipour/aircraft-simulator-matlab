@@ -21,12 +21,13 @@ m = robots.tilted_hex(true);
 average_wind = [];
 %e = worlds.empty_world(average_wind, true);
 e = worlds.straight_wall(average_wind, false);
+%e = worlds.sloped_wall_30_deg(average_wind, false);
 
 %% Prepare the simulation
 
 sim = simulation(m, controller(m), e);
 
-sim.SetTotalTime(10);
+sim.SetTotalTime(12);
 
 %% Prepare the controller
 
@@ -40,7 +41,7 @@ sim.Controller.SetAttitudeStrategy(attitude_strategies.ZeroTilt);
 
 %% Initial multirotor state
 
-pos = [10; 10; -2];
+pos = [10; 10; -4];
 vel = [0; 0; 0];
 rpy = [0; 0; 0];
 omega = [0; 0; 0];
@@ -58,13 +59,13 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Trajectory following
 %traj = [12, 12, -4, 0; 12, 16, -3, 90];
-traj = [15, 8, -2, 0];
+traj = [16, 8, -4, 0];
 last_commands.DesiredContactForce.Set([5; 0; 0], 0);
 sim.SimulateTrajectory(traj, 0.25);
 
 %% Draw Additional plots
 
-%graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind'}, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind'}, true);
 
 %% Animate the result
 

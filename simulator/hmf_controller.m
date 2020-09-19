@@ -15,7 +15,7 @@ classdef hmf_controller < handle
                 force_des, pos_des, yaw_des, vel_des, acc_des, contact_normal, vel_mat, force_constraint, dt)
 
             motion_lin_accel = obj.PositionController.CalculateControlCommand(mult, pos_des, vel_des, acc_des, dt);
-            force_lin_accel = obj.ForceController.CalculateControlCommand(mult, force_des, [], [], dt);
+            force_lin_accel = obj.ForceController.CalculateControlCommand(mult, force_des, contact_normal, eye(3) - vel_mat, dt);
 
             lin_accel = hmf_controller.CombineMotionAndForce(force_lin_accel, ...
                 motion_lin_accel, contact_normal, vel_mat, force_constraint);
