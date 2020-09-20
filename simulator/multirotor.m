@@ -370,7 +370,7 @@ classdef multirotor < handle
             end
             
             % If there is a collision
-            if is_collision && ~last_collision_status
+            if is_collision %&& ~last_collision_status
                 % I assume no bouncing due to the impact and no impulse
                 % TODO: Model based on https://www.sciencedirect.com/science/article/abs/pii/S0094114X02000459
                 % We assume that the collision happened at the end effector

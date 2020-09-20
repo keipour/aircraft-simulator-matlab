@@ -202,6 +202,45 @@ classdef physics
             % Transform the vector back to the original frame
             vec_out = blk_c_rev * vec_free_c;
         end
+        
+        function friction_force = ApplyContactFriction(force, vel, contact_normal, ...
+                friction_coef, rot_to_i)
+
+            % Find the rotation from the inertial to contact
+            rot_ic = vrrotvec2mat(vrrotvec([1; 0; 0], contact_normal));
+
+            % Create the block diagonal for rotations to the contact frame
+            rot_to_c = rot_ic' * rot_to_i;
+            
+            % The input vectors transformed to the contact frame
+            force_c = rot_to_c * force;
+            vel_c = rot_to_c * vel;
+            vel_c(1) = 0;
+
+            if force_c(1) > 0
+                friction_force = zeros(3, 1);
+                return;
+            end
+            
+            % Get the lateral motion direction
+            vel_normalized = vel_c / norm(vel_c);
+
+            % Calculate the friction vector
+            friction_mag = abs(force_c(1)) * friction_coef;
+            friction_c = -friction_mag * vel_normalized;
+            
+            % If the motion is too small (almost static), the friction will be at most the
+            % wrench magnitude, otherwise it is in the direction against the motion
+            if norm(vel_c) < 1e-6
+                lat_force = [0; force(2:3)];
+                if friction_mag > norm(lat_force)
+                    friction_c = -lat_force;
+                end
+            end
+            
+            % Transform the vector back to the original frame
+            friction_force = rot_to_c' * friction_c;
+        end
     end
 end
 

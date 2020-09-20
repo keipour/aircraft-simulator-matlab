@@ -263,6 +263,9 @@ classdef simulation < handle
                         (wrench, contact_normal, diag([0, 0, 0, 1, 0, 0]), ...
                         [0; 0; 0; -1; 0; 0], [obj.Multirotor.GetRotationMatrix()'; eye(3)]);
                     
+                    friction_force = physics.ApplyContactFriction(wrench(4:6), ...
+                        new_state.EndEffectorVelocity, contact_normal, 0.1, eye(3));
+
                     % Calculate the rotation from inertial to the sensor (end effector) frame
                     R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
                     
@@ -275,7 +278,7 @@ classdef simulation < handle
                     blk_rot(4:6, 4:6) = R_SI';
                     
                     % Rotate the contact wrench to the force/torque sensor frame
-                    ft_sensor = blk_rot * contact_wrench;
+                    ft_sensor = blk_rot * (contact_wrench + [zeros(3, 1); friction_force]);
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...
