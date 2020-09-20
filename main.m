@@ -19,25 +19,19 @@ m = robots.tilted_hex(true);
 %% Define the world
 
 average_wind = [];
-%e = worlds.empty_world(average_wind, true);
-e = worlds.straight_wall(average_wind, false);
-%e = worlds.sloped_wall_20_deg(average_wind, false);
+%w = worlds.empty_world(average_wind, true);
+w = worlds.straight_wall(average_wind, false);
+%w = worlds.sloped_wall_20_deg(average_wind, false);
+
+%% Define the controller
+
+c = controllers.fully_actuated(m, attitude_strategies.ZeroTilt);
 
 %% Prepare the simulation
 
-sim = simulation(m, controller(m), e);
+sim = simulation(m, c, w);
 
 sim.SetTotalTime(12);
-
-%% Prepare the controller
-
-sim.Controller.AttitudeController.SetPID(60, 5, 20);
-sim.Controller.PositionController.SetPID(3, 0, 7);
-
-sim.Controller.HMFController.ForceController.SetPID(1, 0, 3);
-sim.Controller.HMFController.PositionController.SetPID(5, 0, 7);
-
-sim.Controller.SetAttitudeStrategy(attitude_strategies.ZeroTilt);
 
 %% Initial multirotor state
 
