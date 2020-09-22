@@ -231,8 +231,8 @@ classdef physics
             
             % If the motion is too small (almost static), the friction will be at most the
             % wrench magnitude, otherwise it is in the direction against the motion
-            if norm(vel_c) < 1e-6
-                lat_force = [0; force(2:3)];
+            if norm(vel_c) < 5e-4
+                lat_force = [0; force_c(2:3)];
                 if friction_mag > norm(lat_force)
                     friction_c = -lat_force;
                 end
