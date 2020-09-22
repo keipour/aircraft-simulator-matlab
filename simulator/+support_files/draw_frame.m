@@ -120,7 +120,7 @@ end
 
 function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, limits, min_lim)
 
-    expand = 3;
+    expand = 1.5;
     limits(:, 1) = limits(:, 1) - expand;
     limits(:, 2) = limits(:, 2) + expand;
     

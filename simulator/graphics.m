@@ -154,8 +154,11 @@ classdef graphics
             drawnow;
         end
         
-        function H = PlotEnvironment(environment)
-            H = support_files.visualize_environment(environment, true);
+        function [H, xyz_limits] = PlotEnvironment(environment)
+            [H, limits] = support_files.visualize_environment(environment, true);
+            if nargout > 1
+                xyz_limits = limits;
+            end
         end
         
         function H = PlotMultirotor(multirotor)

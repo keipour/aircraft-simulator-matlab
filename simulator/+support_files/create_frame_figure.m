@@ -1,4 +1,4 @@
-function [fig, form_handles, plot_handles, plot_data] = create_frame_figure...
+function [fig, form_handles, plot_handles, plot_data, xyz_limits] = create_frame_figure...
     (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam)
     
 
@@ -41,7 +41,7 @@ function [fig, form_handles, plot_handles, plot_data] = create_frame_figure...
         axes(form_handles.axanim);
     end
     
-    [plot_handles, plot_data] = create_all_objects(multirotor, environment);
+    [plot_handles, plot_data, xyz_limits] = create_all_objects(multirotor, environment);
 
     if show_fpv
         plot_handles.FPVMultirotor = copyobj(plot_handles.Multirotor, form_handles.axfpvfig);
@@ -75,7 +75,7 @@ end
 
 %% Helper functions
 
-function [plot_handles, plot_data] = create_all_objects(multirotor, environment)
+function [plot_handles, plot_data, xyz_limits] = create_all_objects(multirotor, environment)
 
     % Draw and save the multirotor
     plot_handles.Multirotor = graphics.PlotMultirotor(multirotor);
@@ -97,7 +97,7 @@ function [plot_handles, plot_data] = create_all_objects(multirotor, environment)
     end
     
     % Draw the environment
-    plot_handles.Environment = graphics.PlotEnvironment(environment);
+    [plot_handles.Environment, xyz_limits] = graphics.PlotEnvironment(environment);
 end
 
 %% Draw a 3-D circle

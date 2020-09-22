@@ -25,12 +25,15 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
     % Load the data from the logger
     [states, t] = logger.GetMeasuredStates();
     [pos, ~] = logger.GetMeasuredPositions();
-    pos_lim = [min(pos, [], 1)', max(pos, [], 1)'];
+    axis_limits = [min(pos, [], 1)', max(pos, [], 1)'];
     
     % Set up the first frame
-    [fig, form_handles, plot_handles, plot_data] = support_files.create_frame_figure...
+    [fig, form_handles, plot_handles, plot_data, xyz_limits] = support_files.create_frame_figure...
         (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam);
     
+    axis_limits(:, 1) = min(xyz_limits(:, 1), axis_limits(:, 1));
+    axis_limits(:, 2) = max(xyz_limits(:, 2), axis_limits(:, 2));
+
     set(fig, 'KeyPressFcn', []);
     set(fig, 'WindowKeyPressFcn', @Key_Down);
     set(fig,'WindowScrollWheelFcn',@Mouse_Scroll);
@@ -76,7 +79,7 @@ function animate_logged_traj(multirotor, environment, zoom_level, speed, ...
             % Draw the frame
             [plot_handles] = support_files.draw_frame(fig, curr_state, ...
                 curr_time, plot_handles, plot_data, form_handles, ...
-                num_of_zoom_levels, zoom_level, pos_lim, min_zoom, speed, ...
+                num_of_zoom_levels, zoom_level, axis_limits, min_zoom, speed, ...
                 show_info, show_horizon, show_fpv, fpv_cam);
 
             if is_recording

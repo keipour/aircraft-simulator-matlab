@@ -1,8 +1,8 @@
 %% Visualizer for multirotors
 % This file visualizes the environment geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
-% Last updated: August 11, 2020
-function H = visualize_environment(e, plot_only)
+% Last updated: September 22, 2020
+function [H, xyz_limits] = visualize_environment(e, plot_only)
     
     if nargin < 2
         plot_only = false;
@@ -13,16 +13,36 @@ function H = visualize_environment(e, plot_only)
     lighting_on = ~plot_only; % turn on the special lighting
 
     H = [];
+    xyz_limits = [inf(3, 1), -inf(3, 1)];
 
     for i = 1 : length(e.Objects)
         o = e.Objects{i};
+        g = o.Geometry;
+
+        % Extract the limits if it's an object
+        if o.Type == 0
+            vertices = g.Pose * [
+                 g.X/2, -g.Y/2, -g.Z/2, 1; 
+                 g.X/2,  g.Y/2, -g.Z/2, 1;
+                -g.X/2,  g.Y/2, -g.Z/2, 1;
+                -g.X/2, -g.Y/2, -g.Z/2, 1;
+                 g.X/2, -g.Y/2,  g.Z/2, 1; 
+                 g.X/2,  g.Y/2,  g.Z/2, 1;
+                -g.X/2,  g.Y/2,  g.Z/2, 1;
+                -g.X/2, -g.Y/2,  g.Z/2, 1]';
+
+            maxv = max(vertices, [], 2);
+            minv = min(vertices, [], 2);
+            xyz_limits(:, 1) = min(xyz_limits(:, 1), minv(1 : 3));
+            xyz_limits(:, 2) = max(xyz_limits(:, 2), maxv(1 : 3));
+        end
+        
         hold on
         if isempty(o.Texture)
             [~,g_handle] = show(o.Geometry);
             g_handle.EdgeColor = 'none';
             g_handle.FaceColor = o.Color;
         else
-            g = o.Geometry;
             % Inflate it just a bit
             XI = g.X + 1e-4;
             YI = g.Y + 1e-4;
