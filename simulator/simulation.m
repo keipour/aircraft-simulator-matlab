@@ -136,8 +136,7 @@ classdef simulation < handle
         function NextStepTrajectoryController(obj, time)
         % Calculate the multirotor command for a desired trajectpry
             
-            pose = [obj.Multirotor.State.Position; obj.Multirotor.State.RPY(3)];
-            next_wp = obj.TrajectoryController.CalcLookaheadPoint(pose);
+            next_wp = obj.TrajectoryController.CalcLookaheadPoint(obj.Multirotor.State.Position, obj.Multirotor.State.RPY(3));
             if time >= 0
                 logger.Add(logger_signals.DesiredPositionYaw, [next_wp.Position; next_wp.RPY(3)]);
             else
@@ -201,11 +200,27 @@ classdef simulation < handle
                 [pos_res, rpy_res(:, 3)], [pos_des; yaw_des], signal_names, plot);
         end
         
-        function SimulateTrajectory(obj, traj_des, radius)
+        function SimulateTrajectory(obj, traj_des, pos_thresh, rpy_thresh, force_thresh)
         % Simulate the response to a desired attitude input
             
+            if nargin < 4
+                rpy_thresh = [];
+            end
+            if nargin < 5
+                force_thresh = [];
+            end
+            if length(rpy_thresh) == 1
+                rpy_thresh = [inf; inf; rpy_thresh];
+            end
+            if isempty(rpy_thresh)
+                rpy_thresh = inf(3, 1);
+            end
+            if isempty(force_thresh)
+                force_thresh = inf(3, 1);
+            end
+        
             obj.Reset();
-            obj.TrajectoryController.SetWaypoints(traj_des, radius);
+            obj.TrajectoryController.SetWaypoints(traj_des, pos_thresh, rpy_thresh, force_thresh);
 
             obj.NextStepTrajectoryController(-1);
             while ~obj.Timer.IsFinished()
