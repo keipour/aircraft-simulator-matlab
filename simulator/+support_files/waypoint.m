@@ -25,7 +25,7 @@ classdef waypoint < handle
         end
         
         function flag = HasForce(obj)
-            flag = any(isnan(obj.Force));
+            flag = any(obj.Force);
         end
     end
     
@@ -48,9 +48,9 @@ classdef waypoint < handle
                     w = [];
                     switch size(input{i}, 2)
                         case 4
-                            w = support_files.waypoint(input{i}(j, 1 : 3)', [NaN; NaN; input{i}(j, 4)], NaN(3, 1));
+                            w = support_files.waypoint(input{i}(j, 1 : 3)', [NaN; NaN; input{i}(j, 4)], zeros(3, 1));
                         case 6
-                            w = support_files.waypoint(input{i}(j, 1 : 3)', input{i}(j, 4 : 6)', NaN(3, 1));
+                            w = support_files.waypoint(input{i}(j, 1 : 3)', input{i}(j, 4 : 6)', zeros(3, 1));
                         case 7
                             w = support_files.waypoint(input{i}(j, 1 : 3)', [NaN; NaN; input{i}(j, 4)], input{i}(j, 5 : 7)');
                         case 9
