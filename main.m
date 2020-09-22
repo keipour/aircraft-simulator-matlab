@@ -53,8 +53,7 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Trajectory following
 %traj = [12, 12, -4, 0; 12, 16, -3, 90];
-traj = [16, 8, -4, 0];
-last_commands.DesiredContactForce.Set([5; 0; 0], 0);
+traj = [16, 8, -4, 0, 5, 0, 0];
 sim.SimulateTrajectory(traj, 0.25);
 
 %% Draw Additional plots

@@ -114,19 +114,17 @@ classdef simulation < handle
         % Calculate the multirotor command for a desired motion and force
             
             if ~last_commands.DesiredWaypoint.IsInitialized() ...
-                || ~last_commands.DesiredContactForce.IsInitialized() ...
                 || ~last_commands.ContactNormal.IsInitialized()
                 return;
             end
             
             waypoint_des = last_commands.DesiredWaypoint.Data;
-            force_des = last_commands.DesiredContactForce.Data;
             contact_normal = last_commands.ContactNormal.Data;
             
             vel_mat = diag([0, 1, 1]);
             force_constraint = [-1; 0; 0];
             [lin_accel, rpy_des] = obj.Controller.ControlMotionAndForce(obj.Multirotor, ...
-                force_des, waypoint_des.Position, waypoint_des.RPY(3), [], [], contact_normal, ...
+                waypoint_des.Force, waypoint_des.Position, waypoint_des.RPY(3), [], [], contact_normal, ...
                 vel_mat, force_constraint, time);
 
             last_commands.DesiredRPY.Set(rpy_des, time);
@@ -157,7 +155,7 @@ classdef simulation < handle
                 end
                 obj.NextStepPlant(time);
             elseif module == obj.Timer.PosControllerIndex && last_commands.DesiredWaypoint.IsInitialized()
-                if last_commands.DesiredContactForce.IsInitialized() && obj.Multirotor.State.InCollision
+                if obj.Multirotor.State.InCollision
                     obj.NextStepHMFController(time);
                 else
                     obj.NextStepPositionController(time);
