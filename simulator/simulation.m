@@ -252,6 +252,7 @@ classdef simulation < handle
             if col_ind > 0
                 
                 contact_normal = obj.Environment.Objects{col_ind}.Normal;
+                contact_friction = obj.Environment.Objects{col_ind}.Friction;
                 %contact_normal = [-1; 0; 0];
                 %contact_normal = [-cosd(30); 0; -sind(30)];
 
@@ -264,7 +265,7 @@ classdef simulation < handle
                         [0; 0; 0; -1; 0; 0], [obj.Multirotor.GetRotationMatrix()'; eye(3)]);
                     
                     friction_force = physics.ApplyContactFriction(wrench(4:6), ...
-                        new_state.EndEffectorVelocity, contact_normal, 0.1, eye(3));
+                        new_state.EndEffectorVelocity, contact_normal, contact_friction, eye(3));
 
                     % Calculate the rotation from inertial to the sensor (end effector) frame
                     R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
