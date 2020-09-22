@@ -50,10 +50,15 @@ classdef (Abstract) pid_controller < handle
 
     methods(Access=protected)
         function LimitErrorIntegral(obj, output, err, err_dot)
+            % Set the error integral to zero everytime the error crosses 
+            % zero (err sign is different than the error integral's sign)
+            obj.ErrorIntegral(err .* obj.ErrorIntegral < 0) = 0;
+            
             for i = 1 : 3
                 if obj.I(i, i) == 0
                     continue;
                 end
+                % Set bounds for the error integral
                 if output(i) > 1.2 * obj.OutputMax(i)
                      obj.ErrorIntegral(i) = (1.2 * obj.OutputMax(i) - ...
                          obj.P(i, i) * err(i) - obj.D(i, i) * err_dot(i)) ...
