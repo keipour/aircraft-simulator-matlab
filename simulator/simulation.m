@@ -154,9 +154,13 @@ classdef simulation < handle
             last_commands.DesiredWaypoint.Set(next_wp, time);
         end
         
-        function NextSimulationStep(obj)
+        function success = NextSimulationStep(obj)
             [time, module] = obj.Timer.NextTimeStep();
-            update_waitbar(obj.WaitBar, time / obj.Timer.TotalTime);
+            if ~update_waitbar(obj.WaitBar, time / obj.Timer.TotalTime)
+                success = false;
+                return;
+            end
+            success = true;
             if module == obj.Timer.PlantIndex
                 if last_commands.DesiredEulerAcceleration.IsInitialized() && ...
                         last_commands.DesiredLinearAcceleration.IsInitialized()
@@ -183,8 +187,9 @@ classdef simulation < handle
             last_commands.DesiredLinearAcceleration.Set(zeros(3, 1), 0);
             last_commands.DesiredRPY.Set(rpy_des, 0);
             obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the attitude response...');
-            while ~obj.Timer.IsFinished()
-                obj.NextSimulationStep();
+            stop = false;
+            while ~obj.Timer.IsFinished() && ~stop
+                stop = ~obj.NextSimulationStep();
             end
             close_waitbar(obj.WaitBar);
             
@@ -201,8 +206,9 @@ classdef simulation < handle
             obj.Reset();
             last_commands.DesiredWaypoint.Set(support_files.waypoint([pos_des; yaw_des]), 0);
             obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the position response...');
-            while ~obj.Timer.IsFinished()
-                obj.NextSimulationStep();
+            stop = false;
+            while ~obj.Timer.IsFinished() && ~stop
+                stop = ~obj.NextSimulationStep();
             end
             close_waitbar(obj.WaitBar);
             
@@ -238,8 +244,9 @@ classdef simulation < handle
 
             obj.NextStepTrajectoryController(-1);
             obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the trajectory...');
-            while ~obj.Timer.IsFinished()
-                obj.NextSimulationStep();
+            stop = false;
+            while ~obj.Timer.IsFinished() && ~stop
+                stop = ~obj.NextSimulationStep();
             end
             close_waitbar(obj.WaitBar);
         end
@@ -338,8 +345,13 @@ function h = start_waitbar(h, titletext)
     h = waitbar(0, '0%%', 'Name', titletext);
 end
 
-function update_waitbar(h, ratio)
-    waitbar(ratio, h, sprintf('%0.0f%%', floor(ratio * 100)));
+function flag = update_waitbar(h, ratio)
+    flag = true;
+    try
+        waitbar(ratio, h, sprintf('%0.0f%%', floor(ratio * 100)));
+    catch
+        flag = false;
+    end
 end
 
 function close_waitbar(h)
