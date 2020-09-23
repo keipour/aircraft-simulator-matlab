@@ -31,6 +31,14 @@ classdef hmf_controller < handle
     methods (Static)
         function lin_accel = CombineMotionAndForce(force_lin_accel, motion_lin_accel, contact_normal, vel_mat, force_constraint)
 
+            % Check if we are still supposed to apply force or we should
+            % fly away from the contact
+            motion_normal = motion_lin_accel' * contact_normal;
+            if motion_normal > 0
+                lin_accel = motion_lin_accel;
+                return;
+            end
+            
             % Apply the constraints for the force
             force_lin_accel_con = physics.ApplyContactConstraints(force_lin_accel, ...
                 contact_normal, eye(3) - vel_mat, force_constraint, eye(3));
