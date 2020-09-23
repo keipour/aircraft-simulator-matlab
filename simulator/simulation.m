@@ -64,9 +64,11 @@ classdef simulation < handle
             if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
                 rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
             end
-            [contact_status, contact_normal] = obj.UpdateAllStates(rotor_speeds_squared, time);
+            [contact_status, contact_normal, contact_wrench, rot_ic] = ...
+                obj.UpdateAllStates(rotor_speeds_squared, time);
             if contact_status == true
                 last_commands.ContactNormal.Set(contact_normal, time);
+                last_commands.ContactForce.Set(rot_ic' * contact_wrench(4 : 6), time);
             end
             logger.Add(logger_signals.MeasuredStates, struct(obj.Multirotor.State));
         end
@@ -135,8 +137,14 @@ classdef simulation < handle
         
         function NextStepTrajectoryController(obj, time)
         % Calculate the multirotor command for a desired trajectpry
-            
-            next_wp = obj.TrajectoryController.CalcLookaheadPoint(obj.Multirotor.State.Position, obj.Multirotor.State.RPY(3));
+
+            contact_force = [];
+            if last_commands.ContactForce.IsInitialized()
+                contact_force = last_commands.ContactForce.Data;
+            end
+
+            next_wp = obj.TrajectoryController.CalcLookaheadPoint(obj.Multirotor.State.Position, ...
+                obj.Multirotor.State.RPY(3), contact_force, obj.Multirotor.State.InCollision);
             if time >= 0
                 logger.Add(logger_signals.DesiredPositionYaw, [next_wp.Position; next_wp.RPY(3)]);
             else
@@ -233,7 +241,8 @@ classdef simulation < handle
     
     methods (Access = private)
 
-        function [contact_status, contact_normal] = UpdateAllStates(obj, rotor_speeds_squared, time)
+        function [contact_status, contact_normal, contact_wrench, rot_ic] = ...
+                UpdateAllStates(obj, rotor_speeds_squared, time)
             
             % Save the last time we updated the state
             persistent last_time;
@@ -262,6 +271,8 @@ classdef simulation < handle
             [~, col_ind] = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
             contact_normal = [];
+            contact_wrench = [];
+            rot_ic = [];
             if col_ind > 0
                 
                 contact_normal = obj.Environment.Objects{col_ind}.Normal;
@@ -272,14 +283,18 @@ classdef simulation < handle
                 ft_sensor = zeros(6, 1);
                 if obj.Multirotor.HasEndEffector()
 
-                    % Calculate the wrench resulting from the contact
-                    contact_wrench = - physics.ApplyContactConstraints...
+                    % Calculate the normal wrench resulting from the contact
+                    [normal_contact_wrench, rot_ic] = physics.ApplyContactConstraints...
                         (wrench, contact_normal, diag([0, 0, 0, 1, 0, 0]), ...
                         [0; 0; 0; -1; 0; 0], [obj.Multirotor.GetRotationMatrix()'; eye(3)]);
+                    normal_contact_wrench = -normal_contact_wrench;
                     
                     friction_force = physics.ApplyContactFriction(wrench(4:6), ...
                         new_state.EndEffectorVelocity, contact_normal, contact_friction, eye(3));
 
+                    % The total wrench resulting from the contact
+                    contact_wrench = normal_contact_wrench + [zeros(3, 1); friction_force];
+                    
                     % Calculate the rotation from inertial to the sensor (end effector) frame
                     R_SI = obj.Multirotor.GetRotationMatrix()' * obj.Multirotor.EndEffector.R_BE;
                     
@@ -292,7 +307,7 @@ classdef simulation < handle
                     blk_rot(4:6, 4:6) = R_SI';
                     
                     % Rotate the contact wrench to the force/torque sensor frame
-                    ft_sensor = blk_rot * (contact_wrench + [zeros(3, 1); friction_force]);
+                    ft_sensor = blk_rot * contact_wrench;
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...

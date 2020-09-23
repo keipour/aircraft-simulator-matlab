@@ -160,7 +160,7 @@ classdef physics
             f = 1/2 * physics.AirDensity * (air_vel.^2) * eff_area;
         end
         
-        function vec_out = ApplyContactConstraints(vec_in, contact_normal, free_mat, constraint_vec, rot_to_i)
+        function [vec_out, rot_ic] = ApplyContactConstraints(vec_in, contact_normal, free_mat, constraint_vec, rot_to_i)
         % In the constraint vector, for each element of input vector in the contact frame we apply: 
         % 0: no constraint, 1: can only be positive, -1: can only be negative
         % rot_to_i is the vertically stacked rotation matrices to transform

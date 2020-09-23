@@ -7,6 +7,7 @@ classdef last_commands < handle
         DesiredWaypoint support_files.data_field = support_files.data_field;
         RotorSpeedsSquaredCommand support_files.data_field = support_files.data_field;
         ContactNormal support_files.data_field = support_files.data_field;
+        ContactForce support_files.data_field = support_files.data_field;
     end
     
     methods (Static)
@@ -17,6 +18,7 @@ classdef last_commands < handle
             last_commands.DesiredWaypoint.Reset();
             last_commands.RotorSpeedsSquaredCommand.Reset();
             last_commands.ContactNormal.Reset();
+            last_commands.ContactForce.Reset();
         end
     end
     

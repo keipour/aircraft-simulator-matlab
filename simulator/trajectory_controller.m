@@ -39,13 +39,16 @@ classdef trajectory_controller < handle
             obj.CurrentWaypoint = 1;
         end
         
-        function next_wp = CalcLookaheadPoint(obj, pos, rpy, force)
+        function next_wp = CalcLookaheadPoint(obj, pos, rpy, force, in_contact)
 
             if length(rpy) == 1
                 rpy = [0; 0; rpy];
             end
             if nargin < 4
                 force = [];
+            end
+            if nargin < 5
+                in_contact = false;
             end
             if isempty(force)
                 force = 0;
@@ -54,7 +57,7 @@ classdef trajectory_controller < handle
             % Switch to the next point if we're within the radius of the
             % current one. Not issuing lookahead for now.
             next_wp = obj.Waypoints(obj.CurrentWaypoint);
-            if obj.HasReached(next_wp, pos, rpy, force)
+            if obj.HasReached(next_wp, pos, rpy, force, in_contact)
                 if obj.CurrentWaypoint < obj.NumOfWaypoints
                     obj.CurrentWaypoint = obj.CurrentWaypoint + 1;
                     next_wp = obj.Waypoints(obj.CurrentWaypoint);
@@ -66,7 +69,13 @@ classdef trajectory_controller < handle
     end
     
     methods (Access = private)
-        function flag = HasReached(obj, next_wp, pos, rpy, force)
+        function flag = HasReached(obj, next_wp, pos, rpy, force, in_contact)
+
+            flag = true;
+            
+            if in_contact && ~next_wp.HasForce()
+                return;
+            end
 
             if length(obj.PositionThreshold) == 1 % it's a radius on position
                 if norm(next_wp.Position - pos) > obj.PositionThreshold
@@ -106,8 +115,6 @@ classdef trajectory_controller < handle
                     return;
                 end
             end
-            
-            flag = true;
         end
     end
 end
