@@ -2,6 +2,8 @@ function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, .
     plot_data, form_handles, num_of_zoom_levels, zoom_level, axis_limits, ...
     min_zoom, speed, show_info, show_horizon, show_fpv, fpv_cam)
 
+    leave_mark_on_wall = false;
+
     figure(fig);
     
     % Get the current transform
@@ -20,11 +22,22 @@ function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, .
         form_handles.horizon.update(rpy(3), rpy(2), rpy(1));
     end
 
+    if leave_mark_on_wall && curr_state.InCollision && curr_state.ForceSensor(3) > 4.8
+        hold on
+        plot3(curr_state.EndEffectorPosition(1), curr_state.EndEffectorPosition(2), ...
+            curr_state.EndEffectorPosition(3), 'w*');
+    end
+    
     if show_fpv
         copy_data_object_points(plot_handles.FPVMultirotor, plot_handles.Multirotor);
         copy_data_object_points(plot_handles.FPVShadow, plot_handles.Shadow);
         fpv_cam.UpdateState(T);
         fpv_cam.CopyTo(form_handles.axfpv);
+        if leave_mark_on_wall && curr_state.InCollision && curr_state.ForceSensor(3) > 4.8
+            hold(form_handles.axfpvfig, 'on');
+            plot3(form_handles.axfpvfig, curr_state.EndEffectorPosition(1), curr_state.EndEffectorPosition(2), ...
+                curr_state.EndEffectorPosition(3), 'w*');
+        end
     end
 
     if show_info
