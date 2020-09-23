@@ -12,6 +12,7 @@ classdef simulation < handle
     
     properties(SetAccess=protected, GetAccess=protected)
         InitialMultirotor multirotor
+        WaitBar
     end
     
     %% Methods
@@ -155,6 +156,7 @@ classdef simulation < handle
         
         function NextSimulationStep(obj)
             [time, module] = obj.Timer.NextTimeStep();
+            update_waitbar(obj.WaitBar, time / obj.Timer.TotalTime);
             if module == obj.Timer.PlantIndex
                 if last_commands.DesiredEulerAcceleration.IsInitialized() && ...
                         last_commands.DesiredLinearAcceleration.IsInitialized()
@@ -180,9 +182,11 @@ classdef simulation < handle
             obj.Reset();
             last_commands.DesiredLinearAcceleration.Set(zeros(3, 1), 0);
             last_commands.DesiredRPY.Set(rpy_des, 0);
+            obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the attitude response...');
             while ~obj.Timer.IsFinished()
                 obj.NextSimulationStep();
             end
+            close_waitbar(obj.WaitBar);
             
             % Analysis of the response
             signal_names = {'Roll', 'Pitch', 'Yaw'};
@@ -196,9 +200,11 @@ classdef simulation < handle
             
             obj.Reset();
             last_commands.DesiredWaypoint.Set(support_files.waypoint([pos_des; yaw_des]), 0);
+            obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the position response...');
             while ~obj.Timer.IsFinished()
                 obj.NextSimulationStep();
             end
+            close_waitbar(obj.WaitBar);
             
             % Analysis of the response
             signal_names = {'X', 'Y', 'Z', 'Yaw'};
@@ -231,9 +237,11 @@ classdef simulation < handle
             obj.TrajectoryController.SetWaypoints(traj_des, pos_thresh, rpy_thresh, force_thresh);
 
             obj.NextStepTrajectoryController(-1);
+            obj.WaitBar = start_waitbar(obj.WaitBar, 'Simulating the trajectory...');
             while ~obj.Timer.IsFinished()
                 obj.NextSimulationStep();
             end
+            close_waitbar(obj.WaitBar);
         end
     end
     
@@ -322,3 +330,22 @@ classdef simulation < handle
         
     end
 end
+
+%% Helper functions
+
+function h = start_waitbar(h, titletext)
+    close_waitbar(h);
+    h = waitbar(0, '0%%', 'Name', titletext);
+end
+
+function update_waitbar(h, ratio)
+    waitbar(ratio, h, sprintf('%0.0f%%', floor(ratio * 100)));
+end
+
+function close_waitbar(h)
+    try
+        delete(h);
+    catch
+    end
+end
+
