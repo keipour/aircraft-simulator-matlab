@@ -71,12 +71,19 @@ classdef trajectory_controller < handle
     methods (Access = private)
         function flag = HasReached(obj, next_wp, pos, rpy, force, in_contact)
 
+            persistent last_contact_status
+            if isempty(last_contact_status)
+                last_contact_status = false;
+            end
+            
             flag = true;
             
-            if in_contact && ~next_wp.HasForce()
+            if last_contact_status == false && in_contact && ~next_wp.HasForce()
                 return;
             end
 
+            last_contact_status = in_contact;
+            
             if length(obj.PositionThreshold) == 1 % it's a radius on position
                 if norm(next_wp.Position - pos) > obj.PositionThreshold
                     flag = false;
@@ -102,8 +109,8 @@ classdef trajectory_controller < handle
                 flag = false;
                 return;
             end
-            if length(obj.ForceThreshold) == 1 % it's a radius on force
-                if norm(next_wp.Force - force) > obj.PositionThreshold
+            if length(obj.ForceThreshold) == 1 % it's a threshold on normal force
+                if norm(next_wp.Force(1) - force(1)) > obj.PositionThreshold
                     flag = false;
                     return;
                 end
