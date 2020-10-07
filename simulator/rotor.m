@@ -6,6 +6,7 @@ classdef rotor < handle
         DihedralAngle = 0;                      % in degrees
         ArmAngle = 0;                           % in degrees
         ArmLength = 0.4;                        % in meters
+        Diameter = 13;                          % in inches (used in visualization only)
 
         TimeConstant = 0.01;                    % for motor in secs
         ConstantGain = 1;                       % for motor

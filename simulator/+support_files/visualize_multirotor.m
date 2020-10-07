@@ -17,7 +17,6 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
     arm_labels_on = ~plot_only;
     motor_size = 0.02; % in meters -- set to zero if don't want motors
     lighting_on = ~plot_only; % turn on the special lighting
-    rotor_diameter = 12; % in inches
 
     % Initialization
     num_of_rotors = m.NumOfRotors;
@@ -47,7 +46,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
         hold on
         if plot_axes_only == false
             H = [H; plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
-                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, rotor_diameter, plot_only)];
+                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, m.Rotors{i}.Diameter, plot_only)];
         else
             H = [H; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
