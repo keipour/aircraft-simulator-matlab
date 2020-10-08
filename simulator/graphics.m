@@ -317,7 +317,6 @@ function plot_cross_section(X, plot_title, label, pivot_axis)
         title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
         xlim(xylimits);
         ylim(xylimits);
-        axis equal
     end
 end
 
