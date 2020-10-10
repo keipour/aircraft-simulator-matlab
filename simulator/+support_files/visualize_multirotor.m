@@ -11,12 +11,14 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
     end
 
     % Visualization settings
-    box_height = 0.1; % in meters
-    axis_arrow_size = 0.3; % in meters
-    plot_title = 'Your Cool Multirotor';
-    arm_labels_on = ~plot_only;
-    motor_size = 0.02; % in meters -- set to zero if don't want motors
-    lighting_on = ~plot_only; % turn on the special lighting
+    box_height = options.MV_PayloadHeight; % in meters
+    axis_arrow_size = options.MV_AxisArrowSize; % in meters
+    plot_title = options.MV_PlotTitle;
+    arm_labels_on = ~plot_only && options.MV_ShowArmLabels;
+    motor_height = options.MV_MotorHeight; % in meters -- set to zero if don't want motors
+    motor_radius = options.MV_MotorRadius; % in meters
+    lighting_on = ~plot_only && options.MV_AddLighting; % turn on the special lighting
+    plot_rotor_axes = ~plot_only && options.MV_ShowRotorAxes;
 
     % Initialization
     num_of_rotors = m.NumOfRotors;
@@ -38,7 +40,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
     % Draw the arms
     for i = 1 : num_of_rotors
         hold on
-        H = [H; plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_size)];
+        H = [H; plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_height)];
     end
 
     % Draw the rotors
@@ -46,7 +48,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
         hold on
         if plot_axes_only == false
             H = [H; plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
-                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_size, m.Rotors{i}.Diameter, plot_only)];
+                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_height, motor_radius, m.Rotors{i}.Diameter, ~plot_rotor_axes)];
         else
             H = [H; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
@@ -185,17 +187,16 @@ function H = plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor
     end
 end
 
-function H = plotRotor(position, axis, direction, arrow_size, motor_size, rotor_diameter, no_axes)
+function H = plotRotor(position, axis, direction, arrow_size, motor_height, motor_radius, rotor_diameter, no_axes)
     rotor_size = rotor_diameter * 0.0254 / 2; 
-    rotor_color = [0.4, 0.4, 1]; % CW
+    rotor_color = options.MV_RotorColorCW; % CW
     if direction == 1
-        rotor_color = [0.4, 1, 0.4];
+        rotor_color = options.MV_RotorColorCCW;
     end
-    motor_color = 'black';
-    dmot = motor_size * axis;
+    motor_color = options.MV_MotorColor;
+    dmot = motor_height * axis;
     pos_m1 = position - dmot;
     pos_m2 = position + dmot;
-    motor_radius = 0.02;
     H = line3d([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], motor_radius, motor_color);
     H = [H; circlePlane3D(pos_m2, axis, rotor_size, 0.005, ~no_axes, rotor_color, arrow_size, direction, no_axes)];
 end
@@ -262,7 +263,7 @@ function H = circlePlane3D( center, normal, radious, theintv, normalon, color, a
     fx = fx+center(1);
     fy = fy+center(2);
     fz = fz+center(3);
-    H = fill3(fx, fy, fz, color, 'FaceAlpha', 0.7);
+    H = fill3(fx, fy, fz, color, 'FaceAlpha', options.MV_RotorOpacity);
     if normalon == 1
         hold on;
         normal_scaled = normal * arrow_size;
