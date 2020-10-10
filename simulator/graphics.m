@@ -151,6 +151,7 @@ classdef graphics
             figure;
             H = support_files.visualize_multirotor(multirotor, axes_only, false, draw_collision_model);
             view(3);
+            axis(gca, options.MV_PlotAxes);
             drawnow;
         end
         

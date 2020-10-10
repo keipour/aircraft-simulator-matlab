@@ -17,7 +17,7 @@ classdef options
         % Multirotor Visualization settings
         MV_PayloadHeight = 0.1; % in meters
         MV_AxisArrowSize = 0.3; % in meters
-        MV_PlotTitle = 'Your Cool Multirotor';
+        MV_PlotTitle = '';%'Your Cool Multirotor';
         MV_ShowArmLabels = false;
         MV_MotorHeight = 0.02; % in meters -- set to zero if don't want motors
         MV_MotorRadius = 0.02; % in meters -- set to zero if don't want motors
@@ -26,7 +26,8 @@ classdef options
         MV_MotorColor = 'black';
         MV_RotorColorCW = [0.4, 0.4, 1];
         MV_RotorColorCCW = [0.4, 1, 0.4];
-        MV_RotorOpacity = 0.75;
+        MV_RotorOpacity = 0.85;
+        MV_PlotAxes = 'off'; % Options are: 'on' | 'off'
     end    
 end
 
