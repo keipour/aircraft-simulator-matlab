@@ -322,7 +322,7 @@ function plot_cross_section(X, plot_title, label, pivot_axis)
 end
 
 function [x, y] = get_cross_section(X, Y, Z, z)
-    Nq = 1e5;
+    Nq = options.DM_CrossSectionPoints;
     minx = min(X);
     miny = min(Y);
     maxx = max(X);

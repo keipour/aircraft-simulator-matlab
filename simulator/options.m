@@ -28,6 +28,10 @@ classdef options
         MV_RotorColorCCW = [0.4, 1, 0.4];
         MV_RotorOpacity = 0.85;
         MV_PlotAxes = 'off'; % Options are: 'on' | 'off'
+        
+        % Dynamic Manipulability settings
+        DM_CrossSectionPoints = 1e6;    % Default: 1e5
+        
     end    
 end
 
