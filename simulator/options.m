@@ -30,7 +30,10 @@ classdef options
         MV_PlotAxes = 'off'; % Options are: 'on' | 'off'
         
         % Dynamic Manipulability settings
-        DM_CrossSectionPoints = 1e6;    % Default: 1e5
+        DM_CrossSectionPoints = 1e5;    % Default: 1e5
+        DM_LateralThrustMonteCarloPoints = 5e3;    % Default: 5e3
+        DM_LateralThrustColor = 'b';
+        DM_CrossSectionColor = 'b';
         
     end    
 end

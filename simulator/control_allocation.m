@@ -23,7 +23,7 @@ classdef control_allocation < handle
             end
         end
         
-        function [rotor_speeds_squared, saturated] = CalcRotorSpeeds(obj, multirotor, lin_accel, ang_accel)
+        function [rotor_speeds_squared, saturated] = CalcRotorSpeeds(obj, mult, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
             persistent lin_accel_last
@@ -37,7 +37,7 @@ classdef control_allocation < handle
                 ang_accel_last = zeros(3, 1);
             end
             if isempty(rotor_speeds_squared_last)
-                rotor_speeds_squared_last = zeros(multirotor.NumOfRotors, 1);
+                rotor_speeds_squared_last = zeros(mult.NumOfRotors, 1);
             end
             if isempty(saturated_last)
                 saturated_last = false;
@@ -50,11 +50,11 @@ classdef control_allocation < handle
             end
         
             if obj.Method == control_allocation_types.NDI
-                rotor_speeds_squared = obj.NDIRotorSpeeds(multirotor, lin_accel, ang_accel);
+                rotor_speeds_squared = obj.NDIRotorSpeeds(mult, lin_accel, ang_accel);
             end
 
             saturation_flag = false;
-            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxrotorSpeedSquared, multirotor.Rotors, 'uni', 0));
+            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxrotorSpeedSquared, mult.Rotors, 'uni', 0));
             if any(rotor_speeds_squared > max_rotor_speeds)
                 %mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
                 %rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;

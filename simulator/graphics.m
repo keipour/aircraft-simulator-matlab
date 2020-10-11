@@ -256,31 +256,38 @@ classdef graphics
             plot_cross_section(X, plot_title, label, 'x');
             plot_cross_section(X, plot_title, label, 'y');
             plot_cross_section(X, plot_title, label, 'z');
-
-            % % Another method based on dynamic inversion - Kept just for
-            % % double proof when needed
-            %
-            % ca = control_allocation(multirotor);
-            % figure;
-            % sgtitle(plot_title);
-            % Zq = linspace(min(X(:, 3)), 0, 9);
-            % X_xy = X(:, 1:2);
-            % xylimits = [min(X_xy(:)), max(X_xy(:))];
-            % for i = 1 : 9
-            %     subplot(3, 3, i);
-            %     is_angular = true;
-            %     [xc, yc] = get_cross_section_from_dynamic_inversion ...
-            %         (X(:, 1), X(:, 2), Zq(i), ca, multirotor, is_angular);
-            %     plot(xc, yc);
-            %     xlabel(['$' label '_x$'], 'Interpreter', 'latex');
-            %     ylabel(['$' label '_y$'], 'Interpreter', 'latex');
-            %     title(['$' label '_z = ' num2str(Zq(i), '%0.2f') '$'], 'Interpreter', 'latex');
-            %     xlim(xylimits);
-            %     ylim(xylimits);
-            %     axis equal
-            % end
             drawnow;
         end
+        
+        function PlotLateralThrustDynInv(mult, X, des_ang_accel, plot_title, label)
+            if rank(X) < 3
+                return;
+            end
+            
+            ca = control_allocation(mult);
+            figure;
+            sgtitle(plot_title);
+            Zq = linspace(min(X(:, 3)), 0, 9);
+            X_xy = X(:, 1:2);
+            xylimits = [min(X_xy(:)), max(X_xy(:))];
+            for i = 1 : 9
+                subplot(3, 3, i);
+                is_angular = false;
+                [xc, yc] = get_cross_section_from_dynamic_inversion ...
+                    (X(:, 1), X(:, 2), Zq(i), ca, mult, is_angular, des_ang_accel);
+                if ~isempty(xc)
+                    k = convhull(xc, yc, 'Simplify', true);
+                    fill(xc(k), yc(k), options.DM_LateralThrustColor);
+                end
+                xlabel(['$' label '_x$'], 'Interpreter', 'latex');
+                ylabel(['$' label '_y$'], 'Interpreter', 'latex');
+                title(['$' label '_z = ' num2str(Zq(i), '%0.2f') '$'], 'Interpreter', 'latex');
+                xlim(xylimits);
+                ylim(xylimits);
+            end
+            drawnow;
+        end
+       
     end
 end
 
@@ -312,7 +319,10 @@ function plot_cross_section(X, plot_title, label, pivot_axis)
     for i = 1 : 9
         subplot(3, 3, i);
         [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
-        plot(xc, yc);
+        if ~isempty(xc)
+            k = convhull(xc, yc, 'Simplify', true);
+            fill(xc(k), yc(k), options.DM_CrossSectionColor);
+        end
         xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
         ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
         title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
@@ -336,11 +346,11 @@ function [x, y] = get_cross_section(X, Y, Z, z)
     y = Yq(in1);
 end 
 
-function [x, y] = get_cross_section_from_dynamic_inversion(X, Y, z, ca, m, is_angluar)
+function [x, y] = get_cross_section_from_dynamic_inversion(X, Y, z, ca, m, is_angluar, des_accel)
     if nargin < 6
         is_angluar = false;
     end
-    Nq = 5*1e3;
+    Nq = options.DM_LateralThrustMonteCarloPoints;
     minx = min(X);
     miny = min(Y);
     maxx = max(X);
@@ -352,9 +362,9 @@ function [x, y] = get_cross_section_from_dynamic_inversion(X, Y, z, ca, m, is_an
     out1 = false(Nq, 1);
     for i = 1 : Nq
         if is_angluar
-            [~, out1(i)] = ca.CalcRotorSpeeds(m, zeros(3, 1), [Xq(i); Yq(i); z]);
+            [~, out1(i)] = ca.CalcRotorSpeeds(m, des_accel, [Xq(i); Yq(i); z]);
         else
-            [~, out1(i)] = ca.CalcRotorSpeeds(m, [Xq(i); Yq(i); z], zeros(3, 1));
+            [~, out1(i)] = ca.CalcRotorSpeeds(m, [Xq(i); Yq(i); z], des_accel);
         end
     end
     x = Xq(~out1);

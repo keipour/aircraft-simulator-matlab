@@ -55,21 +55,22 @@ classdef analysis
             end
         end
 
-        function AnalyzeDynamicManipulability(multirotor, lin_steps, ang_steps)
-            accel = analysis.AnalyzeAccelerationDynamicManipulability(multirotor, lin_steps);
-            omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(multirotor, ang_steps);
-            res = analyze_plant_structure(multirotor, accel, omega_dot);
+        function AnalyzeDynamicManipulability(mult, lin_steps, ang_steps)
+            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, lin_steps);
+            omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, ang_steps);
+            res = analyze_plant_structure(mult, accel, omega_dot);
             graphics.PrintDynamicManipulabilityAnalysis(res);
         end
         
-        function accel = AnalyzeAccelerationDynamicManipulability(multirotor, n_steps)
-            accel = analyze_accelerations(multirotor, n_steps);
+        function accel = AnalyzeAccelerationDynamicManipulability(mult, n_steps)
+            accel = analyze_accelerations(mult, n_steps);
             graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a');
+            %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
         end
         
-        function omega_dot = AnalyzeAngularAccelerationDynamicManipulability(multirotor, n_steps)
-            omega_dot = analyze_angular_accelerations(multirotor, n_steps);
+        function omega_dot = AnalyzeAngularAccelerationDynamicManipulability(mult, n_steps)
+            omega_dot = analyze_angular_accelerations(mult, n_steps);
             graphics.DrawConvexHull(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
             graphics.PlotCrossSections(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
         end
