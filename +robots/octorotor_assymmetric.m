@@ -7,7 +7,7 @@ function m = octorotor_assymmetric(add_arm)
     RotorRotationDirections = [-1, -1, 1, 1, -1, -1, 1, 1];
     RotorDihedralAngle = 0;
     RotorSidewardAngle = 0;
-    RotorInwardAngle = [90, 0, 90, 0, 90, 0, 90, 0];
+    RotorInwardAngle = [-90, 0, -90, 0, -90, 0, -90, 0];
     RotorDiameters = [8, 12, 8, 12, 8, 12, 8, 12];
     
     m = multirotor(RotorPlacementAngles, RotorRotationDirections);
