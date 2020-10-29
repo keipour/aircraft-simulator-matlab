@@ -32,7 +32,7 @@ m.SetInitialState(position, velocity, rpy, omega);
 %physics.Gravity = [0; 0; 9.80665];  % in m/s^2
 
 % The multirotor mass is defined in 'm.TotalMass'
-%m.TotalMass = 5; % in kg
+%m.TotalMass = 7.427; % in kg
 
 % The air density is defined in 'physics.AirDensity' (has a small effect on 
 % drag, which depends on the airspeed as well)
@@ -58,4 +58,4 @@ wind_force = [0; 0; 0]; % in N
 
 %% Analyze the dynamic manipulability
 
-m.AnalyzeDynamicManipulability();
+m.AnalyzeDynamicManipulability(wind_force);

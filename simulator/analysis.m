@@ -55,15 +55,15 @@ classdef analysis
             end
         end
 
-        function AnalyzeDynamicManipulability(mult)
-            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, 2);
+        function AnalyzeDynamicManipulability(mult, wind_force)
+            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 2);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
             res = analyze_plant_structure(mult, accel, omega_dot);
             graphics.PrintDynamicManipulabilityAnalysis(res);
         end
         
-        function accel = AnalyzeAccelerationDynamicManipulability(mult, n_steps)
-            accel = analyze_accelerations(mult, n_steps);
+        function accel = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
+            accel = analyze_accelerations(mult, wind_force, n_steps);
             graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a');
             %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
@@ -78,14 +78,14 @@ classdef analysis
 end
 
 %% Helper functions
-function accel = analyze_accelerations(multirotor, n_steps)
-    n_rotors = multirotor.NumOfRotors;
+function accel = analyze_accelerations(mult, wind_force, n_steps)
+    n_rotors = mult.NumOfRotors;
     n_total = n_steps ^ n_rotors;
     accel = zeros(n_total, 3);
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxrotorSpeedSquared;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
@@ -93,18 +93,18 @@ function accel = analyze_accelerations(multirotor, n_steps)
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
         rotor_speeds_squared = nextnum' .* steps;
-        accel(i, :) = multirotor.CalculateAccelerationManipulability(rotor_speeds_squared);
+        accel(i, :) = mult.CalculateAccelerationManipulability(wind_force, rotor_speeds_squared);
     end
 end
 
-function omega_dot = analyze_angular_accelerations(multirotor, n_steps)
-    n_rotors = multirotor.NumOfRotors;
+function omega_dot = analyze_angular_accelerations(mult, n_steps)
+    n_rotors = mult.NumOfRotors;
     n_total = n_steps ^ n_rotors;
     omega_dot = zeros(n_total, 3);
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = multirotor.Rotors{i}.MaxrotorSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxrotorSpeedSquared;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
@@ -112,7 +112,7 @@ function omega_dot = analyze_angular_accelerations(multirotor, n_steps)
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
         rotor_speeds_squared = nextnum' .* steps;
-        omega_dot(i, :) = multirotor.CalculateAngularAccelerationManipulability(rotor_speeds_squared);
+        omega_dot(i, :) = mult.CalculateAngularAccelerationManipulability(rotor_speeds_squared);
     end
 end
 
@@ -122,7 +122,7 @@ function result = analyze_plant_structure(multirotor, accel, omega_dot)
     result.RotationType = detect_dynamic_manipulability_type(omega_dot);
 
     max_z_accel = -min(accel(:, 3));
-    total_accel = norm(multirotor.CalculateAccelerationManipulability(0, true));
+    total_accel = norm(multirotor.CalculateAccelerationManipulability(zeros(3, 1), 0, true));
     result.VerticalThrustEfficiency = (max_z_accel + physics.Gravity(3)) / (total_accel + physics.Gravity(3));
     result.VerticalTranslationEfficiency = max_z_accel / total_accel;
     result.MaximumHorizontalAcceleration = sqrt(max(accel(:, 1).^2 + accel(:, 2).^2));

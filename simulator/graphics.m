@@ -253,9 +253,9 @@ classdef graphics
             if rank(X) < 3
                 return;
             end
-            plot_cross_section(X, plot_title, label, 'x');
-            plot_cross_section(X, plot_title, label, 'y');
-            plot_cross_section(X, plot_title, label, 'z');
+            plot_cross_section(X, plot_title, label, 'x', 3, 3);
+            plot_cross_section(X, plot_title, label, 'y', 3, 3);
+            plot_cross_section(X, plot_title, label, 'z', 3, 3);
             drawnow;
         end
         
@@ -292,32 +292,34 @@ classdef graphics
 end
 
 %% Helper functions
-function plot_cross_section(X, plot_title, label, pivot_axis)
+function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols)
+    nsubplots = csrows * cscols;
     if lower(pivot_axis) == 'z'
         axis_labels = {'x', 'y', 'z'};
-        Pivot_q = linspace(min(X(:, 3)), 0, 9);
+        Pivot_q = linspace(min(X(:, 3)), max(X(:, 3)), nsubplots);
         axis1 = X(:, 1);
         axis2 = X(:, 2);
         axis3 = X(:, 3);
     elseif lower(pivot_axis) == 'y'
         axis_labels = {'x', 'z', 'y'};
-        Pivot_q = linspace(min(X(:, 2)), max(X(:, 2)), 9);
+        Pivot_q = linspace(min(X(:, 2)), max(X(:, 2)), nsubplots);
         axis1 = X(:, 1);
         axis2 = X(:, 3);
         axis3 = X(:, 2);
     elseif lower(pivot_axis) == 'x'
         axis_labels = {'y', 'z', 'x'};
-        Pivot_q = linspace(min(X(:, 1)), max(X(:, 1)), 9);
+        Pivot_q = linspace(min(X(:, 1)), max(X(:, 1)), nsubplots);
         axis1 = X(:, 2);
         axis2 = X(:, 3);
         axis3 = X(:, 1);
     end
+    xlimit = max(abs(axis1));
+    ylimit = max(abs(axis2));
+    
     figure;
     sgtitle([plot_title ' (' upper(axis_labels{3}) ' axis)']);
-    X_xy = [axis1 axis2];
-    xylimits = [min(X_xy(:)), max(X_xy(:))];
-    for i = 1 : 9
-        subplot(3, 3, i);
+    for i = 1 : nsubplots
+        subplot(csrows, csrows, i);
         [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
         if ~isempty(xc)
             k = convhull(xc, yc, 'Simplify', true);
@@ -326,8 +328,8 @@ function plot_cross_section(X, plot_title, label, pivot_axis)
         xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
         ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
         title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
-        xlim(xylimits);
-        ylim(xylimits);
+        xlim([-xlimit xlimit]);
+        ylim([-ylimit ylimit]);
     end
 end
 

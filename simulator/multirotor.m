@@ -32,9 +32,6 @@ classdef multirotor < handle
 
         NE_M                        % M matrix in Newton-Euler dynamics formulation
                                     % (related to body-fixed thrust and reaction moments)
-                                    
-        Ang_Acc_Manip_A             % The fixed part of the angular manipulability (A + Bu)
-        Ang_Acc_Manip_B             % The part dependent on rotor speeds of the angular manipulability
     end
 
     
@@ -187,15 +184,15 @@ classdef multirotor < handle
             end
         end
         
-        function accel = CalculateAccelerationManipulability(obj, rotor_speeds_squared, get_maximum)
-            if nargin < 3
+        function accel = CalculateAccelerationManipulability(obj, wind_force, rotor_speeds_squared, get_maximum)
+            if nargin < 4
                 get_maximum = false;
             end
             
-            persistent NE_L RPY
-            if isempty(NE_L) || isempty(RPY)
+            persistent F RPY
+            if isempty(F) || isempty(RPY)
                 RPY = obj.State.RPY;
-                NE_L = obj.GetRotationMatrix()' * obj.NE_L;
+                F = (obj.GetRotationMatrix()' * obj.NE_L) / obj.TotalMass;
             end
 
             if get_maximum
@@ -204,10 +201,10 @@ classdef multirotor < handle
             else
                 if ~isequal(RPY, obj.State.RPY)
                     RPY = obj.State.RPY;
-                    NE_L = obj.GetRotationMatrix()' * obj.NE_L;
+                    F = (obj.GetRotationMatrix()' * obj.NE_L) / obj.TotalMass;
                 end
  
-                accel = (obj.TotalMass * physics.Gravity + NE_L * rotor_speeds_squared) / obj.TotalMass;
+                accel = physics.Gravity + wind_force / obj.TotalMass + F * rotor_speeds_squared;
             end
         end
         
@@ -316,8 +313,11 @@ classdef multirotor < handle
             H = graphics.VisualizeMultirotor(obj, true);
         end
         
-        function AnalyzeDynamicManipulability(obj)
-            analysis.AnalyzeDynamicManipulability(obj);
+        function AnalyzeDynamicManipulability(obj, wind_force)
+            if nargin < 2
+                wind_force = zeros(3, 1);
+            end
+            analysis.AnalyzeDynamicManipulability(obj, wind_force);
         end
         
         function RBI = GetRotationMatrix(obj)
@@ -464,10 +464,6 @@ classdef multirotor < handle
             end
             
             obj.NE_M = NE_F + NE_G;
-            
-            % Update the manipulability matrices
-            obj.Ang_Acc_Manip_A = obj.I_inv * obj.GetGravityMoment(eye(3));
-            obj.Ang_Acc_Manip_B = obj.I_inv * obj.NE_M;
         end
         
         function e_pos = CalcEndEffectorPosition(obj, m_pos, m_rpy_deg)
