@@ -256,18 +256,23 @@ classdef graphics
             zlabel(['$' label '_z$'], 'Interpreter', 'latex');
             axis equal
             title(plot_title);
+            set(gca, 'Xdir', 'reverse')
+            set(gca, 'Zdir', 'reverse')
             drawnow;
         end
         
-        function PlotCrossSections(X, plot_title, label)
+        function PlotCrossSections(X, plot_title, label, z_from_zero)
+            if nargin < 4
+                z_from_zero = false;
+            end
             if rank(X) < 3
                 return;
             end
             sprows = options.DM_CrossSectionSubplotRows;
             spcols = options.DM_CrossSectionSubplotCols;
-            plot_cross_section(X, plot_title, label, 'x', sprows, spcols);
-            plot_cross_section(X, plot_title, label, 'y', sprows, spcols);
-            plot_cross_section(X, plot_title, label, 'z', sprows, spcols);
+            plot_cross_section(X, plot_title, label, 'x', sprows, spcols, z_from_zero);
+            plot_cross_section(X, plot_title, label, 'y', sprows, spcols, z_from_zero);
+            plot_cross_section(X, plot_title, label, 'z', sprows, spcols, z_from_zero);
             drawnow;
         end
         
@@ -308,11 +313,14 @@ classdef graphics
 end
 
 %% Helper functions
-function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols)
+function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero)
     nsubplots = csrows * cscols;
     if lower(pivot_axis) == 'z'
         axis_labels = {'x', 'y', 'z'};
         Pivot_q = linspace(min(X(:, 3)), max(X(:, 3)), nsubplots);
+        if z_from_zero && max(X(:, 3)) > 0
+            Pivot_q = linspace(min(X(:, 3)), 0, nsubplots);
+        end
         axis1 = X(:, 1);
         axis2 = X(:, 2);
         axis3 = X(:, 3);
