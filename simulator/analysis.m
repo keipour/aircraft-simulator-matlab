@@ -63,9 +63,10 @@ classdef analysis
         end
         
         function accel = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
+            plot_z_axis_from_zero = options.DM_CrossSectionZFromZero;
             accel = analyze_accelerations(mult, wind_force, n_steps);
             graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
-            graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a');
+            graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero);
             %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
         end
         
@@ -85,14 +86,15 @@ function accel = analyze_accelerations(mult, wind_force, n_steps)
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = mult.Rotors{i}.MaxrotorSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxSpeedSquared;
+        mins(i) = mult.Rotors{i}.MinSpeedSquared;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
 
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
-        rotor_speeds_squared = nextnum' .* steps;
+        rotor_speeds_squared = mins + nextnum' .* steps;
         accel(i, :) = mult.CalculateAccelerationManipulability(wind_force, rotor_speeds_squared);
     end
 end
@@ -104,14 +106,15 @@ function omega_dot = analyze_angular_accelerations(mult, n_steps)
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = mult.Rotors{i}.MaxrotorSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxSpeedSquared;
+        mins(i) = mult.Rotors{i}.MinSpeedSquared;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
 
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
-        rotor_speeds_squared = nextnum' .* steps;
+        rotor_speeds_squared = mins + nextnum' .* steps;
         omega_dot(i, :) = mult.CalculateAngularAccelerationManipulability(rotor_speeds_squared);
     end
 end

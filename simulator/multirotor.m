@@ -446,20 +446,20 @@ classdef multirotor < handle
             % Calculate L matrix (related to body thrust forces)
             obj.NE_L = zeros(3, obj.NumOfRotors);
             for i = 1 : obj.NumOfRotors
-               obj.NE_L(:, i) = obj.Rotors{i}.GetThrustForce(1);
+               obj.NE_L(:, i) = obj.Rotors{i}.GetThrustForcePerUnitInput();
             end
 
             % Calculate G matrix (related to body reaction moments)
             NE_G = zeros(3, obj.NumOfRotors);
             for i = 1 : obj.NumOfRotors
-               NE_G(:, i) = obj.Rotors{i}.GetReactionMoment(1);
+               NE_G(:, i) = obj.Rotors{i}.GetReactionMomentPerUnitInput();
             end
             
             % Calculate F matrix (related to body thrust moments)
             NE_F = zeros(3, obj.NumOfRotors);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                F = obj.Rotors{i}.GetThrustForce(1);
+                F = obj.Rotors{i}.GetThrustForcePerUnitInput();
                 NE_F(:, i) = cross(r, F);
             end
             
@@ -510,7 +510,7 @@ classdef multirotor < handle
                 if nargin < 4 || get_maximum == false
                     FB = FB + obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
                 else
-                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxrotorSpeedSquared))];
+                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxSpeedSquared))];
                     FB = FB + max_thrust;
                 end
             end

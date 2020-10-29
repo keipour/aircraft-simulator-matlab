@@ -54,7 +54,7 @@ classdef control_allocation < handle
             end
 
             saturation_flag = false;
-            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxrotorSpeedSquared, mult.Rotors, 'uni', 0));
+            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxSpeedSquared, mult.Rotors, 'uni', 0));
             if any(rotor_speeds_squared > max_rotor_speeds)
                 %mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
                 %rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;
@@ -62,8 +62,10 @@ classdef control_allocation < handle
                 rotor_speeds_squared(ind) = max_rotor_speeds(ind);
                 saturation_flag = true;
             end
-            if any(rotor_speeds_squared < 0)
-                rotor_speeds_squared(rotor_speeds_squared < 0) = 0;
+            min_rotor_speeds = cell2mat(cellfun(@(s)s.MinSpeedSquared, mult.Rotors, 'uni', 0));
+            if any(rotor_speeds_squared < min_rotor_speeds)
+                ind = rotor_speeds_squared < min_rotor_speeds;
+                rotor_speeds_squared(ind) = min_rotor_speeds(ind);
                 saturation_flag = true;
             end
             
@@ -86,20 +88,20 @@ classdef control_allocation < handle
             % Calculate L matrix (related to body thrust forces)
             obj.NDI_L = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
-               obj.NDI_L(:, i) = multirotor.Rotors{i}.GetThrustForce(1);
+               obj.NDI_L(:, i) = multirotor.Rotors{i}.GetThrustForcePerUnitInput();
             end
 
             % Calculate G matrix (related to body reaction moments)
             NDI_G = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
-               NDI_G(:, i) = multirotor.Rotors{i}.GetReactionMoment(1);
+               NDI_G(:, i) = multirotor.Rotors{i}.GetReactionMomentPerUnitInput();
             end
             
             % Calculate F matrix (related to body thrust moments)
             NDI_F = zeros(3, multirotor.NumOfRotors);
             for i = 1 : multirotor.NumOfRotors
                 r = multirotor.Rotors{i}.Position;
-                F = multirotor.Rotors{i}.GetThrustForce(1);
+                F = multirotor.Rotors{i}.GetThrustForcePerUnitInput();
                 NDI_F(:, i) = cross(r, F);
             end
             
