@@ -259,7 +259,7 @@ classdef graphics
                 trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor', facecolor, ...
                     'LineStyle', linestyle, 'EdgeColor', edgecolor, 'FaceAlpha', facealpha);
                 
-                if get_max_sphere
+                if get_max_sphere && inhull([0, 0, 0], X)
                     k2 = unique(k);
                     Y = X(k2, :);
                     k2 = convhull(Y(:, 1), Y(:, 2), Y(:, 3), 'Simplify', true);
@@ -408,7 +408,7 @@ function [x, y] = get_cross_section(X, Y, Z, z)
     in1 = inhull([Xq, Yq, z*ones(Nq, 1)], [X, Y, Z]);
     x = Xq(in1);
     y = Yq(in1);
-end 
+end
 
 function [x, y] = get_cross_section_from_dynamic_inversion(X, Y, z, ca, m, is_angluar, des_accel)
     if nargin < 6
