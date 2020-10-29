@@ -192,16 +192,42 @@ classdef multirotor < handle
                 get_maximum = false;
             end
             
+            persistent NE_L RPY
+            if isempty(NE_L) || isempty(RPY)
+                RPY = obj.State.RPY;
+                NE_L = obj.GetRotationMatrix()' * obj.NE_L;
+            end
+
             if get_maximum
                 accel = (obj.GetGravityForce() + ...
                     obj.GetThrustForce(eye(3), rotor_speeds_squared, get_maximum)) / obj.TotalMass;
             else
-                accel = (obj.TotalMass * physics.Gravity + obj.NE_L * rotor_speeds_squared) / obj.TotalMass;
+                if ~isequal(RPY, obj.State.RPY)
+                    RPY = obj.State.RPY;
+                    NE_L = obj.GetRotationMatrix()' * obj.NE_L;
+                end
+ 
+                accel = (obj.TotalMass * physics.Gravity + NE_L * rotor_speeds_squared) / obj.TotalMass;
             end
         end
         
         function omega_dot = CalculateAngularAccelerationManipulability(obj, rotor_speeds_squared)
-            omega_dot = obj.Ang_Acc_Manip_A + obj.Ang_Acc_Manip_B * rotor_speeds_squared;
+            
+            persistent M1 M2 RPY Omega
+            if isempty(M1) || isempty(M2) || isempty(RPY) || isempty(Omega)
+                RPY = obj.State.RPY;
+                Omega = obj.State.Omega;
+                M1 = obj.I_inv * (obj.GetGravityMoment(obj.GetRotationMatrix()) - cross(obj.State.Omega, obj.I * obj.State.Omega));
+                M2 = obj.I_inv * obj.NE_M;
+            end
+            
+            if ~isequal(RPY, obj.State.RPY) || ~isequal(Omega, obj.State.Omega)
+                RPY = obj.State.RPY;
+                Omega = obj.State.Omega;
+                M1 = obj.I_inv * (obj.GetGravityMoment(obj.GetRotationMatrix()) - cross(obj.State.Omega, obj.I * obj.State.Omega));
+            end
+            
+            omega_dot = M1 + M2 * rotor_speeds_squared;
         end
         
         function set.I(obj, value)
@@ -290,8 +316,8 @@ classdef multirotor < handle
             H = graphics.VisualizeMultirotor(obj, true);
         end
         
-        function AnalyzeDynamicManipulability(obj, lin_steps, ang_steps)
-            analysis.AnalyzeDynamicManipulability(obj, lin_steps, ang_steps);
+        function AnalyzeDynamicManipulability(obj)
+            analysis.AnalyzeDynamicManipulability(obj);
         end
         
         function RBI = GetRotationMatrix(obj)

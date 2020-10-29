@@ -55,9 +55,9 @@ classdef analysis
             end
         end
 
-        function AnalyzeDynamicManipulability(mult, lin_steps, ang_steps)
-            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, lin_steps);
-            omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, ang_steps);
+        function AnalyzeDynamicManipulability(mult)
+            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, 2);
+            omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
             res = analyze_plant_structure(mult, accel, omega_dot);
             graphics.PrintDynamicManipulabilityAnalysis(res);
         end
