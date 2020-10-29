@@ -56,7 +56,7 @@ classdef analysis
         end
 
         function AnalyzeDynamicManipulability(mult, wind_force)
-            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 2);
+            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
             res = analyze_plant_structure(mult, accel, omega_dot);
             graphics.PrintDynamicManipulabilityAnalysis(res);
@@ -120,6 +120,9 @@ function result = analyze_plant_structure(multirotor, accel, omega_dot)
     result = [];
     result.TranslationType = detect_dynamic_manipulability_type(accel);
     result.RotationType = detect_dynamic_manipulability_type(omega_dot);
+    if isequal(size(accel), size(omega_dot))
+        result.ActuationRank = detect_actuation_rank([accel, omega_dot]);
+    end
 
     max_z_accel = -min(accel(:, 3));
     total_accel = norm(multirotor.CalculateAccelerationManipulability(zeros(3, 1), 0, true));
@@ -144,6 +147,15 @@ function type = detect_dynamic_manipulability_type(X)
         type = 'Underactuated in 1-D';
     else
         error('Error in dynamic manipulability analysis: translation type not recognized');
+    end
+end
+
+function type = detect_actuation_rank(X)
+    x_rank = rank(X);
+    if x_rank == 6
+        type = 'Full 6-D actuation';
+    else
+        type = sprintf('%d-D actuation', x_rank);
     end
 end
 

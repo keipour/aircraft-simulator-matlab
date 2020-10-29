@@ -219,6 +219,10 @@ classdef graphics
         function PrintDynamicManipulabilityAnalysis(res)
             fprintf('Analysis for the multirotor structure:\n');
             fprintf('    Translation Actuation Type           : %s\n', res.TranslationType);
+            fprintf('    Rotation Actuation Type              : %s\n', res.RotationType);
+            if isfield(res, 'ActuationRank')
+                fprintf('    Robot Actuation Rank                 : %s\n', res.ActuationRank);
+            end
             fprintf('    Vertical Thrust Efficiency           : %0.2f %%\n', res.VerticalThrustEfficiency * 100);
             fprintf('    Vertical Translation Efficiency      : %0.2f %%\n', res.VerticalTranslationEfficiency * 100);
             fprintf('    Maximum Vertical Acceleration        : %0.2f m/s^2\n', res.MaximumVerticalAcceleration);
