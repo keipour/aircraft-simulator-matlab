@@ -11,12 +11,6 @@ addpath('simulator');
 %m = robots.quadrotor(true);
 m = robots.tilted_hex(true);
 
-%% Visualize the robot
-
-%m.Visualize();
-%m.VisualizeAxes();
-%m.AnalyzeDynamicManipulability(2, 2);
-
 %% Define the world
 
 average_wind = [];
