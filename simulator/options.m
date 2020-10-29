@@ -34,12 +34,16 @@ classdef options
         DM_LateralThrustMonteCarloPoints = 5e3;    % Default: 5e3
         DM_LateralThrustColor = 'b';
         DM_CrossSectionColor = 'b';
+        DM_CrossSectionZFromZero = true; % Options are: true | false
         DM_CrossSectionSubplotRows = 3;
         DM_CrossSectionSubplotCols = 3;
         DM_ConvexHullFaceColor = 'cyan';
         DM_ConvexHullFaceAlpha = 0.8; % Options are: 0..1
         DM_ConvexHullEdgeColor = [0 0 0]; % Options are: [0 0 0] | color name | RGB triplet | 'none'
-        DM_ConvexHullLineStyle = '-'; % Options are: 
+        DM_ConvexHullLineStyle = '-'; % Options are: '-' | '--' | ':' | '-.' | 'none'
+        
+        % Simulation settings
+        SS_ShowWaitbar = true; % Options are: true | false
         
     end    
 end

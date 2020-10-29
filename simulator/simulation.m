@@ -341,16 +341,27 @@ end
 %% Helper functions
 
 function h = start_waitbar(h, titletext)
-    close_waitbar(h);
-    h = waitbar(0, '0%%', 'Name', titletext);
+    if options.SS_ShowWaitbar
+        close_waitbar(h);
+        h = waitbar(0, '0%%', 'Name', titletext);
+    end
 end
 
 function flag = update_waitbar(h, ratio)
     flag = true;
-    try
-        waitbar(ratio, h, sprintf('%0.0f%%', floor(ratio * 100)));
-    catch
-        flag = false;
+    if options.SS_ShowWaitbar == false
+        return;
+    end
+    
+    perc = floor(ratio * 100);
+    persistent last_perc
+    if isempty(last_perc) || last_perc ~= perc
+        last_perc = perc;
+        try
+            waitbar(ratio, h, sprintf('%0.0f%%', perc));
+        catch
+            flag = false;
+        end
     end
 end
 
@@ -360,4 +371,3 @@ function close_waitbar(h)
     catch
     end
 end
-

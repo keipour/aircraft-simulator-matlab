@@ -26,7 +26,8 @@ c = controllers.fully_actuated(m, attitude_strategies.ZeroTilt);
 
 sim = simulation(m, c, w);
 
-sim.SetTotalTime(75);
+sim.SetTotalTime(10);
+%sim.SetTotalTime(75); % For the AIR trajectory
 
 %% Initial multirotor state
 
