@@ -10,6 +10,7 @@ addpath('simulator');
 % Feel free to try these:
 
 %m = robots.floating_hex();
+%m = robots.tilted_quad();
 %m = robots.octorotor_assymmetric();
 %m = robots.quadrotor(true);
 m = robots.tilted_hex(true);

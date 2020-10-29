@@ -18,22 +18,28 @@ classdef options
         MV_PayloadHeight = 0.1; % in meters
         MV_AxisArrowSize = 0.3; % in meters
         MV_PlotTitle = '';%'Your Cool Multirotor';
-        MV_ShowArmLabels = false;
+        MV_ShowArmLabels = true; % Options are: true | false
         MV_MotorHeight = 0.02; % in meters -- set to zero if don't want motors
         MV_MotorRadius = 0.02; % in meters -- set to zero if don't want motors
-        MV_AddLighting = true;
-        MV_ShowRotorAxes = false;
+        MV_AddLighting = true; % Options are: true | false
+        MV_ShowRotorAxes = true; % Options are: true | false
         MV_MotorColor = 'black';
         MV_RotorColorCW = [0.4, 0.4, 1];
         MV_RotorColorCCW = [0.4, 1, 0.4];
         MV_RotorOpacity = 0.85;
-        MV_PlotAxes = 'off'; % Options are: 'on' | 'off'
+        MV_ShowPlotAxes = 'off'; % Options are: 'on' | 'off'
         
         % Dynamic Manipulability settings
         DM_CrossSectionPoints = 1e5;    % Default: 1e5
         DM_LateralThrustMonteCarloPoints = 5e3;    % Default: 5e3
         DM_LateralThrustColor = 'b';
         DM_CrossSectionColor = 'b';
+        DM_CrossSectionSubplotRows = 3;
+        DM_CrossSectionSubplotCols = 3;
+        DM_ConvexHullFaceColor = 'cyan';
+        DM_ConvexHullFaceAlpha = 0.8; % Options are: 0..1
+        DM_ConvexHullEdgeColor = [0 0 0]; % Options are: [0 0 0] | color name | RGB triplet | 'none'
+        DM_ConvexHullLineStyle = '-'; % Options are: 
         
     end    
 end

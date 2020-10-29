@@ -151,7 +151,7 @@ classdef graphics
             figure;
             H = support_files.visualize_multirotor(multirotor, axes_only, false, draw_collision_model);
             view(3);
-            axis(gca, options.MV_PlotAxes);
+            axis(gca, options.MV_ShowPlotAxes);
             drawnow;
         end
         
@@ -229,17 +229,23 @@ classdef graphics
         end
         
         function DrawConvexHull(X, plot_title, label)
+            facecolor = options.DM_ConvexHullFaceColor;
+            linestyle = options.DM_ConvexHullLineStyle;
+            edgecolor = options.DM_ConvexHullEdgeColor;
+            facealpha = options.DM_ConvexHullFaceAlpha;
+            
             figure;
-            r = rank(X);
+            r = rank(X, 1e-4);
             if r == 3
                 k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
-                trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor','cyan', 'LineStyle', '-');
+                trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor', facecolor, ...
+                    'LineStyle', linestyle, 'EdgeColor', edgecolor, 'FaceAlpha', facealpha);
             elseif r == 2
                 X_xy = rotate_3d_plane_to_xy(X);
                 k = convhull(X_xy(:, 1), X_xy(:, 2), 'Simplify', true);
-                fill3(X(k, 1), X(k, 2), X(k, 3), 'c');
+                fill3(X(k, 1), X(k, 2), X(k, 3), facecolor);
             elseif r == 1
-                plot3(X(:, 1), X(:, 2), X(:, 3), 'c');
+                plot3(X(:, 1), X(:, 2), X(:, 3), 'Color', facecolor);
             end
             xlabel(['$' label '_x$'], 'Interpreter', 'latex');
             ylabel(['$' label '_y$'], 'Interpreter', 'latex');
@@ -253,9 +259,11 @@ classdef graphics
             if rank(X) < 3
                 return;
             end
-            plot_cross_section(X, plot_title, label, 'x', 3, 3);
-            plot_cross_section(X, plot_title, label, 'y', 3, 3);
-            plot_cross_section(X, plot_title, label, 'z', 3, 3);
+            sprows = options.DM_CrossSectionSubplotRows;
+            spcols = options.DM_CrossSectionSubplotCols;
+            plot_cross_section(X, plot_title, label, 'x', sprows, spcols);
+            plot_cross_section(X, plot_title, label, 'y', sprows, spcols);
+            plot_cross_section(X, plot_title, label, 'z', sprows, spcols);
             drawnow;
         end
         
@@ -264,14 +272,18 @@ classdef graphics
                 return;
             end
             
+            sprows = options.DM_CrossSectionSubplotRows;
+            spcols = options.DM_CrossSectionSubplotCols;
+            nsubplots = sprows * spcols;
+            
             ca = control_allocation(mult);
             figure;
             sgtitle(plot_title);
-            Zq = linspace(min(X(:, 3)), 0, 9);
+            Zq = linspace(min(X(:, 3)), 0, nsubplots);
             X_xy = X(:, 1:2);
             xylimits = [min(X_xy(:)), max(X_xy(:))];
-            for i = 1 : 9
-                subplot(3, 3, i);
+            for i = 1 : nsubplots
+                subplot(sprows, spcols, i);
                 is_angular = false;
                 [xc, yc] = get_cross_section_from_dynamic_inversion ...
                     (X(:, 1), X(:, 2), Zq(i), ca, mult, is_angular, des_ang_accel);
@@ -316,20 +328,24 @@ function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols)
     xlimit = max(abs(axis1));
     ylimit = max(abs(axis2));
     
-    figure;
+    hfig = figure;
     sgtitle([plot_title ' (' upper(axis_labels{3}) ' axis)']);
-    for i = 1 : nsubplots
-        subplot(csrows, csrows, i);
-        [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
-        if ~isempty(xc)
-            k = convhull(xc, yc, 'Simplify', true);
-            fill(xc(k), yc(k), options.DM_CrossSectionColor);
+    try
+        for i = 1 : nsubplots
+            subplot(csrows, cscols, i);
+            [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
+            if ~isempty(xc)
+                k = convhull(xc, yc, 'Simplify', true);
+                fill(xc(k), yc(k), options.DM_CrossSectionColor);
+            end
+            xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
+            ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
+            title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
+            xlim([-xlimit xlimit]);
+            ylim([-ylimit ylimit]);
         end
-        xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
-        ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
-        title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
-        xlim([-xlimit xlimit]);
-        ylim([-ylimit ylimit]);
+    catch
+        close(hfig);
     end
 end
 
