@@ -41,6 +41,7 @@ classdef options
         DM_ConvexHullFaceAlpha = 0.8; % Options are: 0..1
         DM_ConvexHullEdgeColor = [0 0 0]; % Options are: [0 0 0] | color name | RGB triplet | 'none'
         DM_ConvexHullLineStyle = '-'; % Options are: '-' | '--' | ':' | '-.' | 'none'
+        DM_DrawAccelerationOmniSphere = true; % Options are: true | false
         
         % Simulation settings
         SS_ShowWaitbar = true; % Options are: true | false

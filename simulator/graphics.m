@@ -227,23 +227,57 @@ classdef graphics
             fprintf('    Vertical Translation Efficiency      : %0.2f %%\n', res.VerticalTranslationEfficiency * 100);
             fprintf('    Maximum Vertical Acceleration        : %0.2f m/s^2\n', res.MaximumVerticalAcceleration);
             fprintf('    Maximum Horizontal Acceleration      : %0.2f m/s^2\n', res.MaximumHorizontalAcceleration);
+            fprintf('    Maximum Omni-directional Acceleration: %0.2f m/s^2\n', res.AccelerationOmni);
             fprintf('    Maximum Angular Acceleration Around X: %0.2f rad/s^2\n', res.MaximumAngularAccelerationX);
             fprintf('    Maximum Angular Acceleration Around Y: %0.2f rad/s^2\n', res.MaximumAngularAccelerationY);
             fprintf('    Maximum Angular Acceleration Around Z: %0.2f rad/s^2\n', res.MaximumAngularAccelerationZ);
         end
         
-        function DrawConvexHull(X, plot_title, label)
+        function [hfig, sphere_radius] = DrawConvexHull(X, plot_title, label, get_max_sphere, sphere_center)
+            if nargout > 1
+                sphere_radius = 0;
+            end
+            if nargin < 4
+                get_max_sphere = false;
+            end
+            if nargin < 5
+                sphere_center = zeros(1, 3);
+            end
+            if size(sphere_center, 1) == 3
+                sphere_center = sphere_center';
+            end
+            
             facecolor = options.DM_ConvexHullFaceColor;
             linestyle = options.DM_ConvexHullLineStyle;
             edgecolor = options.DM_ConvexHullEdgeColor;
             facealpha = options.DM_ConvexHullFaceAlpha;
             
-            figure;
+            hfig = figure;
             r = rank(X, 1e-4);
             if r == 3
                 k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
                 trisurf(k, X(:, 1), X(:, 2), X(:, 3), 'FaceColor', facecolor, ...
                     'LineStyle', linestyle, 'EdgeColor', edgecolor, 'FaceAlpha', facealpha);
+                
+                if get_max_sphere
+                    k2 = unique(k);
+                    Y = X(k2, :);
+                    k2 = convhull(Y(:, 1), Y(:, 2), Y(:, 3), 'Simplify', true);
+                    [sphere_radius, contact_point] = support_files.point2trimesh...
+                        ('Faces', k2, 'Vertices', Y, 'QueryPoints', sphere_center);
+                    sphere_radius = abs(sphere_radius);
+                    [Xs,Ys,Zs] = sphere;
+                    X2 = Xs * sphere_radius;
+                    Y2 = Ys * sphere_radius;
+                    Z2 = Zs * sphere_radius;
+                    
+                    if options.DM_DrawAccelerationOmniSphere
+                        hold on
+                        hSurface = surf(X2,Y2,Z2);
+                        %set(hSurface,'FaceColor', [1 0 0]);
+                        plot3(contact_point(1), contact_point(2), contact_point(3), 'r*');
+                    end
+                end
             elseif r == 2
                 X_xy = rotate_3d_plane_to_xy(X);
                 k = convhull(X_xy(:, 1), X_xy(:, 2), 'Simplify', true);

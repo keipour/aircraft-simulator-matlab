@@ -56,16 +56,16 @@ classdef analysis
         end
 
         function AnalyzeDynamicManipulability(mult, wind_force)
-            accel = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
+            [accel, accel_omni_radius] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
-            res = analyze_plant_structure(mult, accel, omega_dot);
+            res = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius);
             graphics.PrintDynamicManipulabilityAnalysis(res);
         end
         
-        function accel = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
+        function [accel, omni_radius] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
             plot_z_axis_from_zero = options.DM_CrossSectionZFromZero;
             accel = analyze_accelerations(mult, wind_force, n_steps);
-            graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a');
+            [~, omni_radius] = graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', true, zeros(3, 1));
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero);
             %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
         end
@@ -119,7 +119,7 @@ function omega_dot = analyze_angular_accelerations(mult, n_steps)
     end
 end
 
-function result = analyze_plant_structure(multirotor, accel, omega_dot)
+function result = analyze_plant_structure(multirotor, accel, omega_dot, accel_omni_radius)
     result = [];
     result.TranslationType = detect_dynamic_manipulability_type(accel);
     result.RotationType = detect_dynamic_manipulability_type(omega_dot);
@@ -137,6 +137,7 @@ function result = analyze_plant_structure(multirotor, accel, omega_dot)
     result.MaximumAngularAccelerationX = max(abs(omega_dot(:, 1)));
     result.MaximumAngularAccelerationY = max(abs(omega_dot(:, 2)));
     result.MaximumAngularAccelerationZ = max(abs(omega_dot(:, 3)));
+    result.AccelerationOmni = accel_omni_radius;
 end
 
 
