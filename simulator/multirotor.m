@@ -313,11 +313,11 @@ classdef multirotor < handle
             H = graphics.VisualizeMultirotor(obj, true);
         end
         
-        function AnalyzeDynamicManipulability(obj, wind_force)
+        function result = AnalyzeDynamicManipulability(obj, wind_force)
             if nargin < 2
                 wind_force = zeros(3, 1);
             end
-            analysis.AnalyzeDynamicManipulability(obj, wind_force);
+            res = analysis.AnalyzeDynamicManipulability(obj, wind_force);
         end
         
         function RBI = GetRotationMatrix(obj)

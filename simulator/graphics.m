@@ -233,9 +233,12 @@ classdef graphics
             fprintf('    Maximum Angular Acceleration Around Z: %0.2f rad/s^2\n', res.MaximumAngularAccelerationZ);
         end
         
-        function [hfig, sphere_radius] = DrawConvexHull(X, plot_title, label, get_max_sphere, sphere_center)
+        function [hfig, sphere_radius, contact_point] = DrawConvexHull(X, plot_title, label, get_max_sphere, sphere_center)
             if nargout > 1
                 sphere_radius = 0;
+            end
+            if nargout > 2
+                contact_point = NaN(3, 1);
             end
             if nargin < 4
                 get_max_sphere = false;

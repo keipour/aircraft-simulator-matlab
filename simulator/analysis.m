@@ -55,11 +55,11 @@ classdef analysis
             end
         end
 
-        function AnalyzeDynamicManipulability(mult, wind_force)
+        function result = AnalyzeDynamicManipulability(mult, wind_force)
             [accel, accel_omni_radius] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
-            res = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius);
-            graphics.PrintDynamicManipulabilityAnalysis(res);
+            result = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius);
+            graphics.PrintDynamicManipulabilityAnalysis(result);
         end
         
         function [accel, omni_radius] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
