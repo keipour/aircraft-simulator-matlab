@@ -43,13 +43,9 @@ classdef options
         DM_ConvexHullLineStyle = '-'; % Options are: '-' | '--' | ':' | '-.' | 'none'
         DM_DrawAccelerationOmniSphere = true; % Options are: true | false
         DM_DrawAccelerationConvexHull = true; % Options are: true | false
-        DM_DrawAngularAccelerationConvexHull = false; % Options are: true | false
-        DM_DrawAccelerationCrossSectionX = false; % Options are: true | false
-        DM_DrawAccelerationCrossSectionY = false; % Options are: true | false
-        DM_DrawAccelerationCrossSectionZ = true; % Options are: true | false
-        DM_DrawAngularAccelerationCrossSectionX = false; % Options are: true | false
-        DM_DrawAngularAccelerationCrossSectionY = false; % Options are: true | false
-        DM_DrawAngularAccelerationCrossSectionZ = false;   % Options are: true | false   
+        DM_DrawAngularAccelerationConvexHull = true; % Options are: true | false
+        DM_DrawAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
+        DM_DrawAngularAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
         
         % Simulation settings
         SS_ShowWaitbar = true; % Options are: true | false

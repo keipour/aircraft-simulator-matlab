@@ -65,11 +65,18 @@ classdef analysis
         function [accel, omni_radius, contact_point] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
             plot_z_axis_from_zero = options.DM_CrossSectionZFromZero;
             accel = analyze_accelerations(mult, wind_force, n_steps);
+            [omni_radius, contact_point] = get_maximum_inscribed_sphere(accel, zeros(3, 1));
             if options.DM_DrawAccelerationConvexHull
-                [~, omni_radius, contact_point] = graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', true, zeros(3, 1));
+                draw_sphere_radius = 0;
+                if options.DM_DrawAccelerationOmniSphere 
+                    draw_sphere_radius = omni_radius;
+                end
+                graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', draw_sphere_radius, zeros(3, 1), contact_point);
             end
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero, ...
-                options.DM_DrawAccelerationCrossSectionX, options.DM_DrawAccelerationCrossSectionY, options.DM_DrawAccelerationCrossSectionZ);
+                contains(options.DM_DrawAccelerationCrossSections, 'x'), ...
+                contains(options.DM_DrawAccelerationCrossSections, 'y'), ...
+                contains(options.DM_DrawAccelerationCrossSections, 'z'));
             %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
         end
         
@@ -79,14 +86,31 @@ classdef analysis
                 graphics.DrawConvexHull(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
             end
             graphics.PlotCrossSections(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}', ...
-                false, options.DM_DrawAngularAccelerationCrossSectionX, ...
-                options.DM_DrawAngularAccelerationCrossSectionY, ...
-                options.DM_DrawAngularAccelerationCrossSectionZ);
+                false, contains(options.DM_DrawAngularAccelerationCrossSections, 'x'), ...
+                contains(options.DM_DrawAngularAccelerationCrossSections, 'y'), ...
+                contains(options.DM_DrawAngularAccelerationCrossSections, 'z'));
         end
     end
 end
 
 %% Helper functions
+function [sphere_radius, contact_point] = get_maximum_inscribed_sphere(X, center_point)
+    sphere_radius = 0;
+    contact_point = NaN(3, 1);
+    if rank(X, 1e-4) < 3
+        return;
+    end
+    k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
+    if math.InConvexHull(center_point', X, k)
+        k2 = unique(k);
+        Y = X(k2, :);
+        k2 = convhull(Y(:, 1), Y(:, 2), Y(:, 3), 'Simplify', true);
+        [sphere_radius, contact_point] = support_files.point2trimesh...
+            ('Faces', k2, 'Vertices', Y, 'QueryPoints', center_point');
+        sphere_radius = abs(sphere_radius);
+    end
+end
+
 function accel = analyze_accelerations(mult, wind_force, n_steps)
     n_rotors = mult.NumOfRotors;
     n_total = n_steps ^ n_rotors;
@@ -146,7 +170,7 @@ function result = analyze_plant_structure(multirotor, accel, omega_dot, accel_om
     result.MaximumAngularAccelerationY = max(abs(omega_dot(:, 2)));
     result.MaximumAngularAccelerationZ = max(abs(omega_dot(:, 3)));
     result.AccelerationOmni = accel_omni_radius;
-    result.AccelerationOmniContactPoint = contact_point;
+    result.BoundingOmniAcceleration = contact_point; % The acceleration that is bounding the omni-directional acceleration
 end
 
 
