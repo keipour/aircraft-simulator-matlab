@@ -65,15 +65,23 @@ classdef analysis
         function [accel, omni_radius] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
             plot_z_axis_from_zero = options.DM_CrossSectionZFromZero;
             accel = analyze_accelerations(mult, wind_force, n_steps);
-            [~, omni_radius] = graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', true, zeros(3, 1));
-            graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero);
+            if options.DM_DrawAccelerationConvexHull
+                [~, omni_radius] = graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', true, zeros(3, 1));
+            end
+            graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero, ...
+                options.DM_DrawAccelerationCrossSectionX, options.DM_DrawAccelerationCrossSectionY, options.DM_DrawAccelerationCrossSectionZ);
             %graphics.PlotLateralThrustDynInv(mult, accel, [8; 9; 10], 'Dynamic Manipulability - Acceleration', 'a');
         end
         
         function omega_dot = AnalyzeAngularAccelerationDynamicManipulability(mult, n_steps)
             omega_dot = analyze_angular_accelerations(mult, n_steps);
-            graphics.DrawConvexHull(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
-            graphics.PlotCrossSections(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
+            if options.DM_DrawAngularAccelerationConvexHull
+                graphics.DrawConvexHull(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}');
+            end
+            graphics.PlotCrossSections(omega_dot, 'Dynamic Manipulability - Angular Acceleration', '\dot{\omega}', ...
+                false, options.DM_DrawAngularAccelerationCrossSectionX, ...
+                options.DM_DrawAngularAccelerationCrossSectionY, ...
+                options.DM_DrawAngularAccelerationCrossSectionZ);
         end
     end
 end

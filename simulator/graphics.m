@@ -273,6 +273,7 @@ classdef graphics
                     
                     if options.DM_DrawAccelerationOmniSphere
                         hold on
+                        %plot3(0, 0, physics.Gravity(3), 'r*');
                         hSurface = surf(X2,Y2,Z2);
                         %set(hSurface,'FaceColor', [1 0 0]);
                         plot3(contact_point(1), contact_point(2), contact_point(3), 'r*');
@@ -295,18 +296,33 @@ classdef graphics
             drawnow;
         end
         
-        function PlotCrossSections(X, plot_title, label, z_from_zero)
+        function PlotCrossSections(X, plot_title, label, z_from_zero, ...
+                plot_crosssection_x, plot_crosssection_y, plot_crosssection_z)
             if nargin < 4
                 z_from_zero = false;
             end
             if rank(X) < 3
                 return;
             end
+            if nargin < 5
+               plot_crosssection_x = true;
+               plot_crosssection_y = true;
+               plot_crosssection_z = true;
+            end
             sprows = options.DM_CrossSectionSubplotRows;
             spcols = options.DM_CrossSectionSubplotCols;
-            plot_cross_section(X, plot_title, label, 'x', sprows, spcols, z_from_zero);
-            plot_cross_section(X, plot_title, label, 'y', sprows, spcols, z_from_zero);
-            plot_cross_section(X, plot_title, label, 'z', sprows, spcols, z_from_zero);
+            if plot_crosssection_x
+                plot_cross_section(X, plot_title, label, 'x', sprows, spcols, z_from_zero, ...
+                    plot_crosssection_x, plot_crosssection_y, plot_crosssection_z);
+            end
+            if plot_crosssection_y
+                plot_cross_section(X, plot_title, label, 'y', sprows, spcols, z_from_zero, ...
+                    plot_crosssection_x, plot_crosssection_y, plot_crosssection_z);
+            end
+            if plot_crosssection_z
+                plot_cross_section(X, plot_title, label, 'z', sprows, spcols, z_from_zero, ...
+                    plot_crosssection_x, plot_crosssection_y, plot_crosssection_z);
+            end
             drawnow;
         end
         
@@ -347,9 +363,13 @@ classdef graphics
 end
 
 %% Helper functions
-function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero)
+function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero, ...
+    plot_crosssection_x, plot_crosssection_y, plot_crosssection_z)
     nsubplots = csrows * cscols;
     if lower(pivot_axis) == 'z'
+        if ~plot_crosssection_z
+            return;
+        end
         axis_labels = {'x', 'y', 'z'};
         Pivot_q = linspace(min(X(:, 3)), max(X(:, 3)), nsubplots);
         if z_from_zero && max(X(:, 3)) > 0
@@ -359,12 +379,18 @@ function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_
         axis2 = X(:, 2);
         axis3 = X(:, 3);
     elseif lower(pivot_axis) == 'y'
+        if ~plot_crosssection_y
+            return;
+        end
         axis_labels = {'x', 'z', 'y'};
         Pivot_q = linspace(min(X(:, 2)), max(X(:, 2)), nsubplots);
         axis1 = X(:, 1);
         axis2 = X(:, 3);
         axis3 = X(:, 2);
     elseif lower(pivot_axis) == 'x'
+        if ~plot_crosssection_x
+            return;
+        end
         axis_labels = {'y', 'z', 'x'};
         Pivot_q = linspace(min(X(:, 1)), max(X(:, 1)), nsubplots);
         axis1 = X(:, 2);

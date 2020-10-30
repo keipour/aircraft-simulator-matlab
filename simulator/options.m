@@ -42,6 +42,14 @@ classdef options
         DM_ConvexHullEdgeColor = [0 0 0]; % Options are: [0 0 0] | color name | RGB triplet | 'none'
         DM_ConvexHullLineStyle = '-'; % Options are: '-' | '--' | ':' | '-.' | 'none'
         DM_DrawAccelerationOmniSphere = true; % Options are: true | false
+        DM_DrawAccelerationConvexHull = true; % Options are: true | false
+        DM_DrawAngularAccelerationConvexHull = false; % Options are: true | false
+        DM_DrawAccelerationCrossSectionX = false; % Options are: true | false
+        DM_DrawAccelerationCrossSectionY = false; % Options are: true | false
+        DM_DrawAccelerationCrossSectionZ = true; % Options are: true | false
+        DM_DrawAngularAccelerationCrossSectionX = false; % Options are: true | false
+        DM_DrawAngularAccelerationCrossSectionY = false; % Options are: true | false
+        DM_DrawAngularAccelerationCrossSectionZ = false;   % Options are: true | false   
         
         % Simulation settings
         SS_ShowWaitbar = true; % Options are: true | false

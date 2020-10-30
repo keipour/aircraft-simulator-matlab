@@ -26,7 +26,7 @@ classdef rotor < handle
                                                 % rpm that sets the upper speed
                                                 % limit (0..100)
         
-        LowerSpeedPercentage = 15;               % The percentage of the minimum 
+        LowerSpeedPercentage = 0;               % The percentage of the minimum 
                                                 % rpm that sets the lower speed
                                                 % limit (0..100)                                           
     end
