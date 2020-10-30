@@ -56,9 +56,9 @@ classdef analysis
         end
 
         function result = AnalyzeDynamicManipulability(mult, wind_force)
-            [accel, accel_omni_radius] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
+            [accel, accel_omni_radius, contact_point] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
-            result = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius);
+            result = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius, contact_point);
             graphics.PrintDynamicManipulabilityAnalysis(result);
         end
         
@@ -127,7 +127,7 @@ function omega_dot = analyze_angular_accelerations(mult, n_steps)
     end
 end
 
-function result = analyze_plant_structure(multirotor, accel, omega_dot, accel_omni_radius)
+function result = analyze_plant_structure(multirotor, accel, omega_dot, accel_omni_radius, contact_point)
     result = [];
     result.TranslationType = detect_dynamic_manipulability_type(accel);
     result.RotationType = detect_dynamic_manipulability_type(omega_dot);
@@ -146,6 +146,7 @@ function result = analyze_plant_structure(multirotor, accel, omega_dot, accel_om
     result.MaximumAngularAccelerationY = max(abs(omega_dot(:, 2)));
     result.MaximumAngularAccelerationZ = max(abs(omega_dot(:, 3)));
     result.AccelerationOmni = accel_omni_radius;
+    result.AccelerationOmniContactPoint = contact_point;
 end
 
 

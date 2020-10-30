@@ -59,4 +59,4 @@ wind_force = [0; 0; 0]; % in N
 
 %% Analyze the dynamic manipulability
 
-m.AnalyzeDynamicManipulability(wind_force);
+res = m.AnalyzeDynamicManipulability(wind_force);
