@@ -101,12 +101,12 @@ function [sphere_radius, contact_point] = get_maximum_inscribed_sphere(X, center
         return;
     end
     k = convhull(X(:, 1), X(:, 2), X(:, 3), 'Simplify', true);
-    if math.InConvexHull(center_point', X, k)
+    if math.InConvexHull(center_point', X)
         k2 = unique(k);
         Y = X(k2, :);
         k2 = convhull(Y(:, 1), Y(:, 2), Y(:, 3), 'Simplify', true);
         [sphere_radius, contact_point] = support_files.point2trimesh...
-            ('Faces', k2, 'Vertices', Y, 'QueryPoints', center_point');
+            ('Faces', k2, 'Vertices', Y, 'QueryPoints', center_point', 'UseSubSurface', false);
         sphere_radius = abs(sphere_radius);
     end
 end
