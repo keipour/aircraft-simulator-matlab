@@ -30,8 +30,6 @@ classdef options
         MV_ShowPlotAxes = 'off'; % Options are: 'on' | 'off'
         
         % Dynamic Manipulability settings
-        DM_CrossSectionPoints = 1e5;    % Default: 1e5
-        DM_LateralThrustMonteCarloPoints = 5e3;    % Default: 5e3
         DM_LateralThrustColor = 'b';
         DM_CrossSectionColor = 'b';
         DM_CrossSectionZFromZero = true; % Options are: true | false
@@ -47,9 +45,25 @@ classdef options
         DM_DrawAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
         DM_DrawAngularAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
         
-        % Simulation settings
+        %% Simulation Settings
+
+        % GUI settings
         SS_ShowWaitbar = true; % Options are: true | false
         
-    end    
+        %% Analysis Settings
+        
+        % Dynamic Manipulability settings
+        DM_CrossSectionPoints = 1e5;    % Default: 1e5
+        DM_LateralThrustMonteCarloPoints = 5e3;    % Default: 5e3
+
+        %% Controller Settings
+        
+        % Attitude strategies settings
+        AS_FixedAttitudeRoll = 0; % in degrees
+        AS_FixedAttitudePitch = 0; % in degrees
+        AS_FixedTiltAngle = 0; % in degrees
+        AS_FixedTiltDirection = 0; % in degrees
+        AS_MinTiltMaxLateralAcceleration = 0.5; % in m/s^2
+    end
 end
 

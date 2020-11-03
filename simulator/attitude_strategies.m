@@ -1,5 +1,5 @@
 classdef attitude_strategies
    enumeration
-      Full, ZeroTilt
+      FullTilt, ZeroTilt, MinTilt, FixedTilt, FixedAttitude
    end
 end
