@@ -64,6 +64,8 @@ classdef position_controller < pid_controller
                 rpy_des = position_controller.CalculateMinimumTiltAttitude(acc_cmd, yaw_des);
             elseif obj.AttitudeStrategy == attitude_strategies.FixedTilt
                 rpy_des = position_controller.CalculateFixedTiltAttitude(acc_cmd, yaw_des);
+            elseif obj.AttitudeStrategy == attitude_strategies.FixedAttitude
+                rpy_des = position_controller.CalculateFixedOrientationAttitude(acc_cmd, yaw_des);
             end
         end
 
@@ -113,7 +115,9 @@ classdef position_controller < pid_controller
         end
         
         function rpy_des = CalculateFixedOrientationAttitude(~, yaw_des)
-            rpy_des = [0; 0; yaw_des];
+            rpy_des = [ options.AS_FixedAttitudeRoll; ...
+                        options.AS_FixedAttitudePitch; ...
+                        yaw_des];
         end
         
         function rpy_des = CalculateMinimumTiltAttitude(acc_cmd, yaw_des)
