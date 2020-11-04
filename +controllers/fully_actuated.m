@@ -8,7 +8,7 @@ function c = fully_actuated(mult, attitude_strategy)
 
     c = controller(mult);
     
-    c.AttitudeController.SetPID(60, 5, 20);
+    c.AttitudeController.SetPID(1000, 5, 600);
     c.PositionController.SetPID(3, 0, 7);
 
     c.HMFController.ForceController.SetPID(1, 0, 3);
