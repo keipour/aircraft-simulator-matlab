@@ -62,6 +62,8 @@ classdef position_controller < pid_controller
                 rpy_des = position_controller.CalculateZeroTiltAttitude(acc_cmd, yaw_des);
             elseif obj.AttitudeStrategy == attitude_strategies.MinTilt
                 rpy_des = position_controller.CalculateMinimumTiltAttitude(acc_cmd, yaw_des);
+            elseif obj.AttitudeStrategy == attitude_strategies.FixedTilt
+                rpy_des = position_controller.CalculateFixedTiltAttitude(acc_cmd, yaw_des);
             end
         end
 
@@ -92,7 +94,22 @@ classdef position_controller < pid_controller
         end
         
         function rpy_des = CalculateFixedTiltAttitude(~, yaw_des)
-            rpy_des = [0; 0; yaw_des];
+
+            lambda_sp = options.AS_FixedTiltAngle;
+            kappa_sp = options.AS_FixedTiltDirection;
+            
+            % The axis of rotation
+            z_inertial = [0; 0; 1];
+            yaw_c = [cosd(kappa_sp); sind(kappa_sp); 0];
+            r_vec = cross(yaw_c, z_inertial);
+            r_axis = r_vec / norm(r_vec);
+            
+            % Rotate Z around r axis using Rodrigues' formula
+            z_axis = (1 - cosd(lambda_sp)) * dot(r_axis, z_inertial) * r_axis + ...
+                z_inertial * cosd(lambda_sp) + cross(r_axis, z_inertial) * sind(lambda_sp);
+            
+            % Calculate the desired attitude
+            rpy_des = rpy_from_z_and_yaw(z_axis, yaw_des);
         end
         
         function rpy_des = CalculateFixedOrientationAttitude(~, yaw_des)
