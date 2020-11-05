@@ -59,7 +59,9 @@ classdef analysis
             [accel, accel_omni_radius, contact_point] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
             result = analyze_plant_structure(mult, accel, omega_dot, accel_omni_radius, contact_point);
-            graphics.PrintDynamicManipulabilityAnalysis(result);
+            if options.DM_PrintAnalysis
+                graphics.PrintDynamicManipulabilityAnalysis(result);
+            end
         end
         
         function [accel, omni_radius, contact_point] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
@@ -71,7 +73,9 @@ classdef analysis
                 if options.DM_DrawAccelerationOmniSphere 
                     draw_sphere_radius = omni_radius;
                 end
-                graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', draw_sphere_radius, zeros(3, 1), contact_point);
+                rotation_center = physics.Gravity + wind_force / mult.TotalMass;
+                graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Acceleration', 'a', ...
+                    draw_sphere_radius, zeros(3, 1), contact_point, options.DM_DrawPointOfRotationToCenter, rotation_center);
             end
             graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Acceleration', 'a', plot_z_axis_from_zero, ...
                 contains(options.DM_DrawAccelerationCrossSections, 'x'), ...

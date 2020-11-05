@@ -235,7 +235,8 @@ classdef graphics
             fprintf('    Maximum Angular Acceleration Around Z: %0.2f rad/s^2\n', res.MaximumAngularAccelerationZ);
         end
         
-        function hfig = DrawConvexHull(X, plot_title, label, sphere_radius, sphere_center, sphere_contact_point)
+        function hfig = DrawConvexHull(X, plot_title, label, sphere_radius, sphere_center, ...
+                sphere_contact_point, draw_rotation_axis, rotation_center)
             if nargin < 4
                 sphere_radius = 0;
             end
@@ -244,6 +245,9 @@ classdef graphics
             end
             if nargin < 6
                 sphere_contact_point = NaN(3, 1);
+            end
+            if nargin < 7
+                draw_rotation_axis = false;
             end
             
             facecolor = options.DM_ConvexHullFaceColor;
@@ -264,13 +268,27 @@ classdef graphics
                     Ys = Ys * sphere_radius + sphere_center(2);
                     Zs = Zs * sphere_radius + sphere_center(3);
                     hold on
-                    %plot3(0, 0, physics.Gravity(3), 'r*');
-                    hSurface = surf(Xs, Ys, Zs);
-                    %set(hSurface,'FaceColor', [1 0 0]);
+                    surf(Xs, Ys, Zs);
                     if any(~isnan(sphere_contact_point))
                         plot3(sphere_contact_point(1), sphere_contact_point(2), sphere_contact_point(3), 'r*');
                     end
                 end
+                if draw_rotation_axis
+                    [Xs,Ys,Zs] = sphere;
+                    point_radius = 0.1;
+                    Xg = Xs * point_radius + sphere_center(1);
+                    Yg = Ys * point_radius + sphere_center(2);
+                    Zg = Zs * point_radius + sphere_center(3);
+                    Xc = Xs * point_radius + sphere_center(1);
+                    Yc = Ys * point_radius + sphere_center(2);
+                    Zc = Zs * point_radius + sphere_center(3);
+                    hold on
+                    surf(Xg, Yg, Zg);
+                    surf(Xc, Yc, Zc);
+                    plot3([rotation_center(1) sphere_center(1)], [rotation_center(2) sphere_center(2)], ...
+                        [rotation_center(3) sphere_center(3)], 'LineWidth', 2, 'Color', options.DM_PointOfRotationToCenterColor);
+                end
+
             elseif r == 2
                 X_xy = rotate_3d_plane_to_xy(X);
                 k = convhull(X_xy(:, 1), X_xy(:, 2), 'Simplify', true);
