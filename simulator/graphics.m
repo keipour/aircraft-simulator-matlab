@@ -236,7 +236,7 @@ classdef graphics
         end
         
         function hfig = DrawConvexHull(X, plot_title, label, sphere_radius, sphere_center, ...
-                sphere_contact_point, draw_rotation_axis, rotation_center)
+                sphere_contact_point, draw_rotation_line, rotation_center, draw_rotation_sphere)
             if nargin < 4
                 sphere_radius = 0;
             end
@@ -247,7 +247,10 @@ classdef graphics
                 sphere_contact_point = NaN(3, 1);
             end
             if nargin < 7
-                draw_rotation_axis = false;
+                draw_rotation_line = false;
+            end
+            if nargin < 7
+                draw_rotation_sphere = false;
             end
             
             facecolor = options.DM_ConvexHullFaceColor;
@@ -273,12 +276,12 @@ classdef graphics
                         plot3(sphere_contact_point(1), sphere_contact_point(2), sphere_contact_point(3), 'r*');
                     end
                 end
-                if draw_rotation_axis
+                if draw_rotation_line
                     [Xs,Ys,Zs] = sphere;
                     point_radius = 0.1;
-                    Xg = Xs * point_radius + sphere_center(1);
-                    Yg = Ys * point_radius + sphere_center(2);
-                    Zg = Zs * point_radius + sphere_center(3);
+                    Xr = Xs * point_radius + rotation_center(1);
+                    Yr = Ys * point_radius + rotation_center(2);
+                    Zr = Zs * point_radius + rotation_center(3);
                     Xc = Xs * point_radius + sphere_center(1);
                     Yc = Ys * point_radius + sphere_center(2);
                     Zc = Zs * point_radius + sphere_center(3);
@@ -288,7 +291,7 @@ classdef graphics
                     plot3([rotation_center(1) sphere_center(1)], [rotation_center(2) sphere_center(2)], ...
                         [rotation_center(3) sphere_center(3)], 'LineWidth', 2, 'Color', options.DM_PointOfRotationToCenterColor);
                 end
-                if draw_rotation_axis
+                if draw_rotation_sphere
                     %figure;
                     draw_tilt_surface(X, k, sphere_center, rotation_center);
                 end

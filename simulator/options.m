@@ -44,8 +44,9 @@ classdef options
         DM_DrawAngularAccelerationConvexHull = true; % Options are: true | false
         DM_DrawAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
         DM_DrawAngularAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z
-        DM_DrawPointOfRotationToCenter = true;  % Options are: true | false  
-        DM_PointOfRotationToCenterColor = 'g'; 
+        DM_DrawPointOfRotationToCenterLine = true;  % Options are: true | false
+        DM_PointOfRotationToCenterColor = 'g';
+        DM_DrawPointOfRotationSphere = false;  % Options are: true | false
         DM_PrintAnalysis = true;  % Options are: true | false  
         
         %% Simulation Settings
