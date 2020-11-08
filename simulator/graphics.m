@@ -286,7 +286,7 @@ classdef graphics
                     Yc = Ys * point_radius + sphere_center(2);
                     Zc = Zs * point_radius + sphere_center(3);
                     hold on
-                    surf(Xg, Yg, Zg);
+                    surf(Xr, Yr, Zr);
                     surf(Xc, Yc, Zc);
                     plot3([rotation_center(1) sphere_center(1)], [rotation_center(2) sphere_center(2)], ...
                         [rotation_center(3) sphere_center(3)], 'LineWidth', 2, 'Color', options.DM_PointOfRotationToCenterColor);
