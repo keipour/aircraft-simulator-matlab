@@ -12,6 +12,11 @@ function m = tilted_hex(add_arm)
     m = multirotor(RotorPlacementAngles, RotorRotationDirections);
     m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 
+    MinimumRotorSpeed = 15; % Percentage of the maximum limit
+    for i = 1 : m.NumOfRotors
+        m.Rotors{i}.LowerSpeedPercentage = MinimumRotorSpeed;
+    end
+    
     if add_arm
         m.AddEndEffector(arm);
     end
