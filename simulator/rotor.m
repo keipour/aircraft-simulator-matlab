@@ -12,7 +12,6 @@ classdef rotor < handle
         ConstantGain = 1;                       % for motor
         Kv = 475;                               % in RPM/V (for KDE3510XF-475)
         BatteryVoltage = 22.2;                  % in Volts (for 6-cell lipo)
-        RPMLimit = (475) * (22.2);              % Maximum RPM for the motor
         ThrustConstant = 1.08105e-4 / 5;    
         TorqueConstant = (1.08105e-4 / 5) * 0.05;
         PropellerMass = 0.015;                  % For T-Motor 14" * 4.8 propellers
@@ -32,10 +31,11 @@ classdef rotor < handle
     end
     
     properties (GetAccess = public, SetAccess = private)
-        R_BR = eye(3);                          % Rotation matrix R_BR
-        Position = zeros(3, 1);                 % Position of the rotor in B
-        MaxSpeedSquared = 0;
-        MinSpeedSquared = 0;
+        R_BR                                    % Rotation matrix R_BR
+        Position                                % Position of the rotor in B
+        MaxSpeedSquared                         % Maximum rotation speed squared in Hz^2
+        MinSpeedSquared                         % Minimum rotation speed squared in Hz^2
+        RPMLimit                                % Maximum RPM for the motor
     end
     
     methods
@@ -104,18 +104,34 @@ classdef rotor < handle
             obj.UpdateStructure();
         end
 
-        function set.RPMLimit(obj, value)
-            obj.RPMLimit = value;
-            obj.UpdateStructure();
-        end
-
         function set.SidewardAngle(obj, value)
             obj.SidewardAngle = value;
             obj.UpdateStructure();
         end
 
+        function set.LowerSpeedPercentage(obj, value)
+            obj.LowerSpeedPercentage = value;
+            obj.UpdateStructure();
+        end
+
+        function set.UpperSpeedPercentage(obj, value)
+            obj.UpperSpeedPercentage = value;
+            obj.UpdateStructure();
+        end
+
+        function set.Kv(obj, value)
+            obj.Kv = value;
+            obj.UpdateStructure();
+        end
+
+        function set.BatteryVoltage(obj, value)
+            obj.BatteryVoltage = value;
+            obj.UpdateStructure();
+        end
+
         function UpdateStructure(obj)
             obj.R_BR = obj.CalcRotorationMatrix();
+            obj.RPMLimit = obj.Kv * obj.BatteryVoltage;
             obj.MaxSpeedSquared = (obj.UpperSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
             obj.MinSpeedSquared = (obj.LowerSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
             obj.Position = obj.GetPosition();
