@@ -288,6 +288,10 @@ classdef graphics
                     plot3([rotation_center(1) sphere_center(1)], [rotation_center(2) sphere_center(2)], ...
                         [rotation_center(3) sphere_center(3)], 'LineWidth', 2, 'Color', options.DM_PointOfRotationToCenterColor);
                 end
+                if draw_rotation_axis
+                    %figure;
+                    draw_tilt_surface(X, k, sphere_center, rotation_center);
+                end
 
             elseif r == 2
                 X_xy = rotate_3d_plane_to_xy(X);
@@ -373,6 +377,42 @@ classdef graphics
 end
 
 %% Helper functions
+function draw_tilt_surface(X, tess, sphere_center, rotation_center)
+    
+    radius = norm(sphere_center - rotation_center);
+    
+    Nq = options.DM_CrossSectionPoints;
+    minx = min(X(:, 1));
+    miny = min(X(:, 2));
+    maxx = max(X(:, 1));
+    maxy = max(X(:, 2));
+    
+    Xq = rand(Nq, 1) * (maxx - minx) + minx;
+    Yq = rand(Nq, 1) * (maxy - miny) + miny;
+    dx = Xq - rotation_center(1);
+    dy = Yq - rotation_center(2);
+    Zq = rotation_center(3) - sqrt(radius.^2 - dx.*dx - dy.*dy);
+    
+    in = math.InConvexHull([Xq, Yq, Zq], X);
+    
+    x = Xq(in);
+    y = Yq(in);
+    z = Zq(in);
+    dt = delaunayTriangulation(x, y);
+    tri = dt.ConnectivityList;
+    xi = dt.Points(:, 1); 
+    yi = dt.Points(:, 2);
+    F = scatteredInterpolant(x, y, z);
+    zi = F(xi, yi) ;
+    
+    hold on
+    ts = trisurf(tri,xi,yi,zi);
+    set(ts, 'EdgeColor', 'interp', 'FaceColor', 'interp');
+    view(3)
+%     camlight
+%     lighting flat
+end
+
 function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero, ...
     plot_crosssection_x, plot_crosssection_y, plot_crosssection_z)
     nsubplots = csrows * cscols;
