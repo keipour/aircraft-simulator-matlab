@@ -470,6 +470,10 @@ function hfig = plot_cross_section(X, plot_title, label, pivot_axis, csrows, csc
         for i = 1 : nsubplots
             subplot(csrows, cscols, i);
             plot_single_cross_section(axis1, axis2, axis3, query_points(i), label, axis_labels);
+            if lower(pivot_axis) ~= 'z'
+                set(gca, 'Ydir', 'reverse');
+            end
+
         end
     catch
         close(hfig);
@@ -499,6 +503,7 @@ function hfig = plot_center_cross_sections(X, plot_title, label, ...
             subplot(1, nsubplots, spcounter);
         end
         plot_single_cross_section(X(:, 2), X(:, 3), X(:, 1), sphere_center(1), label, {'y', 'z', 'x'}, sphere_radius, sphere_center([2, 3]));
+        set(gca, 'Ydir', 'reverse');
     end
     if plot_crosssection_y
         if nsubplots > 1
@@ -506,6 +511,7 @@ function hfig = plot_center_cross_sections(X, plot_title, label, ...
             subplot(1, nsubplots, spcounter);
         end
         plot_single_cross_section(X(:, 1), X(:, 3), X(:, 2), sphere_center(2), label, {'x', 'z', 'y'}, sphere_radius, sphere_center([1, 3]));
+        set(gca, 'Ydir', 'reverse');
     end
     if plot_crosssection_z
         if nsubplots > 1
