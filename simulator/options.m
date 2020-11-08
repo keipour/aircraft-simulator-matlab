@@ -40,6 +40,7 @@ classdef options
         DM_ConvexHullEdgeColor = [0 0 0]; % Options are: [0 0 0] | color name | RGB triplet | 'none'
         DM_ConvexHullLineStyle = '-'; % Options are: '-' | '--' | ':' | '-.' | 'none'
         DM_DrawAccelerationOmniSphere = true; % Options are: true | false
+        DM_AccelerationOmniSphereColor = 'r';
         DM_DrawAccelerationConvexHull = true; % Options are: true | false
         DM_DrawAngularAccelerationConvexHull = true; % Options are: true | false
         DM_DrawAccelerationCrossSections = 'xyz'; % Options are: '' | 'xyz' | 'x' | 'zy' | all other combinations of x, y and z

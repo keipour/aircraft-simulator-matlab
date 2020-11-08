@@ -293,7 +293,7 @@ classdef graphics
                 end
                 if draw_rotation_sphere
                     %figure;
-                    draw_tilt_surface(X, k, sphere_center, rotation_center);
+                    draw_tilt_surface(X, sphere_center, rotation_center);
                 end
 
             elseif r == 2
@@ -314,18 +314,26 @@ classdef graphics
         end
         
         function PlotCrossSections(X, plot_title, label, z_from_zero, ...
-                plot_crosssection_x, plot_crosssection_y, plot_crosssection_z)
-            if nargin < 4
-                z_from_zero = false;
-            end
+                plot_crosssection_x, plot_crosssection_y, plot_crosssection_z, ...
+                sphere_radius, sphere_center)
             if rank(X) < 3
                 return;
+            end
+            if nargin < 4
+                z_from_zero = false;
             end
             if nargin < 5
                plot_crosssection_x = true;
                plot_crosssection_y = true;
                plot_crosssection_z = true;
             end
+            if nargin < 6
+                sphere_radius = 0;
+            end
+            if nargin < 7
+                sphere_center = zeros(1, 3);
+            end
+            
             sprows = options.DM_CrossSectionSubplotRows;
             spcols = options.DM_CrossSectionSubplotCols;
             if plot_crosssection_x
@@ -340,6 +348,9 @@ classdef graphics
                 plot_cross_section(X, plot_title, label, 'z', sprows, spcols, z_from_zero, ...
                     plot_crosssection_x, plot_crosssection_y, plot_crosssection_z);
             end
+            plot_center_cross_sections(X, plot_title, label, ...
+                plot_crosssection_x, plot_crosssection_y, plot_crosssection_z, ...
+                sphere_radius, sphere_center);
             drawnow;
         end
         
@@ -380,7 +391,7 @@ classdef graphics
 end
 
 %% Helper functions
-function draw_tilt_surface(X, tess, sphere_center, rotation_center)
+function draw_tilt_surface(X, sphere_center, rotation_center)
     
     radius = norm(sphere_center - rotation_center);
     
@@ -416,17 +427,18 @@ function draw_tilt_surface(X, tess, sphere_center, rotation_center)
 %     lighting flat
 end
 
-function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero, ...
+function hfig = plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_from_zero, ...
     plot_crosssection_x, plot_crosssection_y, plot_crosssection_z)
+
     nsubplots = csrows * cscols;
     if lower(pivot_axis) == 'z'
         if ~plot_crosssection_z
             return;
         end
         axis_labels = {'x', 'y', 'z'};
-        Pivot_q = linspace(min(X(:, 3)), max(X(:, 3)), nsubplots);
+        query_points = linspace(min(X(:, 3)), max(X(:, 3)), nsubplots);
         if z_from_zero && max(X(:, 3)) > 0
-            Pivot_q = linspace(min(X(:, 3)), 0, nsubplots);
+            query_points = linspace(min(X(:, 3)), 0, nsubplots);
         end
         axis1 = X(:, 1);
         axis2 = X(:, 2);
@@ -436,7 +448,7 @@ function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_
             return;
         end
         axis_labels = {'x', 'z', 'y'};
-        Pivot_q = linspace(min(X(:, 2)), max(X(:, 2)), nsubplots);
+        query_points = linspace(min(X(:, 2)), max(X(:, 2)), nsubplots);
         axis1 = X(:, 1);
         axis2 = X(:, 3);
         axis3 = X(:, 2);
@@ -445,33 +457,91 @@ function plot_cross_section(X, plot_title, label, pivot_axis, csrows, cscols, z_
             return;
         end
         axis_labels = {'y', 'z', 'x'};
-        Pivot_q = linspace(min(X(:, 1)), max(X(:, 1)), nsubplots);
+        query_points = linspace(min(X(:, 1)), max(X(:, 1)), nsubplots);
         axis1 = X(:, 2);
         axis2 = X(:, 3);
         axis3 = X(:, 1);
     end
-    xlimit = max(abs(axis1));
-    ylimit = max(abs(axis2));
     
     hfig = figure;
     sgtitle([plot_title ' (' upper(axis_labels{3}) ' axis)']);
-    try
+
+   try
         for i = 1 : nsubplots
             subplot(csrows, cscols, i);
-            [xc, yc] = get_cross_section(axis1, axis2, axis3, Pivot_q(i));
-            if ~isempty(xc)
-                k = convhull(xc, yc, 'Simplify', true);
-                fill(xc(k), yc(k), options.DM_CrossSectionColor);
-            end
-            xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
-            ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
-            title(['$' label '_' axis_labels{3} ' = ' num2str(Pivot_q(i), '%0.2f') '$'], 'Interpreter', 'latex');
-            xlim([-xlimit xlimit]);
-            ylim([-ylimit ylimit]);
+            plot_single_cross_section(axis1, axis2, axis3, query_points(i), label, axis_labels);
         end
     catch
         close(hfig);
     end
+end
+
+function hfig = plot_center_cross_sections(X, plot_title, label, ...
+    plot_crosssection_x, plot_crosssection_y, plot_crosssection_z, ...
+    sphere_radius, sphere_center)
+
+    nsubplots = double(plot_crosssection_x) + double(plot_crosssection_y) + double(plot_crosssection_z);
+    if nsubplots == 0 || sphere_radius == 0
+        return;
+    end
+    spcounter = 0;
+    
+    hfig = figure;
+    if nsubplots == 1
+        title(plot_title);
+    else
+        sgtitle(plot_title);
+    end
+
+    if plot_crosssection_x
+        if nsubplots > 1
+            spcounter = spcounter + 1;
+            subplot(1, nsubplots, spcounter);
+        end
+        plot_single_cross_section(X(:, 2), X(:, 3), X(:, 1), sphere_center(1), label, {'y', 'z', 'x'}, sphere_radius, sphere_center([2, 3]));
+    end
+    if plot_crosssection_y
+        if nsubplots > 1
+            spcounter = spcounter + 1;
+            subplot(1, nsubplots, spcounter);
+        end
+        plot_single_cross_section(X(:, 1), X(:, 3), X(:, 2), sphere_center(2), label, {'x', 'z', 'y'}, sphere_radius, sphere_center([1, 3]));
+    end
+    if plot_crosssection_z
+        if nsubplots > 1
+            spcounter = spcounter + 1;
+            subplot(1, nsubplots, spcounter);
+        end
+        plot_single_cross_section(X(:, 1), X(:, 2), X(:, 3), sphere_center(3), label, {'x', 'y', 'z'}, sphere_radius, sphere_center([1, 2]));
+    end
+end
+
+function plot_single_cross_section(axis1, axis2, axis3, axis3_query, label, axis_labels, sphere_radius, sphere_center)
+
+    if nargin < 7
+        sphere_radius = 0;
+    end
+    if nargin < 8
+        sphere_center = zeros(1, 3);
+    end
+
+    xlimit = max(abs(axis1));
+    ylimit = max(abs(axis2));
+    xlimit = max(sphere_radius + sphere_center(1), xlimit);
+    ylimit = max(sphere_radius + sphere_center(2), ylimit);
+    
+    [xc, yc] = get_cross_section(axis1, axis2, axis3, axis3_query);
+    if ~isempty(xc)
+        k = convhull(xc, yc, 'Simplify', true);
+        fill(xc(k), yc(k), options.DM_CrossSectionColor);
+        circle(sphere_center(1), sphere_center(2), sphere_radius, options.DM_AccelerationOmniSphereColor);
+    end
+    xlabel(['$' label '_' axis_labels{1} '$'], 'Interpreter', 'latex');
+    ylabel(['$' label '_' axis_labels{2} '$'], 'Interpreter', 'latex');
+    title(['$' label '_' axis_labels{3} ' = ' num2str(axis3_query, '%0.2f') '$'], 'Interpreter', 'latex');
+    xlim([-xlimit xlimit]);
+    ylim([-ylimit ylimit]);
+    daspect([1 1 1]);
 end
 
 function [x, y] = get_cross_section(X, Y, Z, z)
@@ -671,4 +741,20 @@ function plot_settling_time(t, res)
     add_annotation(sx, sy, {'', 'Settling Time (2%)'}, true);
     
     plot_mark(t(index), res.Values(index))
+end
+
+function h = circle(centerx, centery, radius, color)
+    if radius <= 0
+        return;
+    end
+    N = 100;
+    hold on
+    th = linspace(0, 2 * pi, N);
+    rho = ones(1, N) * radius;
+    [x, y] = pol2cart(th, rho);
+    x = x + centerx;
+    y = y + centery;
+    h = fill(x, y, color);
+    plot(centerx, centery, 'k.', 'LineWidth', 2);
+    hold off
 end

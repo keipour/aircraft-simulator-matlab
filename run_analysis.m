@@ -58,10 +58,4 @@ wind_force = [0; 0; 0]; % in N
 %m.VisualizeAxes();
 
 %% Analyze the dynamic manipulability
-os = [];
-for i = -5 : 5
-    m.State.RPY(2) = i;
-    res = m.AnalyzeDynamicManipulability(wind_force);
-    os(i+6) = res.AccelerationOmni;
-end
-disp(os);
+m.AnalyzeDynamicManipulability(wind_force);
