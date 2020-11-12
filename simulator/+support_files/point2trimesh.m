@@ -443,7 +443,7 @@ bary(:,3) = 1 - bary(:,1) - bary(:,2);        % (#faces x 3)
 % bary = tri.cartesianToBarycentric((1:size(faces,1))',P); % (#faces x 3)
 
 % exclude intersections that are outside the triangle
-D( abs(d)<=eps | any(bary<=0,2) | any(bary>=1,2) ) = NaN;  % (#faces x 1)
+D( abs(d)<=1e-10 | any(bary<=0,2) | any(bary>=1,2) ) = NaN;  % (#faces x 1)
 
 % find nearest face for query point
 [~,I] = min(abs(D),[],1); % (1 x 1)
