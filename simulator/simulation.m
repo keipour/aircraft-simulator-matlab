@@ -285,9 +285,9 @@ classdef simulation < handle
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
             [~, col_ind] = physics.CheckAllCollisions(cm, obj.Environment.CollisionModels);
             
-            contact_normal = [];
-            contact_wrench = [];
-            rot_ic = [];
+            contact_normal = [1; 0; 0];
+            contact_wrench = zeros(6, 1);
+            rot_ic = eye(3);
             if col_ind > 0
                 
                 contact_normal = obj.Environment.Objects{col_ind}.Normal;
