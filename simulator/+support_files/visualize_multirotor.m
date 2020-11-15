@@ -210,7 +210,9 @@ function H = plotAxes(position, Rotation, arrow_size)
         end_pos = position + arrow_size*Rotation(:, i);
         label_pos = end_pos + label_dist * Rotation(:, i);
         H = [H; arrow3d([position(1) end_pos(1)], [position(2) end_pos(2)], [position(3) end_pos(3)], 0.8, 0.005, 0.01, colors{i})];
-        H = [H; text(label_pos(1), label_pos(2), label_pos(3), labels{i}, 'Interpreter', 'latex')];
+        if options.MV_ShowAxisLabels
+            H = [H; text(label_pos(1), label_pos(2), label_pos(3), labels{i}, 'Interpreter', 'latex')];
+        end
     end
 end
 
