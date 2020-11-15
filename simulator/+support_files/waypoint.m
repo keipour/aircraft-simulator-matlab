@@ -9,8 +9,8 @@ classdef waypoint < handle
     methods
         function obj = waypoint(input, rpy, force)
             if nargin == 1
-                wp = support_files.waypoint.ProcessWaypoints(input);
-                if length(wp) > 1
+                obj = support_files.waypoint.ProcessWaypoints(input);
+                if length(obj) > 1
                     error('Only one waypoint can be initialized.');
                 end
             else
@@ -39,6 +39,9 @@ classdef waypoint < handle
         % N x 9 matrix: Position, roll, pitch, yaw, force
 
             if ~iscell(input)
+                if size(input, 2) == 1
+                    input = input';
+                end
                 input = {input};
             end
             

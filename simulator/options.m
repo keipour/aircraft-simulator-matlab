@@ -72,4 +72,3 @@ classdef options
         AS_MinTiltMaxLateralAcceleration = 0.5; % in m/s^2
     end
 end
-
