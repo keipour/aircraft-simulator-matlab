@@ -84,6 +84,11 @@ classdef environment < handle
                 obj.Objects{obj_handle}.Texture.Side = repeat_image(scaled_img, p_hgt, p_rows);
             end
         end
+                
+        function hfig = Visualize(obj)
+            hfig = graphics.VisualizeEnvironment(obj);
+        end
+        
     end
 end
 

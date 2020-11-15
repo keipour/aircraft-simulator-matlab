@@ -134,8 +134,8 @@ classdef graphics
             fprintf('\n');
         end
 
-        function VisualizeEnvironment(environment)
-            figure;
+        function hfig = VisualizeEnvironment(environment)
+            hfig = figure;
             support_files.visualize_environment(environment, false);
             view(3);
             drawnow;
@@ -386,7 +386,6 @@ classdef graphics
             end
             drawnow;
         end
-       
     end
 end
 
