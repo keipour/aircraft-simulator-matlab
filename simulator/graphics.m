@@ -89,13 +89,15 @@ classdef graphics
                     else
                         plot_signal(times{i}, data{i}(:, j));
                     end
-                    lbl = {};
                     if length(labels) >= i || length(labels{i}) >= j
-                        lbl = labels{i}(:, j);
+                        y_lbl = cell2mat(labels{i}(:, j));
+                        if n_datacols > 1 && length(labels{i}) > n_datacols
+                            lbl = [cell2mat(labels{i}(:, n_datacols + 1)), ' - ', y_lbl];
+                        end
                     end
                     title(lbl);
                     xlabel('Time (s)');
-                    ylabel(lbl);
+                    ylabel(y_lbl);
                     if gridon
                         grid on
                     end
@@ -608,13 +610,14 @@ function plot_signal(t, Y, properties, line_width)
         Y = Y * ones(length(t), 1);
     end
 
+    skip = 1;
     % Plot the signal
     if nargin < 3
-        plot(t, Y, 'LineWidth', 2);
+        plot(t(1:skip:end), Y(1:skip:end), 'LineWidth', 2);
     elseif nargin < 4
-        plot(t, Y, properties);
+        plot(t(1:skip:end), Y(1:skip:end), properties);
     else
-        plot(t, Y, properties, 'LineWidth', line_width);
+        plot(t(1:skip:end), Y(1:skip:end), properties, 'LineWidth', line_width);
     end
     
     hold off
