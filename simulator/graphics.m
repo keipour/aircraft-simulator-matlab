@@ -610,14 +610,14 @@ function plot_signal(t, Y, properties, line_width)
         Y = Y * ones(length(t), 1);
     end
 
-    skip = 1;
+    skip = 1; %397
     % Plot the signal
     if nargin < 3
         plot(t(1:skip:end), Y(1:skip:end), 'LineWidth', 2);
     elseif nargin < 4
-        plot(t(1:skip:end), Y(1:skip:end), properties);
+        plot(t(1:end), Y(1:end), properties);
     else
-        plot(t(1:skip:end), Y(1:skip:end), properties, 'LineWidth', line_width);
+        plot(t(1:end), Y(1:end), properties, 'LineWidth', line_width);
     end
     
     hold off
