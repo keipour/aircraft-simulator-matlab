@@ -6,10 +6,10 @@ function m = vtol(add_arm)
     RotorPlacementAngles = [45, 135, 225, 315];
     RotorRotationDirections = [-1, 1, -1, 1];    
     RotorDihedralAngle = 0;
-    RotorSidewardAngle = [45, 0, 0, -45]; 
-    RotorInwardAngle = [-90, 0, 0, -90];
+    RotorSidewardAngle = 0; %[45, 0, 0, -45]; 
+    RotorInwardAngle = 0; %[-90, 0, 0, -90];
 
-    m = multirotor(RotorPlacementAngles, RotorRotationDirections);
+    m = vtol(RotorPlacementAngles, RotorRotationDirections);
     m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 
     

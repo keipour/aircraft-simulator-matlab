@@ -133,6 +133,16 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.MomentSensor', measured_data, 'uni', 0));
         end
 
+        function [data, times] = GetRotorInwardAngles()
+            [data, times] = logger.GetData(logger_signals.RotorInwardAngle);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
+        function [data, times] = GetRotorSidewardAngles()
+            [data, times] = logger.GetData(logger_signals.RotorSidewardAngle);
+            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+        end
+        
         function [data, times, labels] = GetField(str)
             str = lower(str);
             
@@ -148,6 +158,24 @@ classdef logger < handle
                 end
                 labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
                 
+            elseif contains(str, 'inward')
+                [data, times] = logger.GetRotorInwardAngles();
+                n_rotors = size(data, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Rotor ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Rotor Inward Angles';
+
+            elseif contains(str, 'sideward')
+                [data, times] = logger.GetRotorSidewardAngles();
+                n_rotors = size(data, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Rotor ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Rotor Sideward Angles';
+
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
                     contains_or(str, {'deriv', 'dot', 'vel', 'speed', 'rate'})
                 [data, times] = logger.GetMeasuredEulerRates();

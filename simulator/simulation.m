@@ -27,7 +27,11 @@ classdef simulation < handle
             
             obj.InitialMultirotor = multrotor;
             obj.Controller = contrller;
-            obj.Multirotor = multirotor(0, 1);
+            if isa(multrotor, 'vtol')
+                obj.Multirotor = vtol(0, 1);
+            else
+                obj.Multirotor = multirotor(0, 1);
+            end
             obj.Environment = envronment;
             obj.TrajectoryController = trajectory_controller;
             obj.Reset();
@@ -95,6 +99,51 @@ classdef simulation < handle
             euler_accel = obj.Controller.ControlAttitude(obj.Multirotor, rpy_des, [], [], time);
             last_commands.DesiredEulerAcceleration.Set(euler_accel, time);
             logger.Add(logger_signals.DesiredEulerAcceleration, euler_accel);
+        end
+        
+        function NextStepMotorController(obj, time)
+        % Change the motor angles for a VTOL
+        % TODO: Add a proper motor controller
+            if ~last_commands.DesiredWaypoint.IsInitialized()
+                return;
+            end
+            waypoint_des = last_commands.DesiredWaypoint.Data;
+            if any(isnan(waypoint_des.RotorSidewardAngles)) || any(isnan(waypoint_des.RotorInwardAngles))
+                return;
+            end
+            
+            persistent sideangles inwangles last_time
+            if isempty(sideangles) || isempty(inwangles) || isempty(last_time)
+                sideangles = zeros(obj.Multirotor.NumOfRotors, 1);
+                inwangles = zeros(obj.Multirotor.NumOfRotors, 1);
+                for i = 1 : obj.Multirotor.NumOfRotors
+                    sideangles(i) = obj.Multirotor.Rotors{i}.SidewardAngle;
+                    inwangles(i) = obj.Multirotor.Rotors{i}.InwardAngle;
+                end
+                last_time = time;
+            end
+            
+            dt = time - last_time;
+            maximum_rate = 5; % deg/s
+            
+            sideerr = sideangles - waypoint_des.RotorSidewardAngles';
+            inwerr =  inwangles - waypoint_des.RotorInwardAngles';
+            
+            max_change = maximum_rate * dt;
+            sideangles(abs(sideerr) <= max_change) = waypoint_des.RotorSidewardAngles(abs(sideerr) <= max_change)';
+            sideangles(sideerr > max_change) = sideangles(sideerr > max_change) - max_change;
+            sideangles(sideerr < -max_change) = sideangles(sideerr < -max_change) + max_change;
+            
+            inwangles(abs(inwerr) <= max_change) = waypoint_des.RotorInwardAngles(abs(inwerr) <= max_change)';
+            inwangles(inwerr > max_change) = inwangles(inwerr > max_change) - max_change;
+            inwangles(inwerr < -max_change) = inwangles(inwerr < -max_change) + max_change;
+
+            obj.Multirotor.ChangeRotorAngles(inwangles, sideangles);
+            
+            last_time = time;
+            
+            logger.Add(logger_signals.RotorInwardAngle, inwangles);
+            logger.Add(logger_signals.RotorSidewardAngle, sideangles);
         end
         
         function NextStepPositionController(obj, time)
@@ -174,6 +223,7 @@ classdef simulation < handle
                     obj.NextStepPositionController(time);
                 end
             elseif module == obj.Timer.AttControllerIndex && last_commands.DesiredRPY.IsInitialized()
+                obj.NextStepMotorController(time);
                 obj.NextStepAttitudeController(time);
             elseif module == obj.Timer.TrajControllerIndex && obj.TrajectoryController.IsInitialized()
                 obj.NextStepTrajectoryController(time);
