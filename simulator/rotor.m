@@ -27,11 +27,12 @@ classdef rotor < handle
         
         LowerSpeedPercentage = 0;               % The percentage of the minimum 
                                                 % rpm that sets the lower speed
-                                                % limit (0..100)                                           
+                                                % limit (0..100)
+
+        R_BR = eye(3);                          % Rotation matrix R_BR                                            
     end
     
     properties (GetAccess = public, SetAccess = private)
-        R_BR                                    % Rotation matrix R_BR
         Position                                % Position of the rotor in B
         MaxSpeedSquared                         % Maximum rotation speed squared in Hz^2
         MinSpeedSquared                         % Minimum rotation speed squared in Hz^2

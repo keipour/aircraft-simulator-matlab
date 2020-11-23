@@ -8,10 +8,13 @@ function m = vtol(add_arm)
     RotorDihedralAngle = 0;
     RotorSidewardAngle = 0; %[45, 0, 0, -45]; 
     RotorInwardAngle = 0; %[-90, 0, 0, -90];
-
+    RBR = roty(30);
+    
     m = vtol(RotorPlacementAngles, RotorRotationDirections);
-    m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
-
+    %m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
+    for i = 1 : m.NumOfRotors
+        m.Rotors{i}.R_BR = RBR;
+    end
     
     if add_arm
         m.AddEndEffector(arm);

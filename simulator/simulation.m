@@ -138,7 +138,7 @@ classdef simulation < handle
             inwangles(inwerr > max_change) = inwangles(inwerr > max_change) - max_change;
             inwangles(inwerr < -max_change) = inwangles(inwerr < -max_change) + max_change;
 
-            obj.Multirotor.ChangeRotorAngles(inwangles, sideangles);
+            obj.Multirotor.ChangeRotorR_BRs(sideangles);
             
             last_time = time;
             

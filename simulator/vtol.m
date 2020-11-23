@@ -42,5 +42,17 @@ classdef vtol < multirotor
             
             obj.InitializeDynamicsMethod();
         end
+        
+        function ChangeRotorR_BRs(obj, angles)
+            
+            % Assign the values
+            for i = 1 : obj.NumOfRotors
+                R_BR = roty(angles(i));
+                obj.Rotors{i}.R_BR = R_BR;
+            end
+            
+            obj.InitializeDynamicsMethod();
+        end
+    
     end
 end
