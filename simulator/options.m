@@ -19,7 +19,7 @@ classdef options
         MV_AxisArrowSize = 0.3; % in meters
         MV_PlotTitle = '';%'Your Cool Multirotor';
         MV_ShowArmLabels = true; % Options are: true | false
-        MV_ShowAxisLabels = false; % Options are: true | false
+        MV_ShowAxisLabels = true; % Options are: true | false
         MV_MotorHeight = 0.02; % in meters -- set to zero if don't want motors
         MV_MotorRadius = 0.02; % in meters -- set to zero if don't want motors
         MV_AddLighting = true; % Options are: true | false

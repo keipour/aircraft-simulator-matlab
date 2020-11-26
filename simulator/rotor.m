@@ -162,6 +162,19 @@ classdef rotor < handle
             obj.LowerSpeedPercentage = rot.LowerSpeedPercentage;
             obj.UpperSpeedPercentage = rot.UpperSpeedPercentage;
         end
+        
+        function SetR_BR(obj, R_BR)
+            R = rotz(-obj.ArmAngle) * R_BR;
+            y_axis = cross(R(:, 3)', [0, 1, 0]);
+            inward_angle = 0;
+            if any(y_axis)
+                inward_angle = asind(y_axis(3) / norm(y_axis));
+            end
+            R = roty(-inward_angle) * R;
+            sideward_angle = asind(R(2, 3));
+            obj.InwardAngle = inward_angle;
+            obj.SidewardAngle = sideward_angle;
+        end
     end
     
     methods (Access = private)
