@@ -30,9 +30,15 @@ classdef graphics
             drawnow;
         end
         
-        function h = PlotSignalsByName(cols, signals, gridon)
-            if nargin < 3
+        function h = PlotSignalsByName(cols, signals, allinone, gridon, y_label)
+            if nargin < 5
+                y_label = '';
+            end
+            if nargin < 4
                 gridon = false;
+            end
+            if nargin < 3
+                allinone = false;
             end
             if ~iscell(signals)
                 signals = {signals};
@@ -46,12 +52,18 @@ classdef graphics
                 [X{i}, T{i}, L{i}] = logger.GetField(signals{i});
             end
             
-            h = graphics.PlotSignalsFromData(cols, X, T, L, gridon);
+            h = graphics.PlotSignalsFromData(cols, X, T, L, allinone, gridon, y_label);
         end
         
-        function h = PlotSignalsFromData(cols, data, times, labels, gridon)
-            if nargin < 5
+        function h = PlotSignalsFromData(cols, data, times, labels, allinone, gridon, y_label)
+            if nargin < 7
+                y_label = '';
+            end
+            if nargin < 6
                 gridon = false;
+            end
+            if nargin < 5
+                allinone = false;
             end
             if nargin < 4
                 labels = {};
@@ -75,29 +87,44 @@ classdef graphics
             rows = ceil(total_size / cols);
             
             curr_plot = 1;
+            legend_labels = {};
             for i = 1 : n_data
                 n_datacols = size(data{i}, 2);
                 if iscell(data{i})
                     n_datacols = size(data{i}{1}, 2);
                 end
                 for j = 1 : n_datacols
-                    subplot(rows, cols, curr_plot);
+                    if ~allinone
+                        subplot(rows, cols, curr_plot);
+                    else
+                        hold on
+                    end
                     if iscell(data{i})
                         plot_signal(times{i}{1}, data{i}{1}(:, j));
-                        plot_signal(times{i}{2}, data{i}{2}(:, j));
-                        legend('Measured', 'Commanded');
+                        if ~allinone
+                            plot_signal(times{i}{2}, data{i}{2}(:, j));
+                            legend('Measured', 'Commanded');
+                        end
                     else
                         plot_signal(times{i}, data{i}(:, j));
                     end
                     if length(labels) >= i || length(labels{i}) >= j
                         y_lbl = cell2mat(labels{i}(:, j));
+                        legend_labels = [legend_labels, y_lbl];
                         if n_datacols > 1 && length(labels{i}) > n_datacols
-                            lbl = [cell2mat(labels{i}(:, n_datacols + 1)), ' - ', y_lbl];
+                            lbl = cell2mat(labels{i}(:, n_datacols + 1));
+                            if ~allinone
+                                lbl = [lbl, ' - ', y_lbl];
+                            end
+                            title(lbl);
+                        end
+                        if allinone
+                            ylabel(y_label, 'Interpreter', 'latex');
+                        else
+                            ylabel(y_lbl, 'Interpreter', 'latex');
                         end
                     end
-                    title(lbl);
-                    xlabel('Time (s)');
-                    ylabel(y_lbl);
+                    xlabel('Time $[s]$', 'Interpreter', 'latex');
                     if gridon
                         grid on
                     end
@@ -108,6 +135,9 @@ classdef graphics
                     end
                     curr_plot = curr_plot + 1;
                 end
+            end
+            if allinone
+                legend(legend_labels);
             end
             drawnow;
         end
@@ -610,7 +640,7 @@ function plot_signal(t, Y, properties, line_width)
         Y = Y * ones(length(t), 1);
     end
 
-    skip = 1; %397
+    skip = 397;
     % Plot the signal
     if nargin < 3
         plot(t(1:skip:end), Y(1:skip:end), 'LineWidth', 2);
@@ -624,20 +654,37 @@ function plot_signal(t, Y, properties, line_width)
 end
         
 function fix_plot_limits(Xs, Ys)
+    
+    axh = findobj( gcf, 'Type', 'Axes' );
+    axh_children = get(axh(1), 'Children');
+    is_first_plot = length(axh_children) < 2;
+    
     max_x = -inf;
     min_x = inf;
+    max_y = -inf;
+    min_y = inf;
+
+    y_padding = 0.5;
+    
+    if ~is_first_plot
+        curr_y_lim = ylim;
+        curr_x_lim = xlim;
+        max_x = curr_x_lim(2);
+        min_x = curr_x_lim(1);
+        max_y = curr_y_lim(2) - y_padding;
+        min_y = curr_y_lim(1) + y_padding;
+    end
+    
     for i = 1 : length(Xs)
         max_x = max(max_x, max(Xs{i}));
         min_x = min(min_x, min(Xs{i}));
     end
-    max_y = -inf;
-    min_y = inf;
     for i = 1 : length(Ys)
         max_y = max(max_y, max(Ys{i}));
         min_y = min(min_y, min(Ys{i}));
     end
     xlim([min_x max_x]);
-    ylim([min_y - 0.5, max_y + 0.5]);
+    ylim([min_y - y_padding, max_y + y_padding]);
 end
 
 function plot_dotted_line(x, y)

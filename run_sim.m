@@ -9,14 +9,14 @@ addpath('simulator');
 %m = robots.floating_hex();
 %m = robots.octorotor_assymmetric();
 %m = robots.quadrotor(true);
-m = robots.vtol();
-%m = robots.tilted_hex(true);
+%m = robots.vtol();
+m = robots.tilted_hex();
 
 %% Define the world
 
 average_wind = [];
-w = worlds.empty_world(average_wind, false);
-%w = worlds.straight_wall(average_wind, false);
+%w = worlds.empty_world(average_wind, false);
+w = worlds.straight_wall(average_wind, false);
 %w = worlds.sloped_wall_20_deg(average_wind, false);
 
 %% Define the controller
@@ -32,7 +32,7 @@ sim.SetTotalTime(10);
 
 %% Initial multirotor state
 
-pos = [10; 10; -4];
+pos = [0; 0; -4];
 vel = [0; 0; 0];
 rpy = [0; 0; 0];
 omega = [0; 0; 0];
@@ -49,7 +49,7 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 %sim.SimulatePositionResponse([17; 8; -2], -45, true);
 
 % Trajectory following
-traj = [12, 12, -4, 0; 12, 16, -3, 90];
+traj = [2, 2, -4, 0; 2, 6, -3, 30];
 
 % Trajectory for VTOL:
 % traj = {
@@ -86,7 +86,7 @@ sim.SimulateTrajectory(traj, 0.2, 3, 0.2);
 
 %% Draw Additional plots
 
-graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind', 'inward', 'sideward'}, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind', 'inward', 'sideward'}, false, true);
 
 %% Animate the result
 
