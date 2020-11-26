@@ -12,6 +12,10 @@ function m = vtol(add_arm)
     m = vtol(RotorPlacementAngles, RotorRotationDirections);
     m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);
 
+    m.AddServo([1, 4], [0; -1; 0], 0);
+    m.AddServo([2, 3], [0; -1; 0], 0);
+    
+    %m.Servos{1}.SetCurrentAngle(30);
     
     if add_arm
         m.AddEndEffector(arm);

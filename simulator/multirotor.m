@@ -10,6 +10,7 @@ classdef multirotor < handle
         OmegaLimits = deg2rad([70; 70; 30]);           % in deg/s
         WindModel support_files.multirotor_wind_model ...
             = support_files.multirotor_wind_model;     % Model used for wind pressure calculation
+        Servos cell
     end
 
     properties (SetAccess=protected, GetAccess=public)
@@ -72,6 +73,11 @@ classdef multirotor < handle
         function set.Rotors(obj, value)
             obj.Rotors = value;
             obj.UpdateNumOfRotors();
+        end
+        
+        function AddServo(obj, rotor_numbers, axes, initial_angle)
+            n_servos = length(obj.Servos);
+            obj.Servos{n_servos + 1} = servo(obj, rotor_numbers, axes, initial_angle);
         end
         
         function AddEndEffector(obj, end_effector)
