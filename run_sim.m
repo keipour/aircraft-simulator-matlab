@@ -27,7 +27,7 @@ c = controllers.fully_actuated(m, attitude_strategies.FullTilt);
 
 sim = simulation(m, c, w);
 
-sim.SetTotalTime(10);
+sim.SetTotalTime(15);
 %sim.SetTotalTime(75); % For the AIR trajectory
 
 %% Initial multirotor state
@@ -53,8 +53,8 @@ traj = [2, 2, -4, 0; 2, 6, -3, 30];
 
 % Trajectory for VTOL:
 % traj = {
-%     [12, 12, -4, 0], [10, 0]; 
-%     [12, 16, -3, 90], [0, 0]
+%     [2, 0, -4, 0], [0, 0]; 
+%     [20, 0, -4, 0], [90, 90]; 
 %     };
 
 % Trajectory for writing AIR on the wall
