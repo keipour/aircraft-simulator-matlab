@@ -4,12 +4,11 @@ classdef waypoint < handle
         Position
         RPY
         Force
-        RotorSidewardAngles
-        RotorInwardAngles
+        ServoAngles
     end
     
     methods
-        function obj = waypoint(input, rpy, force, rotors_sideward, rotors_inward)
+        function obj = waypoint(input, rpy, force, servo_angles)
             if nargin == 1
                 obj = support_files.waypoint.ProcessWaypoints(input);
                 if length(obj) > 1
@@ -19,15 +18,12 @@ classdef waypoint < handle
                 obj.Position = input;
                 obj.RPY = rpy;
                 obj.Force = force;
-                
             end
             
             if nargin < 4
-                obj.RotorSidewardAngles = NaN;
-                obj.RotorInwardAngles = NaN;
+                obj.ServoAngles = NaN;
             else
-                obj.RotorSidewardAngles = rotors_sideward;
-                obj.RotorInwardAngles = rotors_inward;
+                obj.ServoAngles = servo_angles;
             end
         end
         
@@ -59,24 +55,22 @@ classdef waypoint < handle
             waypoints = [];
             for i = 1 : size(input, 1)
                 desinput = input{i, 1};
-                rotsideinp = NaN;
-                rotinwinp = NaN;
-                if size(input, 2) == 3
-                    rotsideinp = input{i, 2};
-                    rotinwinp = input{i, 3};                    
+                servoinp = NaN;
+                if size(input, 2) == 2
+                    servoinp = input{i, 2};
                 end
                 
                 for j = 1 : size(desinput, 1)
                     w = [];
                     switch size(desinput, 2)
                         case 4
-                            w = support_files.waypoint(desinput(j, 1 : 3)', [NaN; NaN; desinput(j, 4)], zeros(3, 1), rotsideinp, rotinwinp);
+                            w = support_files.waypoint(desinput(j, 1 : 3)', [NaN; NaN; desinput(j, 4)], zeros(3, 1), servoinp);
                         case 6
-                            w = support_files.waypoint(desinput(j, 1 : 3)', desinput(j, 4 : 6)', zeros(3, 1), rotsideinp, rotinwinp);
+                            w = support_files.waypoint(desinput(j, 1 : 3)', desinput(j, 4 : 6)', zeros(3, 1), servoinp);
                         case 7
-                            w = support_files.waypoint(desinput(j, 1 : 3)', [NaN; NaN; desinput(j, 4)], desinput(j, 5 : 7)', rotsideinp, rotinwinp);
+                            w = support_files.waypoint(desinput(j, 1 : 3)', [NaN; NaN; desinput(j, 4)], desinput(j, 5 : 7)', servoinp);
                         case 9
-                            w = support_files.waypoint(desinput(j, 1 : 3)', desinput(j, 4 : 6)', desinput(j, 7 : 9)', rotsideinp, rotinwinp);
+                            w = support_files.waypoint(desinput(j, 1 : 3)', desinput(j, 4 : 6)', desinput(j, 7 : 9)', servoinp);
                         otherwise
                             error('Error processing the input waypoints.');
                     end

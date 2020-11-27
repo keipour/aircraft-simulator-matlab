@@ -134,13 +134,18 @@ classdef logger < handle
         end
 
         function [data, times] = GetRotorInwardAngles()
-            [data, times] = logger.GetData(logger_signals.RotorInwardAngle);
-            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.RotorInwardAngles', measured_data, 'uni', 0));
         end
         
         function [data, times] = GetRotorSidewardAngles()
-            [data, times] = logger.GetData(logger_signals.RotorSidewardAngle);
-            data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.RotorSidewardAngles', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetServoAngles()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.ServoAngles', measured_data, 'uni', 0));
         end
         
         function [data, times, labels] = GetField(str)
@@ -156,7 +161,7 @@ classdef logger < handle
                     data = data_meas;
                     times = times_meas;
                 end
-                labels = {'a_x', 'a_y', 'a_z', 'Acceleration'};
+                labels = {'$a_x$', '$a_y$', '$a_z$', 'Acceleration'};
                 
             elseif contains(str, 'inward')
                 [data, times] = logger.GetRotorInwardAngles();
@@ -176,10 +181,23 @@ classdef logger < handle
                 end
                 labels{n_rotors + 1} = 'Rotor Sideward Angles';
 
-            elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'}) && ...
-                    contains_or(str, {'deriv', 'dot', 'vel', 'speed', 'rate'})
-                [data, times] = logger.GetMeasuredEulerRates();
-                labels = {'Roll Rate', 'Pitch Rate', 'Yaw Rate', 'Attitude Rate'};
+            elseif contains(str, 'sideward')
+                [data, times] = logger.GetRotorSidewardAngles();
+                n_rotors = size(data, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Rotor ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Rotor Sideward Angles';
+
+            elseif contains(str, 'servo')
+                [data, times] = logger.GetServoAngles();
+                n_rotors = size(data, 2);
+                labels = cell(1, n_rotors + 1);
+                for i = 1 : n_rotors
+                    labels{i} = ['Servo ' num2str(i, '%d')];
+                end
+                labels{n_rotors + 1} = 'Servo Angles';
 
             elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
                     (contains_or(str, {'dot', 'deriv'}) && contains(str, 'omega'))
@@ -192,7 +210,7 @@ classdef logger < handle
                     data = data_meas;
                     times = times_meas;
                 end
-                labels = {'\alpha_x', '\alpha_y', '\alpha_z', 'Angular Acceleration'};
+                labels = {'$\alpha_x$', '$\alpha_y$', '$\alpha_z$', 'Angular Acceleration'};
 
             elseif contains_or(str, {'euler', 'rpy', 'att', 'phi'})
                 [data_meas, times_meas] = logger.GetMeasuredRPYs();
@@ -217,39 +235,39 @@ classdef logger < handle
 
             elseif contains(str, 'omega') || (contains_or(str, {'ang', 'rot'}) && contains_or(str, {'vel', 'rate', 'speed'}))
                 [data, times] = logger.GetMeasuredOmegas();
-                labels = {'\omega_x', '\omega_y', '\omega_z', 'Angular Velocity'};
+                labels = {'$\omega_x$', '$\omega_y$', '$\omega_z$', 'Angular Velocity'};
 
             elseif contains_or(str, {'air', 'wind'})
                 [data, times] = logger.GetAppliedWindForces();
-                labels = {'F_x', 'F_y', 'F_z', 'Wind Force'};
+                labels = {'$F_x$', '$F_y$', '$F_z$', 'Wind Force'};
 
             elseif contains_and(str, {'forc', 'sens'})
                 [data, times] = logger.GetForceSensorReadings();
-                labels = {'F_x', 'F_y', 'F_z', 'Force Sensor'};
+                labels = {'$F_x$', '$F_y$', '$F_z$', 'Force Sensor'};
 
             elseif contains(str, 'forc')
                 [data, times] = logger.GetMeasuredForces();
-                labels = {'F_x', 'F_y', 'F_z', 'Generated Force'};
+                labels = {'$F_x$', '$F_y$', '$F_z$', 'Generated Force'};
 
             elseif contains_or(str, {'momen', 'torq'}) && contains(str, 'sens')
                 [data, times] = logger.GetMomentSensorReadings();
-                labels = {'M_x', 'M_y', 'M_z', 'Moment Sensor'};
+                labels = {'$M_x$', '$M_y$', '$M_z$', 'Moment Sensor'};
 
             elseif contains_or(str, {'momen', 'torq'})
                 [data, times] = logger.GetMeasuredMoments();
-                labels = {'M_x', 'M_y', 'M_z', 'Generated Moment'};
+                labels = {'$M_x$', '$M_y$', '$M_z$', 'Generated Moment'};
 
             elseif contains_or(str, {'vel', 'speed'}) && contains(str, 'eff')
                 [data, times] = logger.GetMeasuredEndEffectorVelocities();
-                labels = {'V_xe', 'V_ye', 'V_ze', 'End Effector Velocity'};
+                labels = {'$V_{xe}$', '$V_{ye}$', '$V_{ze}$', 'End Effector Velocity'};
 
             elseif contains_or(str, {'vel', 'speed'})
                 [data, times] = logger.GetMeasuredVelocities();
-                labels = {'V_x', 'V_y', 'V_z', 'Velocity'};
+                labels = {'$V_x$', '$V_y$', '$V_z$', 'Velocity'};
             
             elseif contains(str, 'eff')
                 [data, times] = logger.GetMeasuredEndEffectorPositions();
-                labels = {'x_e', 'y_e', 'z_e', 'End Effector Position'};
+                labels = {'$x_e$', '$y_e$', '$z_e$', 'End Effector Position'};
 
             elseif contains(str, 'pos')
                 [data_meas, times_meas] = logger.GetMeasuredPositions();
@@ -261,7 +279,7 @@ classdef logger < handle
                     data = data_meas;
                     times = times_meas;
                 end
-                labels = {'x', 'y', 'z', 'Position'};
+                labels = {'$x$', '$y$', '$z$', 'Position'};
 
             elseif contains(str, 'sat')
                 [data, times] = logger.GetMeasuredRotorSaturations();

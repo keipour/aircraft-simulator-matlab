@@ -22,25 +22,5 @@ classdef vtol < multirotor
             wrench(6) = wrench(6) + 0; % Add vertical lift
         end
         
-        function ChangeRotorAngles(obj, RotorInwardAngles, RotorSidewardAngles)
-            % Set the angles of the rotors
-            % Inputs can be scalar or an array of he same length as 
-            % the number of rotors.
-
-            if length(RotorInwardAngles) == 1
-                RotorInwardAngles = ones(obj.NumOfRotors, 1) * RotorInwardAngles;
-            end
-            if length(RotorSidewardAngles) == 1
-                RotorSidewardAngles = ones(obj.NumOfRotors, 1) * RotorSidewardAngles;
-            end
-            
-            % Assign the values
-            for i = 1 : obj.NumOfRotors
-                obj.Rotors{i}.InwardAngle = RotorInwardAngles(i);
-                obj.Rotors{i}.SidewardAngle = RotorSidewardAngles(i);
-            end
-            
-            obj.InitializeDynamicsMethod();
-        end
     end
 end

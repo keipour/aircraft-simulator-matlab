@@ -10,11 +10,12 @@ classdef multirotor < handle
         OmegaLimits = deg2rad([70; 70; 30]);           % in deg/s
         WindModel support_files.multirotor_wind_model ...
             = support_files.multirotor_wind_model;     % Model used for wind pressure calculation
-        Servos cell
+        Servos cell = {};
     end
 
     properties (SetAccess=protected, GetAccess=public)
         NumOfRotors                 % Number of rotors
+        NumOfServos                 % Number of servos
         TotalMass                   % Total mass including the arm
         InitialState state          % Initial state
         State state                 % The current state
@@ -34,7 +35,6 @@ classdef multirotor < handle
         NE_M                        % M matrix in Newton-Euler dynamics formulation
                                     % (related to body-fixed thrust and reaction moments)
     end
-
     
     %% Public methods
     methods
@@ -46,7 +46,7 @@ classdef multirotor < handle
             % The number of rotors in the multirotor
             obj.NumOfRotors = length(ArmAngles);
             
-            % Create the array of rotors
+            % Create the array of rotors and servos
             obj.Rotors = cell(obj.NumOfRotors, 1);
             
             for i = 1 : obj.NumOfRotors
@@ -55,8 +55,8 @@ classdef multirotor < handle
                 obj.Rotors{i}.RotationDirection = RotationDirections(i);
             end
             
-            obj.InitialState = state(obj.NumOfRotors);
-            obj.State = state(obj.NumOfRotors);
+            obj.InitialState = state(obj.NumOfRotors, obj.NumOfServos);
+            obj.State = state(obj.NumOfRotors, obj.NumOfServos);
             
             % Set the dynamics formulation type
             obj.DynamicsMethod = multirotor_dynamics_methods.NewtonEuler;
@@ -75,9 +75,14 @@ classdef multirotor < handle
             obj.UpdateNumOfRotors();
         end
         
+        function set.Servos(obj, value)
+            obj.Servos = value;
+            obj.UpdateNumOfServos();
+        end
+        
         function AddServo(obj, rotor_numbers, axes, initial_angle)
-            n_servos = length(obj.Servos);
-            obj.Servos{n_servos + 1} = servo(obj, rotor_numbers, axes, initial_angle);
+            obj.Servos{obj.NumOfServos + 1} = servo(obj, rotor_numbers, axes, initial_angle);
+            obj.UpdateNumOfServos
         end
         
         function AddEndEffector(obj, end_effector)
@@ -92,6 +97,13 @@ classdef multirotor < handle
         
         function has_end_effector = HasEndEffector(obj)
             has_end_effector = obj.HasArm;
+        end
+        
+        function ChangeServoAngles(obj, angles)
+            for i = 1 : obj.NumOfServos
+                obj.Servos{i}.SetCurrentAngle(angles(i));
+            end
+            obj.InitializeDynamicsMethod();
         end
         
         function SetInitialState(obj, pos, vel, rpy, omega)
@@ -187,6 +199,12 @@ classdef multirotor < handle
                 [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
                 new_state.RotorSpeeds(i) = sqrt(rs);
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
+                new_state.RotorInwardAngles(i) = obj.Rotors{i}.InwardAngle;
+                new_state.RotorSidewardAngles(i) = obj.Rotors{i}.SidewardAngle;
+            end
+            
+            for i = 1 : obj.NumOfServos
+                new_state.ServoAngles(i) = obj.Servos{i}.CurrentAngle;
             end
         end
         
@@ -241,6 +259,7 @@ classdef multirotor < handle
         function UpdateStructure(obj)
             obj.I = obj.EstimateInertia();
             obj.UpdateNumOfRotors();
+            obj.UpdateNumOfServos();
             obj.TotalMass = obj.Mass;
             obj.CollisionModel = obj.CalculateCollisionModel();
             mult_cm = support_files.collision_box(obj.CollisionModel.X, ...
@@ -271,10 +290,15 @@ classdef multirotor < handle
             for i = 1 : mult.NumOfRotors
                 obj.Rotors{i} = rotor(mult.Rotors{i});
             end
+            obj.Servos = {};
+            for i = 1 : mult.NumOfServos
+                obj.AddServo(mult.Servos{i}.RotorNumbers, mult.Servos{i}.Axes, mult.Servos{i}.CurrentAngle);
+            end
             obj.Mass = mult.Mass;
             obj.I = mult.I;
             obj.PayloadRadius = mult.PayloadRadius;
             obj.NumOfRotors = mult.NumOfRotors;
+            obj.NumOfServos = mult.NumOfServos;
             obj.InitialState = state();
             obj.InitialState = mult.InitialState;
             obj.State = state();
@@ -375,7 +399,7 @@ classdef multirotor < handle
             end
             
             % Create the new state
-            new_state = state(obj.NumOfRotors);
+            new_state = state(obj.NumOfRotors, obj.NumOfServos);
             
             p_dotdot = wrench(4 : 6) / obj.TotalMass;
             phi_dot = obj.GetEulerRate();
@@ -434,7 +458,7 @@ classdef multirotor < handle
         
         function new_state = CalcStateLagrange(obj, RotorSpeedsSquared, dt)
             % Create the new state
-            new_state = state(obj.NumOfRotors);
+            new_state = state(obj.NumOfRotors, obj.NumOfServos);
         end
         
         function InitializeDynamicsMethod(obj)
@@ -500,6 +524,10 @@ classdef multirotor < handle
         
         function UpdateNumOfRotors(obj)
             obj.NumOfRotors = length(obj.Rotors);
+        end
+        
+        function UpdateNumOfServos(obj)
+            obj.NumOfServos = length(obj.Servos);
         end
         
         function UpdateI_inv(obj)

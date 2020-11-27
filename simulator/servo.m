@@ -2,6 +2,7 @@ classdef servo < handle
     properties (SetAccess=protected, GetAccess=public)
         Axes
         Rotors
+        RotorNumbers
         CurrentAngle = 0;
     end
 
@@ -9,6 +10,7 @@ classdef servo < handle
     methods
         function obj = servo(rbt, rotor_numbers, axes, initial_angle)
 
+            obj.RotorNumbers = rotor_numbers;
             n_rotors = length(rotor_numbers);
 
             if ~iscell(axes)
@@ -44,6 +46,6 @@ classdef servo < handle
                 Rax = axang2rotm([obj.Axes{i}', deg2rad(ang_diff)]);
                 obj.Rotors{i}.SetR_BR(Rax * obj.Rotors{i}.R_BR);
             end
-        end        
+        end
     end
 end

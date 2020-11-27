@@ -53,8 +53,8 @@ traj = [2, 2, -4, 0; 2, 6, -3, 30];
 
 % Trajectory for VTOL:
 % traj = {
-%     [12, 12, -4, 0], [10, 0, 0, 10], [-2, 3, 4, -1]; 
-%     [12, 16, -3, 90], [0, 0, 0, 0], [0, 0, 0, 0]
+%     [12, 12, -4, 0], [10, 0]; 
+%     [12, 16, -3, 90], [0, 0]
 %     };
 
 % Trajectory for writing AIR on the wall
@@ -86,7 +86,8 @@ sim.SimulateTrajectory(traj, 0.2, 3, 0.2);
 
 %% Draw Additional plots
 
-graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'wind', 'inward', 'sideward'}, false, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, false, true);
+graphics.PlotSignalsByName(2, {'servo', 'inward', 'sideward'}, false, true);
 
 %% Animate the result
 

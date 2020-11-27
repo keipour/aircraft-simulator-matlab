@@ -23,12 +23,21 @@ classdef state < handle
         WindForce           = zeros(3, 1);        % Wind force applied to the CoM in N
 
         InCollision         = false;              % If multirotor is in collision
+        
+        ServoAngles         = [];                 % Servo angles (in degrees)
+        RotorInwardAngles   = [];                 % Rotor inward angles (in degrees)
+        RotorSidewardAngles = [];                 % Rotor sideward angles (in degrees)
     end
     
     methods
-        function obj = state(n_rotors)
+        function obj = state(n_rotors, n_servos)
             if nargin > 0
                 obj.RotorSpeeds = zeros(n_rotors, 1);
+                obj.RotorInwardAngles = zeros(n_rotors, 1);
+                obj.RotorSidewardAngles = zeros(n_rotors, 1);
+            end
+            if nargin > 1
+                obj.ServoAngles = zeros(n_servos, 1);
             end
         end
         
@@ -43,6 +52,9 @@ classdef state < handle
             obj.Force               = s.Force;
             obj.Moment              = s.Moment;
             obj.RotorSpeeds         = s.RotorSpeeds;
+            obj.ServoAngles         = s.ServoAngles;
+            obj.RotorInwardAngles   = s.RotorInwardAngles;
+            obj.RotorSidewardAngles = s.RotorSidewardAngles;
             obj.RotorsSaturated     = s.RotorsSaturated;
 
             obj.EndEffectorPosition = s.EndEffectorPosition;
@@ -68,6 +80,9 @@ classdef state < handle
             s.Force               = obj.Force;
             s.Moment              = obj.Moment;
             s.RotorSpeeds         = obj.RotorSpeeds;
+            s.ServoAngles         = obj.ServoAngles;
+            s.RotorInwardAngles   = obj.RotorInwardAngles;
+            s.RotorSidewardAngles = obj.RotorSidewardAngles;
             s.RotorsSaturated     = obj.RotorsSaturated;
 
             s.EndEffectorPosition = obj.EndEffectorPosition;

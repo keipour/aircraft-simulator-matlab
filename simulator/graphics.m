@@ -116,7 +116,7 @@ classdef graphics
                             if ~allinone
                                 lbl = [lbl, ' - ', y_lbl];
                             end
-                            title(lbl);
+                            title(lbl, 'Interpreter', 'latex');
                         end
                         if allinone
                             ylabel(y_label, 'Interpreter', 'latex');

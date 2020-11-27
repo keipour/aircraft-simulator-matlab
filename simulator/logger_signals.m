@@ -7,11 +7,9 @@ classdef logger_signals < handle
         DesiredPositionYaw = 5;
         DesiredContactForce = 6; % in the contact frame assuming X is perpendicular
         RotorSpeedsSquaredCommand = 7;
-        RotorSidewardAngle = 8;
-        RotorInwardAngle = 9;
 
         % Set it to the largest number
-        Max = 9;
+        Max = 7;
     end
 end
 

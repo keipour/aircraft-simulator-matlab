@@ -108,17 +108,18 @@ classdef simulation < handle
                 return;
             end
             waypoint_des = last_commands.DesiredWaypoint.Data;
-            if any(isnan(waypoint_des.RotorSidewardAngles)) || any(isnan(waypoint_des.RotorInwardAngles))
+            if any(isnan(waypoint_des.ServoAngles))
                 return;
             end
-            
-            persistent sideangles inwangles last_time
-            if isempty(sideangles) || isempty(inwangles) || isempty(last_time)
-                sideangles = zeros(obj.Multirotor.NumOfRotors, 1);
-                inwangles = zeros(obj.Multirotor.NumOfRotors, 1);
-                for i = 1 : obj.Multirotor.NumOfRotors
-                    sideangles(i) = obj.Multirotor.Rotors{i}.SidewardAngle;
-                    inwangles(i) = obj.Multirotor.Rotors{i}.InwardAngle;
+            if length(waypoint_des.ServoAngles) ~= obj.Multirotor.NumOfServos
+                warning('The number of servos in the waypoint is different than the number of robot servos.');
+                return;
+            end
+            persistent servoangles last_time
+            if isempty(servoangles) || isempty(last_time)
+                servoangles = zeros(obj.Multirotor.NumOfServos, 1);
+                for i = 1 : obj.Multirotor.NumOfServos
+                    servoangles(i) = obj.Multirotor.Servos{i}.CurrentAngle;
                 end
                 last_time = time;
             end
@@ -126,24 +127,16 @@ classdef simulation < handle
             dt = time - last_time;
             maximum_rate = 5; % deg/s
             
-            sideerr = sideangles - waypoint_des.RotorSidewardAngles';
-            inwerr =  inwangles - waypoint_des.RotorInwardAngles';
+            angleerr = servoangles - waypoint_des.ServoAngles';
             
             max_change = maximum_rate * dt;
-            sideangles(abs(sideerr) <= max_change) = waypoint_des.RotorSidewardAngles(abs(sideerr) <= max_change)';
-            sideangles(sideerr > max_change) = sideangles(sideerr > max_change) - max_change;
-            sideangles(sideerr < -max_change) = sideangles(sideerr < -max_change) + max_change;
+            servoangles(abs(angleerr) <= max_change) = waypoint_des.ServoAngles(abs(angleerr) <= max_change)';
+            servoangles(angleerr > max_change) = servoangles(angleerr > max_change) - max_change;
+            servoangles(angleerr < -max_change) = servoangles(angleerr < -max_change) + max_change;
             
-            inwangles(abs(inwerr) <= max_change) = waypoint_des.RotorInwardAngles(abs(inwerr) <= max_change)';
-            inwangles(inwerr > max_change) = inwangles(inwerr > max_change) - max_change;
-            inwangles(inwerr < -max_change) = inwangles(inwerr < -max_change) + max_change;
-
-            obj.Multirotor.ChangeRotorAngles(inwangles, sideangles);
+            obj.Multirotor.ChangeServoAngles(servoangles);
             
             last_time = time;
-            
-            logger.Add(logger_signals.RotorInwardAngle, inwangles);
-            logger.Add(logger_signals.RotorSidewardAngle, sideangles);
         end
         
         function NextStepPositionController(obj, time)
