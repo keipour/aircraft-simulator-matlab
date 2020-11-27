@@ -1,4 +1,4 @@
-function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, ...
+function [plot_handles] = draw_frame(fig, rbt, curr_state, curr_time, plot_handles, ...
     plot_data, form_handles, num_of_zoom_levels, zoom_level, axis_limits, ...
     min_zoom, speed, show_info, show_horizon, show_fpv, fpv_cam)
 
@@ -9,12 +9,24 @@ function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, .
     % Get the current transform
     rpy = deg2rad(curr_state.RPY);
     T = [physics.GetRotationMatrixRadians(rpy(1), rpy(2), rpy(3))', curr_state.Position; 0, 0, 0, 1];
+    
+    Tr = cell(rbt.NumOfRotors, 1);
+    for i = 1 : rbt.NumOfRotors
+        inw = curr_state.RotorInwardAngles(i);
+        side = curr_state.RotorSidewardAngles(i);
+        arm_angle = rbt.Rotors{i}.ArmAngle;
+        T_pos = [eye(3), rbt.Rotors{i}.Position; 0, 0, 0, 1];
+        T_posT = [eye(3), -rbt.Rotors{i}.Position; 0, 0, 0, 1];
+        curr_Rbr = [rbt.Rotors{i}.CalcRotorationMatrix(arm_angle, inw, side), zeros(3, 1); 0, 0, 0, 1];
+        init_Rbr = [rbt.Rotors{i}.R_BR, zeros(3, 1); 0, 0, 0, 1];
+        Tr{i} = T * T_pos * curr_Rbr * init_Rbr' * T_posT;
+    end
 
     % Draw the robot
     transform_robot(T, plot_handles.Multirotor, plot_data.Multirotor);
 
     % Draw the rotors
-    transform_rotors(T, plot_handles.Rotors, plot_data.Rotors);
+    transform_rotors(Tr, plot_handles.Rotors, plot_data.Rotors);
 
     % Draw the shadow
     transform_shadow(T, plot_handles.Shadow, plot_data.Shadow);
@@ -82,10 +94,10 @@ function transform_robot(T, obj_handles, robot_data)
     end
 end
 
-function transform_rotors(T, obj_handles, rotor_data)
+function transform_rotors(Tr, obj_handles, rotor_data)
     for i = 1 : length(obj_handles)
         for j = 1 : length(obj_handles{i})
-            transform_object(T, obj_handles{i}(j), rotor_data(i, j, :));
+            transform_object(Tr{i}, obj_handles{i}(j), rotor_data(i, j, :));
         end
     end
 end
@@ -147,7 +159,7 @@ end
 
 function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, limits, min_lim)
 
-    expand = 1.5;
+    expand = 1;
     limits(:, 1) = limits(:, 1) - expand;
     limits(:, 2) = limits(:, 2) + expand;
     
@@ -155,7 +167,7 @@ function [limx, limy, limz] = calc_all_axis_limits(n_levels, level, pos, limits,
     stepy = calc_single_axis_size(n_levels, level, limits(2, 1), limits(2, 2), min_lim);
     stepz = calc_single_axis_size(n_levels, level, limits(3, 1), limits(3, 2), min_lim);
     
-    step = max([stepx, stepy, stepz]);
+    step = max([stepx, stepy, stepz]) + expand / 2;
     
     limx = calc_single_axis_limits(pos(1), limits(1, 1), limits(1, 2), step);
     limy = calc_single_axis_limits(pos(2), limits(2, 1), limits(2, 2), step);
