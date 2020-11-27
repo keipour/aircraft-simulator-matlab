@@ -148,6 +148,16 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.ServoAngles', measured_data, 'uni', 0));
         end
         
+        function [data, times] = GetMeasuredTiltAngles()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.TiltAngle, measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetMeasuredTiltDirections()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.TiltDirection, measured_data, 'uni', 0));
+        end
+        
         function [data, times, labels] = GetField(str)
             str = lower(str);
             
@@ -198,6 +208,14 @@ classdef logger < handle
                     labels{i} = ['Servo ' num2str(i, '%d')];
                 end
                 labels{n_rotors + 1} = 'Servo Angles';
+
+            elseif contains_and(str, {'tilt', 'ang'})
+                [data, times] = logger.GetMeasuredTiltAngles();
+                labels = {'Angle', 'Tilt'};
+
+            elseif contains(str, 'tilt')
+                [data, times] = logger.GetMeasuredTiltDirections();
+                labels = {'Direction', 'Tilt'};
 
             elseif (contains_or(str, {'ang', 'rot'}) && contains(str, 'accel')) || ...
                     (contains_or(str, {'dot', 'deriv'}) && contains(str, 'omega'))

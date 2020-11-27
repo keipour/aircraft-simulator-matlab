@@ -112,7 +112,7 @@ classdef simulation < handle
                 return;
             end
             if length(waypoint_des.ServoAngles) ~= obj.Multirotor.NumOfServos
-                warning('The number of servos in the waypoint is different than the number of robot servos.');
+                error('The number of servos in the waypoint is different than the number of robot servos.');
                 return;
             end
             persistent servoangles last_time

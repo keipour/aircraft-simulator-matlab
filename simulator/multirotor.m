@@ -195,6 +195,13 @@ classdef multirotor < handle
             new_state.InCollision = is_collision;
             new_state.WindForce = wind_force;
             
+            % Calculate the tilt
+            RIB = obj.GetRotationMatrix()';
+            z_axis = RIB(:, 3);
+            z_axis(abs(z_axis) < 1e-5) = 0;
+            new_state.TiltAngle =  acosd(z_axis(3));
+            new_state.TiltDirection = atan2d(-z_axis(2), -z_axis(1));
+            
             for i = 1 : obj.NumOfRotors
                 [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
                 new_state.RotorSpeeds(i) = sqrt(rs);

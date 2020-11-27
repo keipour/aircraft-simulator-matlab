@@ -27,6 +27,8 @@ classdef state < handle
         ServoAngles         = [];                 % Servo angles (in degrees)
         RotorInwardAngles   = [];                 % Rotor inward angles (in degrees)
         RotorSidewardAngles = [];                 % Rotor sideward angles (in degrees)
+        TiltAngle           = 0;                  % Robot's tilt angle (in degrees)
+        TiltDirection       = 0;                  % Tilt direction w.r.t. north (in degrees)
     end
     
     methods
@@ -65,8 +67,10 @@ classdef state < handle
             obj.MomentSensor        = s.MomentSensor;
 
             obj.WindForce           = s.WindForce;
-
             obj.InCollision         = s.InCollision;
+            
+            obj.TiltAngle           = s.TiltAngle;
+            obj.TiltDirection       = s.TiltDirection;
         end
         
         function s = struct(obj)
@@ -93,8 +97,10 @@ classdef state < handle
             s.MomentSensor        = obj.MomentSensor;
 
             s.WindForce           = obj.WindForce;
-
             s.InCollision         = obj.InCollision;
+            
+            s.TiltAngle           = obj.TiltAngle;
+            s.TiltDirection       = obj.TiltDirection;
         end
     end
 end
