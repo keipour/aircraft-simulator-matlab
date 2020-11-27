@@ -252,7 +252,7 @@ function H = plotServo(position1, position2, axis, num, arm_labels_on, plot_axes
         H = line3d([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], motor_radius, servo_color);
         H = [H; line3d([position1(1), position2(1)], [position1(2), position2(2)], [position1(3), position2(3)], options.MV_ArmRadius, 'k')];
         if arm_labels_on
-            label_dist = 0.02;
+            label_dist = 0.04;
             dp = -(motor_height + label_dist) * [0; 0; -1];
             if plot_axes_only
                 dp = -dp;
