@@ -21,6 +21,9 @@ function m = vtol_custom(add_arm)
     m.AddServo([1, 4], [0; -1; 0], 0);
     m.AddServo([2, 3], [0; -1; 0], 0);
     
+    m.Servos{1}.MaxRate = 10; % deg/s
+    m.Servos{2}.MaxRate = 10; % deg/s
+    
     %m.Servos{1}.SetCurrentAngle(30);
     
     m.WingDirections{1} = rotz(10) * [0; 1; 0];

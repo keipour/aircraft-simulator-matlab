@@ -125,14 +125,19 @@ classdef simulation < handle
             end
             
             dt = time - last_time;
-            maximum_rate = 5; % deg/s
+            servo_maximum_rates = zeros(obj.Multirotor.NumOfServos, 1); % deg/s
+            for i = 1 : obj.Multirotor.NumOfServos
+                servo_maximum_rates(i) = obj.Multirotor.Servos{i}.MaxRate;
+            end
+            max_change = servo_maximum_rates * dt;
             
             angleerr = servoangles - waypoint_des.ServoAngles';
-            
-            max_change = maximum_rate * dt;
-            servoangles(abs(angleerr) <= max_change) = waypoint_des.ServoAngles(abs(angleerr) <= max_change)';
-            servoangles(angleerr > max_change) = servoangles(angleerr > max_change) - max_change;
-            servoangles(angleerr < -max_change) = servoangles(angleerr < -max_change) + max_change;
+            cond = abs(angleerr) <= max_change;
+            servoangles(cond) = waypoint_des.ServoAngles(cond)';
+            cond = angleerr > max_change;
+            servoangles(cond) = servoangles(cond) - max_change(cond);
+            cond = angleerr < -max_change;
+            servoangles(cond) = servoangles(cond) + max_change(cond);
             
             obj.Multirotor.ChangeServoAngles(servoangles);
             

@@ -1,4 +1,8 @@
 classdef servo < handle
+    properties
+        MaxRate = 50; % Maximum angular rate (deg/s)
+    end
+    
     properties (SetAccess=protected, GetAccess=public)
         Axes
         Rotors

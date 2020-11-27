@@ -52,10 +52,10 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 traj = [2, 2, -4, 0; 2, 6, -3, 30];
 
 % Trajectory for VTOL:
-% traj = {
-%     [2, 0, -4, 0], [0, 0]; 
-%     [20, 0, -4, 0], [90, 90]; 
-%     };
+traj = {
+    [2, 0, -4, 0], [0, 0]; 
+    [20, 0, -4, 0], [90, 90]; 
+    };
 
 % Trajectory for writing AIR on the wall
 % traj = {[13, 6, -1, 0];
