@@ -16,12 +16,15 @@ function m = vtol_custom(add_arm)
         m.Rotors{i}.ArmLength = 1; % in meters
     end
     
-    m.PayloadRadius = 0.6;
+    m.PayloadRadius = 0.5;
     
     m.AddServo([1, 4], [0; -1; 0], 0);
     m.AddServo([2, 3], [0; -1; 0], 0);
     
     %m.Servos{1}.SetCurrentAngle(30);
+    
+    m.WingDirections{1} = rotz(10) * [0; 1; 0];
+    m.WingDirections{2} = rotz(-10) * [0; -1; 0];
     
     if add_arm
         m.AddEndEffector(arm);

@@ -1,6 +1,7 @@
 classdef vtol < multirotor
     properties
-        % Add your public properties
+        WingDirections = {[0; 1; 0], [0; -1; 0]};
+        WingLengths = [1; 1]; % in meters
     end
 
     properties (SetAccess=protected, GetAccess=public)

@@ -10,6 +10,8 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
         draw_collision_model = false;
     end
 
+    has_wings = isa(m, 'vtol');
+    
     % Visualization settings
     box_height = options.MV_PayloadHeight; % in meters
     axis_arrow_size = options.MV_AxisArrowSize; % in meters
@@ -94,6 +96,17 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
         end
     end
     
+    % Draw the wings
+    if has_wings && ~plot_axes_only
+        for i = 1 : 2
+            wing_direction = m.WingDirections{i};
+            wing_length = m.WingLengths(i);
+            wing_height = wing_length / 3;
+            H = [H; plotWing(zeros(3, 1), wing_direction, options.MV_PayloadHeight / 2, wing_height, wing_length)];
+        end
+    end
+    
+    % Draw the collision model
     if draw_collision_model
         cm = {m.CollisionModel};
         if m.HasEndEffector()
@@ -144,21 +157,43 @@ function H = plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, box_
     box_ys = (Y_rotors * box_size) ./ arm_lengths;
     box_zs = (Z_rotors * box_size) ./ arm_lengths;
     
-    H = fill3(box_xs(arms_order), box_ys(arms_order), box_zs(arms_order) + box_height / 2, 'cyan');
-    H = [H; fill3(box_xs(arms_order), box_ys(arms_order), box_zs(arms_order) - box_height / 2, 'cyan')];
+    H = fill3(box_xs(arms_order), box_ys(arms_order), box_zs(arms_order) + box_height / 2, options.MV_PayloadColor);
+    H = [H; fill3(box_xs(arms_order), box_ys(arms_order), box_zs(arms_order) - box_height / 2, options.MV_PayloadColor)];
     for i = 1 : num_of_rotors
         j = mod(i, num_of_rotors) + 1;
         xs = [box_xs(arms_order(i)) box_xs(arms_order(i)) box_xs(arms_order(j)) box_xs(arms_order(j))];
         ys = [box_ys(arms_order(i)) box_ys(arms_order(i)) box_ys(arms_order(j)) box_ys(arms_order(j))];
         zs = [(box_zs(arms_order(i)) + box_height / 2) (box_zs(arms_order(i)) - box_height / 2) (box_zs(arms_order(j)) - box_height / 2) (box_zs(arms_order(j)) + box_height / 2)];
-        H = [H; fill3(xs, ys, zs, 'cyan')];
+        H = [H; fill3(xs, ys, zs, options.MV_PayloadColor)];
     end
     
     % Draw the forward triangle
     tri_xs = [box_size / 2; -box_size / 3; -box_size / 3];
     tri_ys = [0; -box_size / 6; box_size / 6];
     tri_zs = ones(3, 1) * (min(box_zs) - box_height / 2 - 0.001);
-    H = [H; fill3(tri_xs, tri_ys, tri_zs, 'red')];
+    H = [H; fill3(tri_xs, tri_ys, tri_zs, options.MV_TriangleColor)];
+end
+
+function H = plotWing(center, axis, thickness, height, length)
+    y_s = axis * length;
+    x_s = [1; 0; 0] * height / 2;
+    
+    wing_xs = center(1) + [x_s(1); -x_s(1); -x_s(1) + y_s(1); x_s(1) + y_s(1)];
+    wing_ys = center(2) + [x_s(2); -x_s(2); -x_s(2) + y_s(2); x_s(2) + y_s(2)];
+    wing_zs1 = center(3) + [x_s(3) + thickness / 2; -x_s(3) + thickness / 2; -x_s(3) + y_s(3) +  thickness / 8; x_s(3) + y_s(3) + thickness / 8];
+    wing_zs2 = center(3) + [x_s(3) - thickness / 2; -x_s(3) - thickness / 2; -x_s(3) + y_s(3) - thickness / 8; x_s(3) + y_s(3) - thickness / 8];
+    
+    H = fill3(wing_xs, wing_ys, wing_zs1, options.MV_WingColor);
+    H = [H; fill3(wing_xs, wing_ys, wing_zs2, options.MV_WingColor)];
+    H = [H; fill3([wing_xs(1); wing_xs(1); wing_xs(4); wing_xs(4)], ...
+        [wing_ys(1); wing_ys(1); wing_ys(4); wing_ys(4)], ...
+        [wing_zs1(1); wing_zs2(1); wing_zs2(4); wing_zs1(4)], options.MV_WingColor)];
+    H = [H; fill3([wing_xs(2); wing_xs(2); wing_xs(3); wing_xs(3)], ...
+        [wing_ys(2); wing_ys(2); wing_ys(3); wing_ys(3)], ...
+        [wing_zs1(2); wing_zs2(2); wing_zs2(3); wing_zs1(3)], options.MV_WingColor)];
+    H = [H; fill3([wing_xs(3); wing_xs(3); wing_xs(4); wing_xs(4)], ...
+        [wing_ys(3); wing_ys(3); wing_ys(4); wing_ys(4)], ...
+        [wing_zs1(3); wing_zs2(3); wing_zs2(4); wing_zs1(4)], options.MV_WingColor)];
 end
 
 function H = plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_size, arm_labels_on)

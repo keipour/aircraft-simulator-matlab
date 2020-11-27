@@ -26,6 +26,9 @@ classdef options
         MV_MotorRadius = 0.02; % in meters -- set to zero if don't want motors
         MV_AddLighting = true; % Options are: true | false
         MV_ShowRotorAxes = true; % Options are: true | false
+        MV_PayloadColor = 'cyan';
+        MV_TriangleColor = 'red';
+        MV_WingColor = 'cyan';
         MV_MotorColor = 'black';
         MV_ServoColor = [0, 51, 102] / 255;
         MV_RotorColorCW = [0.4, 0.4, 1];
