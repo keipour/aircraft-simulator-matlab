@@ -22,6 +22,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
 
     % Initialization
     num_of_rotors = m.NumOfRotors;
+    num_of_servos = m.NumOfServos;
 
     payload_size = m.PayloadRadius;
     arm_lengths = cell2mat(cellfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
@@ -53,7 +54,22 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
             H = [H; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
     end
-
+    
+    % Draw the servos
+    if options.MV_ShowServos
+        for i = 1 : num_of_servos
+            hold on
+            if length(m.Servos{i}.RotorNumbers) ~= 2
+                continue;
+            end
+            r1 = m.Servos{i}.RotorNumbers(1);
+            rot_pos1 = [X_rotors(r1); Y_rotors(r1); Z_rotors(r1)];
+            r2 = m.Servos{i}.RotorNumbers(2);
+            rot_pos2 = [X_rotors(r2); Y_rotors(r2); Z_rotors(r2)];
+            H = [H; plotServo(rot_pos1, rot_pos2, m.Servos{i}.Axes{1}, i, arm_labels_on, plot_axes_only, motor_height, motor_radius)];
+        end
+    end
+    
     % Draw the central payload box
     hold on
     if plot_axes_only == false
@@ -152,8 +168,7 @@ function H = plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_s
         line_width = 1;
         H = [H; plot3([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], 'Color', ee_color, 'LineWidth', line_width)];
     else
-        arm_radius = 0.01;
-        H = [H; line3d([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], arm_radius, ee_color)];
+        H = [H; line3d([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], options.MV_ArmRadius, ee_color)];
     end
     
     if arm_labels_on && plot_axes_only
@@ -173,8 +188,7 @@ function H = plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor
         line_width = 1;
         H = [H; plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', line_width)];
     else
-        arm_radius = 0.01;
-        H = [H; line3d([0, position(1)], [0, position(2)], [0, position(3)], arm_radius, 'k')];
+        H = [H; line3d([0, position(1)], [0, position(2)], [0, position(3)], options.MV_ArmRadius, 'k')];
     end
     
     if arm_labels_on
@@ -183,8 +197,34 @@ function H = plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor
         if plot_axes_only
             dp = -dp;
         end
-        H = [H; text(position(1) + dp(1), position(2) + dp(2), position(3) + dp(3), num2str(num), 'Interpreter', 'none')];
+        label_str = ['R_', num2str(num)];
+        H = [H; text(position(1) + dp(1), position(2) + dp(2), position(3) + dp(3), label_str)];
     end
+end
+
+function H = plotServo(position1, position2, axis, num, arm_labels_on, plot_axes_only, motor_height, motor_radius)
+    H = [];
+    if plot_axes_only
+        line_width = 1;
+        H = [H; plot3([position1(1), position2(1)], [position1(2), position2(2)], [position1(3), position2(3)], 'k', 'LineWidth', line_width)];
+    else
+        servo_color = options.MV_ServoColor;
+        dmot = motor_height * axis;
+        pos_mot = (position1 + position2) / 2;
+        pos_m1 = pos_mot - dmot;
+        pos_m2 = pos_mot + dmot;
+        H = line3d([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], motor_radius, servo_color);
+        H = [H; line3d([position1(1), position2(1)], [position1(2), position2(2)], [position1(3), position2(3)], options.MV_ArmRadius, 'k')];
+        if arm_labels_on
+            label_dist = 0.02;
+            dp = -(motor_height + label_dist) * [0; 0; -1];
+            if plot_axes_only
+                dp = -dp;
+            end
+            label_str = ['S_', num2str(num)];
+            H = [H; text(pos_mot(1) + dp(1), pos_mot(2) + dp(2), pos_mot(3) + dp(3), label_str)];
+        end
+    end    
 end
 
 function H = plotRotor(position, axis, direction, arrow_size, motor_height, motor_radius, rotor_diameter, no_axes)
