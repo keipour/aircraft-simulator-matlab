@@ -640,7 +640,12 @@ function plot_signal(t, Y, properties, line_width)
         Y = Y * ones(length(t), 1);
     end
 
-    skip = 397;
+    skip = 1; %397; % reduce tne number of points for matlab2tikz conversion
+    
+    if length(t) < skip * 10
+        skip = 1;
+    end
+    
     % Plot the signal
     if nargin < 3
         plot(t(1:skip:end), Y(1:skip:end), 'LineWidth', 2);
