@@ -130,7 +130,7 @@ classdef rotor < handle
         end
 
         function UpdateStructure(obj)
-            obj.R_BR = obj.CalcRotorationMatrix();
+            obj.R_BR = obj.CalcRotorationMatrix(obj.ArmAngle, obj.InwardAngle, obj.SidewardAngle);
             obj.RPMLimit = obj.Kv * obj.BatteryVoltage;
             obj.MaxSpeedSquared = (obj.UpperSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
             obj.MinSpeedSquared = (obj.LowerSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
@@ -176,6 +176,16 @@ classdef rotor < handle
             obj.SidewardAngle = sideward_angle;
         end
     end
+
+    methods (Static)
+        function R_BR = CalcRotorationMatrix(arm_angle, inward_angle, sideward_angle)
+            rotorZB = rotz(arm_angle + 90);
+            rotorXp = rotx(inward_angle);
+            rotorYpp = roty(sideward_angle);
+
+            R_BR = rotorZB * rotorXp * rotorYpp;
+        end
+    end
     
     methods (Access = private)
 
@@ -186,18 +196,5 @@ classdef rotor < handle
             r = [rx; ry; rz];
         end
         
-        function R_BR = CalcRotorationMatrix(obj)
-            if isempty(obj.ArmAngle)
-                R_BR = eye(3);
-                return;
-            end
-
-            rotorZB = rotz(obj.ArmAngle) * rotz(90);
-            rotorXp = rotx(obj.InwardAngle);
-            rotorYpp = roty(obj.SidewardAngle);
-
-            R_BR = rotorZB * rotorXp * rotorYpp;
-        end
-
     end
 end

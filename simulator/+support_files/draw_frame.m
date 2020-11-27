@@ -13,6 +13,9 @@ function [plot_handles] = draw_frame(fig, curr_state, curr_time, plot_handles, .
     % Draw the robot
     transform_robot(T, plot_handles.Multirotor, plot_data.Multirotor);
 
+    % Draw the rotors
+    transform_rotors(T, plot_handles.Rotors, plot_data.Rotors);
+
     % Draw the shadow
     transform_shadow(T, plot_handles.Shadow, plot_data.Shadow);
 
@@ -54,45 +57,56 @@ function copy_data_object_points(destObjs, srcObjs)
     end    
 end
 
+function transform_object(T, o_handle, o_data)
+    if startsWith(o_handle.Type, 'p') % patch
+        data = [o_data{1}, o_data{2}, o_data{3}]';
+        data = T * [data; ones(1, length(o_data{1}))];
+        set(o_handle,'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
+    elseif startsWith(o_handle.Type, 'l') % line
+        data = [o_data{1}; o_data{2}; o_data{3}];
+        data = T * [data; ones(1, length(o_data{1}))];
+        set(o_handle,'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
+    elseif startsWith(o_handle.Type, 's') % surface
+        data = [o_data{1}(:), o_data{2}(:), o_data{3}(:)]';
+        data = T * [data; ones(1, numel(o_data{1}))]; 
+        X = reshape(data(1, :), size(o_data{1}, 1), []);
+        Y = reshape(data(2, :), size(o_data{2}, 1), []);
+        Z = reshape(data(3, :), size(o_data{3}, 1), []);
+        set(o_handle, 'XData', X, 'YData', Y, 'ZData', Z);
+    end
+end
 
-function transform_robot(T, dataObjs, multirotor_data)
-    for i = 1 : length(dataObjs)
-        if startsWith(dataObjs(i).Type, 'p') % patch
-            data = [multirotor_data{i, 1}, multirotor_data{i, 2}, multirotor_data{i, 3}]';
-            data = T * [data; ones(1, length(multirotor_data{i, 1}))];
-            set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', data(3, :)');
-        elseif startsWith(dataObjs(i).Type, 'l') % line
-            data = [multirotor_data{i, 1}; multirotor_data{i, 2}; multirotor_data{i, 3}];
-            data = T * [data; ones(1, length(multirotor_data{i, 1}))];
-            set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', data(3, :));
-        elseif startsWith(dataObjs(i).Type, 's') % surface
-            data = [multirotor_data{i, 1}(:), multirotor_data{i, 2}(:), multirotor_data{i, 3}(:)]';
-            data = T * [data; ones(1, numel(multirotor_data{i, 1}))]; 
-            X = reshape(data(1, :), size(multirotor_data{i, 1}, 1), []);
-            Y = reshape(data(2, :), size(multirotor_data{i, 2}, 1), []);
-            Z = reshape(data(3, :), size(multirotor_data{i, 3}, 1), []);
-            set(dataObjs(i), 'XData', X, 'YData', Y, 'ZData', Z);
+function transform_robot(T, obj_handles, robot_data)
+    for i = 1 : length(obj_handles)
+        transform_object(T, obj_handles(i), robot_data(i, :));
+    end
+end
+
+function transform_rotors(T, obj_handles, rotor_data)
+    for i = 1 : length(obj_handles)
+        for j = 1 : length(obj_handles{i})
+            transform_object(T, obj_handles{i}(j), rotor_data(i, j, :));
         end
     end
 end
 
-function transform_shadow(T, dataObjs, shadow_data)
-    for i = 1 : length(dataObjs)
-        if startsWith(dataObjs(i).Type, 'p') % patch
+function transform_shadow(T, obj_handles, shadow_data)
+    for i = 1 : length(obj_handles)
+        if startsWith(obj_handles(i).Type, 'p') % patch
             data = [shadow_data{i, 1}, shadow_data{i, 2}, shadow_data{i, 3}]';
             data = T * [data; ones(1, length(shadow_data{i, 1}))];
-            set(dataObjs(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', -0.001*ones(size(data(3, :)')));
-        elseif startsWith(dataObjs(i).Type, 'l') % line
+            set(obj_handles(i),'XData', data(1, :)', 'YData', data(2, :)', 'ZData', -0.001*ones(size(data(3, :)')));
+        elseif startsWith(obj_handles(i).Type, 'l') % line
             data = [shadow_data{i, 1}; shadow_data{i, 2}; shadow_data{i, 3}];
             data = T * [data; ones(1, length(shadow_data{i, 1}))];
-            set(dataObjs(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', -0.001*ones(size(data(3, :)')));
-        elseif startsWith(dataObjs(i).Type, 's') % surface
+            set(obj_handles(i),'XData', data(1, :), 'YData', data(2, :), 'ZData', -0.001*ones(size(data(3, :)')));
+        elseif startsWith(obj_handles(i).Type, 's') % surface
             data = [shadow_data{i, 1}(:), shadow_data{i, 2}(:), shadow_data{i, 3}(:)]';
             data = T * [data; ones(1, numel(shadow_data{i, 1}))]; 
             X = reshape(data(1, :), size(shadow_data{i, 1}, 1), []);
             Y = reshape(data(2, :), size(shadow_data{i, 2}, 1), []);
             Z = reshape(data(3, :), size(shadow_data{i, 3}, 1), []);
-            set(dataObjs(i), 'XData', X, 'YData', Y, 'ZData',  -0.001*ones(size(Z)));
+            set(obj_handles(i), 'XData', X, 'YData', Y, 'ZData',  -0.001*ones(size(Z)));
         end
     end
 end

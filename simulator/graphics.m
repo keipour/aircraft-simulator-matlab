@@ -173,7 +173,7 @@ classdef graphics
             drawnow;
         end
         
-        function H = VisualizeMultirotor(multirotor, axes_only, draw_collision_model)
+        function [H_m, H_r] = VisualizeMultirotor(multirotor, axes_only, draw_collision_model)
             if nargin < 2
                 axes_only = false;
             end
@@ -181,7 +181,7 @@ classdef graphics
                 draw_collision_model = false;
             end
             figure;
-            H = support_files.visualize_multirotor(multirotor, axes_only, false, draw_collision_model);
+            [H_m, H_r] = support_files.visualize_multirotor(multirotor, axes_only, false, draw_collision_model);
             view(3);
             axis(gca, options.MV_ShowPlotAxes);
             drawnow;
@@ -194,8 +194,8 @@ classdef graphics
             end
         end
         
-        function H = PlotMultirotor(multirotor)
-            H = support_files.visualize_multirotor(multirotor, false, true);
+        function [H_m, H_r] = PlotMultirotor(multirotor)
+            [H_m, H_r] = support_files.visualize_multirotor(multirotor, false, true);
         end
         
         function AnimateLoggedTrajectory(multirotor, envronment, zoom_level, ...

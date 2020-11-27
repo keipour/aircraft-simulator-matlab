@@ -1,5 +1,5 @@
 function [fig, form_handles, plot_handles, plot_data, xyz_limits] = create_frame_figure...
-    (multirotor, environment, show_info, show_horizon, show_fpv, is_recording, fpv_cam)
+    (rbt, env, show_info, show_horizon, show_fpv, is_recording, fpv_cam)
     
 
     % Set up the first frame
@@ -41,7 +41,7 @@ function [fig, form_handles, plot_handles, plot_data, xyz_limits] = create_frame
         axes(form_handles.axanim);
     end
     
-    [plot_handles, plot_data, xyz_limits] = create_all_objects(multirotor, environment);
+    [plot_handles, plot_data, xyz_limits] = create_all_objects(rbt, env);
 
     if show_fpv
         plot_handles.FPVMultirotor = copyobj(plot_handles.Multirotor, form_handles.axfpvfig);
@@ -75,20 +75,30 @@ end
 
 %% Helper functions
 
-function [plot_handles, plot_data, xyz_limits] = create_all_objects(multirotor, environment)
+function [plot_handles, plot_data, xyz_limits] = create_all_objects(rbt, env)
 
-    % Draw and save the multirotor
-    plot_handles.Multirotor = graphics.PlotMultirotor(multirotor);
+    % Draw and save the robot and the rotors
+    [plot_handles.Multirotor, plot_handles.Rotors] = graphics.PlotMultirotor(rbt);
     plot_data.Multirotor = cell(length(plot_handles.Multirotor), 3);
     for i = 1 : length(plot_handles.Multirotor)
         plot_data.Multirotor{i, 1} = plot_handles.Multirotor(i).XData;
         plot_data.Multirotor{i, 2} = plot_handles.Multirotor(i).YData;
         plot_data.Multirotor{i, 3} = plot_handles.Multirotor(i).ZData;
     end
+    if ~isempty(plot_handles.Rotors)
+        plot_data.Rotors = cell(length(plot_handles.Rotors), length(plot_handles.Rotors{1}), 3);
+        for i = 1 : length(plot_handles.Rotors)
+            for j = 1 : length(plot_handles.Rotors{i})
+                plot_data.Rotors{i, j, 1} = plot_handles.Rotors{i}(j).XData;
+                plot_data.Rotors{i, j, 2} = plot_handles.Rotors{i}(j).YData;
+                plot_data.Rotors{i, j, 3} = plot_handles.Rotors{i}(j).ZData;
+            end
+        end
+    end
     
-    % Draw the multirotor shadow
+    % Draw the robot shadow
     hold on
-    plot_handles.Shadow = circlePlane3D([0, 0, 0], [0; 0; 1], multirotor.PayloadRadius * 2, 0.2, 'black', 0.5);
+    plot_handles.Shadow = circlePlane3D([0, 0, 0], [0; 0; 1], rbt.PayloadRadius * 2, 0.2, 'black', 0.5);
     plot_data.Shadow = cell(length(plot_handles.Shadow), 3);
     for i = 1 : length(plot_handles.Shadow)
         plot_data.Shadow{i, 1} = plot_handles.Shadow(i).XData;
@@ -97,7 +107,7 @@ function [plot_handles, plot_data, xyz_limits] = create_all_objects(multirotor, 
     end
     
     % Draw the environment
-    [plot_handles.Environment, xyz_limits] = graphics.PlotEnvironment(environment);
+    [plot_handles.Environment, xyz_limits] = graphics.PlotEnvironment(env);
 end
 
 %% Draw a 3-D circle

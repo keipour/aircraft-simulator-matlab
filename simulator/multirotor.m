@@ -332,15 +332,15 @@ classdef multirotor < handle
             obj.WindModel.CopyFrom(mult.WindModel);
         end
         
-        function H = Visualize(obj, draw_collision_model)
+        function [H_m, H_r] = Visualize(obj, draw_collision_model)
             if nargin < 2
                 draw_collision_model = false;
             end
-            H = graphics.VisualizeMultirotor(obj, false, draw_collision_model);
+            [H_m, H_r] = graphics.VisualizeMultirotor(obj, false, draw_collision_model);
         end
         
         function H = VisualizeAxes(obj)
-            H = graphics.VisualizeMultirotor(obj, true);
+            [H, ~] = graphics.VisualizeMultirotor(obj, true);
         end
         
         function result = AnalyzeDynamicManipulability(obj, wind_force)

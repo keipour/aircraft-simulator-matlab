@@ -1,8 +1,8 @@
 %% Visualizer for multirotors
 % This file visualizes the multirotor geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
-% Last updated: June 22, 2020
-function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_model)
+% Last updated: November 27, 2020
+function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_model)
     if nargin < 3
         plot_only = false;
     end
@@ -38,22 +38,23 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
     Z_rotors = arm_lengths .* sin(-phi_dihs);
     
     % Visualize the geometry
-    H = [];
+    H_m = [];
+    H_r = cell(num_of_rotors, 1);
 
     % Draw the arms
     for i = 1 : num_of_rotors
         hold on
-        H = [H; plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_height)];
+        H_m = [H_m; plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_height)];
     end
 
     % Draw the rotors
     for i = 1 : num_of_rotors
         hold on
         if plot_axes_only == false
-            H = [H; plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
-                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_height, motor_radius, m.Rotors{i}.Diameter, ~plot_rotor_axes)];
+            H_r{i} = plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
+                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_height, motor_radius, m.Rotors{i}.Diameter, ~plot_rotor_axes);
         else
-            H = [H; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
+            H_m = [H_m; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
     end
     
@@ -68,31 +69,31 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
             rot_pos1 = [X_rotors(r1); Y_rotors(r1); Z_rotors(r1)];
             r2 = m.Servos{i}.RotorNumbers(2);
             rot_pos2 = [X_rotors(r2); Y_rotors(r2); Z_rotors(r2)];
-            H = [H; plotServo(rot_pos1, rot_pos2, m.Servos{i}.Axes{1}, i, arm_labels_on, plot_axes_only, motor_height, motor_radius)];
+            H_m = [H_m; plotServo(rot_pos1, rot_pos2, m.Servos{i}.Axes{1}, i, arm_labels_on, plot_axes_only, motor_height, motor_radius)];
         end
     end
     
     % Draw the central payload box
     hold on
     if plot_axes_only == false
-        H = [H; plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, payload_size, box_height)];
+        H_m = [H_m; plotBox(X_rotors, Y_rotors, Z_rotors, arm_lengths, arms_order, payload_size, box_height)];
     else
         [sx, sy, sz] = sphere;
         sphere_size = axis_arrow_size / 10;
         sx = sx * sphere_size;
         sy = sy * sphere_size;
         sz = sz * sphere_size;
-        H = [H; surf(sx, sy, sz)];
-        H = [H; plotAxes(zeros(3, 1), eye(3),  axis_arrow_size / 2)];
+        H_m = [H_m; surf(sx, sy, sz)];
+        H_m = [H_m; plotAxes(zeros(3, 1), eye(3),  axis_arrow_size / 2)];
     end
 
     % Draw the end effector
     if m.HasEndEffector()
-        H = [H; plotEndEffectorArm(m.EndEffector.BasePosition, ...
+        H_m = [H_m; plotEndEffectorArm(m.EndEffector.BasePosition, ...
             m.EndEffector.EndEffectorPosition, ...
             -m.EndEffector.Direction, plot_axes_only, 0.05, arm_labels_on)];
         if plot_axes_only == true
-            H = [H; plotAxes(m.EndEffector.EndEffectorPosition, m.EndEffector.R_BE, axis_arrow_size / 2)];
+            H_m = [H_m; plotAxes(m.EndEffector.EndEffectorPosition, m.EndEffector.R_BE, axis_arrow_size / 2)];
         end
     end
     
@@ -102,7 +103,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
             wing_direction = m.WingDirections{i};
             wing_length = m.WingLengths(i);
             wing_height = wing_length / 3;
-            H = [H; plotWing(zeros(3, 1), wing_direction, options.MV_PayloadHeight / 2, wing_height, wing_length)];
+            H_m = [H_m; plotWing(zeros(3, 1), wing_direction, options.MV_PayloadHeight / 2, wing_height, wing_length)];
         end
     end
     
@@ -112,7 +113,7 @@ function H = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_m
         if m.HasEndEffector()
             cm{2} = m.EndEffector.CollisionModel;
         end
-        H = [H; plotCollisionModels(cm)];
+        H_m = [H_m; plotCollisionModels(cm)];
     end
     
     % Make the plot more presentable
