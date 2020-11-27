@@ -9,7 +9,7 @@ addpath('simulator');
 %m = robots.floating_hex();
 %m = robots.octorotor_assymmetric();
 %m = robots.quadrotor(true);
-%m = robots.vtol();
+%m = robots.vtol_custom();
 m = robots.tilted_hex();
 
 %% Define the world

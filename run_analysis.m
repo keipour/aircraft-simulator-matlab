@@ -13,7 +13,7 @@ addpath('simulator');
 %m = robots.tilted_quad();
 %m = robots.octorotor_assymmetric();
 %m = robots.quadrotor(true);
-%m = robots.vtol();
+%m = robots.vtol_custom();
 m = robots.tilted_hex(true);
 
 %% Define the current state
