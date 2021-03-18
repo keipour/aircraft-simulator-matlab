@@ -5,29 +5,25 @@ close all
 
 addpath('simulator');
 
-%% Define the hardware architecture
+%% Define the simulation
+
+% Define the hardware architecture
 %r = robots.floating_hex();
 %r = robots.octorotor_assymmetric();
 %r = robots.quadrotor();
 r = robots.tilted_hex(true);
 
-%% Define the world
-
+% Define the world
 average_wind = [];
 w = worlds.empty_world(average_wind, false);
 %w = worlds.straight_wall(average_wind, false);
 %w = worlds.sloped_wall_20_deg(average_wind, false);
 
-%% Define the controller
-
+% Define the controller
 c = controllers.fully_actuated(r, attitude_strategies.FullTilt);
 
-%% Prepare the simulation
-
+% Define the simulation object
 sim = simulation(r, c, w);
-
-sim.SetTotalTime(15);
-%sim.SetTotalTime(75); % For the AIR trajectory
 
 %% Initial multirotor state
 
@@ -39,43 +35,24 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 %% Get the controller response(s)
 
-% Attitude response
+% Simulate trajectory following
+%[traj, total_time] = trajectories.multi_paint_air();
+[traj, total_time] = trajectories.multi_two_points();
+sim.SetTotalTime(total_time);
+pos_thresh = 0.2;
+rpy_thresh = 3; 
+force_thresh = 0.2;
+sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
+
+% Or simulate attitude response
+%sim.SetTotalTime(10);
 %figure; 
 %sim.SimulateAttitudeResponse([0; 0; -90], true);
 
-% Position response
+% Or simulate position response
+%sim.SetTotalTime(10);
 %figure;
 %sim.SimulatePositionResponse([17; 8; -2], -45, true);
-
-% Trajectory following
-traj = [2, 2, -4, 0; 2, 6, -3, 30];
-
-% Trajectory for writing AIR on the wall
-% traj = {[13, 6, -1, 0];
-%         [13.25, 6, -1, 0]; 
-%         [13.25, 6, -1, 0, 5, 0, 0];
-%         [13.25, 7, -4, 0, 5, 0, 0];
-%         [13.25, 8, -1, 0, 5, 0, 0]
-%         [13.25, 7.5, -2.1, 0, 5, 0, 0]
-%         [13.25, 6.2, -2.1, 0, 5, 0, 0]
-%         [12.8, 6.2, -2.1, 0];
-%         [12.8, 9.5, -4, 0];
-%         [13.25, 9.5, -4, 0, 5, 0, 0]; 
-%         [13.25, 9.5, -1, 0, 5, 0, 0];
-%         [12.8, 9.5, -1, 0];
-%         [12.8, 11.5, -1, 0];
-%         [13.25, 11.5, -1, 0, 5, 0, 0];
-%         [13.25, 11.5, -4, 0, 5, 0, 0];
-%         [13.25, 12, -4, 0, 5, 0, 0];
-%         [13.25, 12.5, -3.5, 0, 5, 0, 0];
-%         [13.25, 12.5, -3, 0, 5, 0, 0];
-%         [13.25, 12, -2.5, 0, 5, 0, 0];
-%         [13.25, 11.5, -2.5, 0, 5, 0, 0];
-%         [13.25, 13, -1, 0, 5, 0, 0];
-%         [12.8, 13, -1, 0];
-%         [10, 10, -4, 0];
-%         };
-sim.SimulateTrajectory(traj, 0.2, 3, 0.2);
 
 %% Draw Additional plots
 

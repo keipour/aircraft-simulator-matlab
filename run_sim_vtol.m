@@ -5,25 +5,20 @@ close all
 
 addpath('simulator');
 
-%% Define the hardware architecture
+%% Define the simulation
+
+% Define the hardware architecture
 m = robots.vtol_custom();
 
-%% Define the world
-
+% Define the world
 average_wind = [];
 w = worlds.empty_world(average_wind, false);
-%w = worlds.straight_wall(average_wind, false);
-%w = worlds.sloped_wall_20_deg(average_wind, false);
 
-%% Define the controller
-
+% Define the controller
 c = controllers.fully_actuated(m, attitude_strategies.FullTilt);
 
-%% Prepare the simulation
-
+% Define the simulation object
 sim = simulation(m, c, w);
-
-sim.SetTotalTime(15);
 
 %% Initial multirotor state
 
@@ -35,21 +30,23 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 %% Get the controller response(s)
 
-% Attitude response
+% Simulate trajectory following
+[traj, total_time] = trajectories.vtol_simple();
+sim.SetTotalTime(total_time);
+pos_thresh = 0.2;
+rpy_thresh = 3; 
+force_thresh = 0.2;
+sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
+
+% Or simulate attitude response
+%sim.SetTotalTime(10);
 %figure; 
 %sim.SimulateAttitudeResponse([0; 0; -90], true);
 
-% Position response
+% Or simulate position response
+%sim.SetTotalTime(10);
 %figure;
 %sim.SimulatePositionResponse([17; 8; -2], -45, true);
-
-% Trajectory for VTOL:
-traj = {
-    [2, 0, -4, 0], [0, 0]; 
-    [20, 0, -4, 0], [90, 90]; 
-    };
-
-sim.SimulateTrajectory(traj, 0.2, 3, 0.2);
 
 %% Draw Additional plots
 
