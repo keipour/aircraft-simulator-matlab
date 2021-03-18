@@ -174,6 +174,23 @@ classdef rotor < handle
             sideward_angle = asind(R(2, 3));
             obj.InwardAngle = inward_angle;
             obj.SidewardAngle = sideward_angle;
+            
+            if obj.R_BR(:, 3)' * R_BR(:, 3) < 0
+                obj.SidewardAngle = wrapTo180(obj.SidewardAngle + 180);
+            end
+        end
+        
+        function SetPosition(obj, position)
+            rbr = obj.R_BR;
+            obj.ArmLength = norm(position);
+            obj.DihedralAngle = asind(-position(3) / obj.ArmLength);
+            obj.ArmAngle = atan2d(position(2), position(1));
+            obj.SetR_BR(rbr);
+        end
+        
+        function SetRotorAxis(obj, axis)
+            rot_mat = vrrotvec2mat(vrrotvec([0; 0; 1], axis));
+            obj.SetR_BR(rot_mat);
         end
     end
 
