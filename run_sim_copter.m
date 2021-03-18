@@ -37,8 +37,8 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 %% Get the controller response(s)
 
 % Simulate trajectory following
-%[traj, total_time] = trajectories.multi_paint_air();
-[traj, total_time] = trajectories.multi_two_points();
+%[traj, total_time] = trajectories.copter_paint_air();
+[traj, total_time] = trajectories.copter_two_points();
 sim.SetTotalTime(total_time);
 pos_thresh = 0.2;
 rpy_thresh = 3; 
