@@ -6,11 +6,10 @@ close all
 addpath('simulator');
 
 %% Define the hardware architecture
-%m = robots.floating_hex();
-%m = robots.octorotor_assymmetric();
-%m = robots.quadrotor(true);
-m = robots.vtol_custom();
-%m = robots.tilted_hex();
+%r = robots.floating_hex();
+%r = robots.octorotor_assymmetric();
+%r = robots.quadrotor();
+r = robots.tilted_hex(true);
 
 %% Define the world
 
@@ -21,11 +20,11 @@ w = worlds.empty_world(average_wind, false);
 
 %% Define the controller
 
-c = controllers.fully_actuated(m, attitude_strategies.FullTilt);
+c = controllers.fully_actuated(r, attitude_strategies.FullTilt);
 
 %% Prepare the simulation
 
-sim = simulation(m, c, w);
+sim = simulation(r, c, w);
 
 sim.SetTotalTime(15);
 %sim.SetTotalTime(75); % For the AIR trajectory
@@ -50,12 +49,6 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Trajectory following
 traj = [2, 2, -4, 0; 2, 6, -3, 30];
-
-% Trajectory for VTOL:
-traj = {
-    [2, 0, -4, 0], [0, 0]; 
-    [20, 0, -4, 0], [90, 90]; 
-    };
 
 % Trajectory for writing AIR on the wall
 % traj = {[13, 6, -1, 0];
@@ -87,7 +80,6 @@ sim.SimulateTrajectory(traj, 0.2, 3, 0.2);
 %% Draw Additional plots
 
 graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, false, true);
-graphics.PlotSignalsByName(2, {'servo', 'inward', 'sideward'}, false, true);
 
 %% Animate the result
 
