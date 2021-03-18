@@ -12,6 +12,7 @@ addpath('simulator');
 %r = robots.octorotor_assymmetric();
 %r = robots.quadrotor();
 r = robots.tilted_hex(true);
+%r = robots.odar();
 
 % Define the world
 average_wind = [];

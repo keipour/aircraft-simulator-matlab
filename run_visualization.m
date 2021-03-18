@@ -6,11 +6,12 @@ close all
 addpath('simulator');
 
 %% Define the hardware architecture
-%m = robots.floating_hex();
-%m = robots.octorotor_assymmetric();
-%m = robots.quadrotor(true);
-m = robots.vtol_custom();
-%m = robots.tilted_hex(true);
+%r = robots.floating_hex();
+%r = robots.octorotor_assymmetric();
+%r = robots.quadrotor(true);
+%r = robots.vtol_custom();
+%r = robots.tilted_hex(true);
+r = robots.odar(true);
 
 %% Define the world
 
@@ -22,8 +23,8 @@ w = worlds.straight_wall(average_wind, false);
 %% Visualize
 
 % Visualize the UAV
-m.Visualize();
-m.VisualizeAxes();
+r.Visualize();
+r.VisualizeAxes();
 
 % Visualize the world
 w.Visualize();
