@@ -8,6 +8,10 @@ classdef physics
     methods(Static)
         % Estimate the inertia tensor of the multirotor
         function inertia_tensor = EstimateInertia(multirotor)
+            
+            % Note that it does not consider the weights of the rods right
+            % now and considers only arms from motors to center.
+            % TODO: needs to consider the rod weights.
 
             % Initialization
             num_rotors = multirotor.NumOfRotors;

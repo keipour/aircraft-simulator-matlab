@@ -25,6 +25,7 @@ function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_co
     % Initialization
     num_of_rotors = m.NumOfRotors;
     num_of_servos = m.NumOfServos;
+    num_of_rods = length(m.Rods);
 
     payload_size = m.PayloadRadius;
     arm_lengths = cell2mat(cellfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
@@ -41,12 +42,19 @@ function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_co
     H_m = [];
     H_r = cell(num_of_rotors, 1);
 
-    % Draw the arms
-    for i = 1 : num_of_rotors
-        hold on
-        H_m = [H_m; plotArm([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], i, arm_labels_on, plot_axes_only, motor_height)];
+    % Draw the arms and rods
+    if num_of_rods == 0
+        for i = 1 : num_of_rotors
+            hold on
+            H_m = [H_m; plotRod(zeros(3, 1), [X_rotors(i); Y_rotors(i); Z_rotors(i)], plot_axes_only)];
+        end
+    else
+        for i = 1 : num_of_rods
+            hold on
+            H_m = [H_m; plotRod(m.Rods{i}.Start, m.Rods{i}.End, plot_axes_only)];
+        end
     end
-
+    
     % Draw the rotors
     for i = 1 : num_of_rotors
         hold on
@@ -57,6 +65,14 @@ function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_co
             H_m = [H_m; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
     end
+    
+    % Add the rotor labels
+    for i = 1 : num_of_rotors
+        if arm_labels_on == true
+            H_m = [H_m; plotRotorLabel([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
+                i, motor_height, plot_axes_only)];
+        end
+    end    
     
     % Draw the servos
     if options.MV_ShowServos
@@ -218,23 +234,12 @@ function H = plotEndEffectorArm(start_pos, end_pos, z_axis, plot_axes_only, ee_s
     end
 end
 
-function H = plotArm(position, z_axis, num, arm_labels_on, plot_axes_only, motor_size)
-    H = [];
+function H = plotRod(start_pos, end_pos, plot_axes_only)
     if plot_axes_only
         line_width = 1;
-        H = [H; plot3([0, position(1)], [0, position(2)], [0, position(3)], 'k', 'LineWidth', line_width)];
+        H = plot3([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], 'k', 'LineWidth', line_width);
     else
-        H = [H; line3d([0, position(1)], [0, position(2)], [0, position(3)], options.MV_ArmRadius, 'k')];
-    end
-    
-    if arm_labels_on
-        label_dist = 0.02;
-        dp = -(motor_size + label_dist) * z_axis;
-        if plot_axes_only
-            dp = -dp;
-        end
-        label_str = ['R_', num2str(num)];
-        H = [H; text(position(1) + dp(1), position(2) + dp(2), position(3) + dp(3), label_str)];
+    H = line3d([start_pos(1), end_pos(1)], [start_pos(2), end_pos(2)], [start_pos(3), end_pos(3)], options.MV_ArmRadius, 'k');
     end
 end
 
@@ -275,6 +280,16 @@ function H = plotRotor(position, axis, direction, arrow_size, motor_height, moto
     pos_m2 = position + dmot;
     H = line3d([pos_m1(1), pos_m2(1)], [pos_m1(2), pos_m2(2)], [pos_m1(3), pos_m2(3)], motor_radius, motor_color);
     H = [H; circlePlane3D(pos_m2, axis, rotor_size, 0.005, ~no_axes, rotor_color, arrow_size, direction, no_axes)];
+end
+
+function H = plotRotorLabel(position, z_axis, rotor_number, motor_height, plot_axes_only)
+    label_dist = 0.02;
+    dp = -(motor_height + label_dist) * z_axis;
+    if plot_axes_only
+        dp = -dp;
+    end
+    label_str = ['R_', num2str(rotor_number)];
+    H = text(position(1) + dp(1), position(2) + dp(2), position(3) + dp(3), label_str);
 end
 
 function H = plotAxes(position, Rotation, arrow_size)
