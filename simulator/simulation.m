@@ -221,7 +221,7 @@ classdef simulation < handle
                     obj.NextStepPositionController(time);
                 end
             elseif module == obj.Timer.AttControllerIndex && last_commands.DesiredRPY.IsInitialized()
-                obj.NextStepMotorController(time);
+                obj.NextStepMotorController(time); % vtol
                 obj.NextStepAttitudeController(time);
             elseif module == obj.Timer.TrajControllerIndex && obj.TrajectoryController.IsInitialized()
                 obj.NextStepTrajectoryController(time);

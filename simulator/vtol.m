@@ -23,5 +23,9 @@ classdef vtol < multirotor
             wrench(6) = wrench(6) - 0.4 * physics.AirDensity * 0.52 / 2 * norm(obj.State.Velocity(1:2))^2; % Add vertical lift
         end
         
+        function new_state = CalcGeneratedWrench(obj, rotor_speeds_squared)
+            wrench = CalcGeneratedWrench@multirotor(obj, rotor_speeds_squared);
+            wrench(6) = wrench(6) - 0.4 * physics.AirDensity * 0.52 / 2 * norm(obj.State.Velocity(1:2))^2; % Add vertical lift
+        end
     end
 end
