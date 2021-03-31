@@ -16,6 +16,9 @@ function m = vtol_custom(add_arm)
         m.Rotors{i}.ArmLength = 1; % in meters
     end
     
+    m.VelocityLimits = [100; 100; 100];
+    m.TotalSpeedLimit = 200;
+    
     m.PayloadRadius = 0.5;
     
     m.AddServo([1, 4], [0; -1; 0], 0);
