@@ -327,7 +327,8 @@ classdef simulation < handle
             % Calculate the next state of the robot if there are no collisions
             wrench = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
-                zeros(6, 1), wind_force, rotor_speeds_squared, dt, false, zeros(3, 1));
+                zeros(6, 1), wind_force, rotor_speeds_squared, dt, ...
+                false, zeros(3, 1), -air_velocity);
             
             % Check for collistion in the new potential state
             cm = obj.Multirotor.GetTransformedCollisionModel(new_state.Position, deg2rad(new_state.RPY));
@@ -374,7 +375,7 @@ classdef simulation < handle
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...
-                    wind_force, rotor_speeds_squared, dt, true, contact_normal);
+                    wind_force, rotor_speeds_squared, dt, true, contact_normal, -air_velocity);
             end
             
             contact_status = col_ind > 0;

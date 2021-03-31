@@ -178,7 +178,7 @@ classdef multirotor < handle
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
-                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal)
+                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal, air_velocity)
 
             ext_wrench = [zeros(3, 1); wind_force];
             if obj.HasArm
@@ -205,6 +205,7 @@ classdef multirotor < handle
             new_state.MomentSensor = tf_sensor_wrench(1:3);
             new_state.InCollision = is_collision;
             new_state.WindForce = wind_force;
+            new_state.AirVelocity = air_velocity;
             
             % Calculate the tilt
             RIB = obj.GetRotationMatrix()';
