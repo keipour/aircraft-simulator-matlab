@@ -78,6 +78,21 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s.WindForce', measured_data, 'uni', 0));
         end
         
+        function [data, times] = GetAnglesOfAttack()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.AngleOfAttack', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetSideSlipAngles()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.SideSlipAngle', measured_data, 'uni', 0));
+        end
+        
+        function [data, times] = GetAirVelocities()
+            [measured_data, times] = logger.GetMeasuredStates();
+            data = cell2mat(cellfun(@(s)s.AirVelocity', measured_data, 'uni', 0));
+        end
+        
         function [data, times] = GetMeasuredRotorSaturations()
             [measured_data, times] = logger.GetMeasuredStates();
             data = cell2mat(cellfun(@(s)s.RotorsSaturated', measured_data, 'uni', 0));
@@ -255,10 +270,22 @@ classdef logger < handle
                 [data, times] = logger.GetMeasuredOmegas();
                 labels = {'$\omega_x$', '$\omega_y$', '$\omega_z$', 'Angular Velocity'};
 
+            elseif contains(str, 'airspeed')
+                [data, times] = logger.GetAirVelocities();
+                labels = {'$V_{ax}$', '$V_{ay}$', '$V_{az}$', 'Airspeed'};
+            
             elseif contains_or(str, {'air', 'wind'})
                 [data, times] = logger.GetAppliedWindForces();
                 labels = {'$F_x$', '$F_y$', '$F_z$', 'Wind Force'};
 
+            elseif contains_or(str, {'attack', 'alpha'})
+                [data, times] = logger.GetAnglesOfAttack();
+                labels = {'$\alpha$', 'Angle of Attack'};
+            
+            elseif contains_or(str, {'slip', 'beta'})
+                [data, times] = logger.GetSideSlipAngles();
+                labels = {'$\beta$', 'Side Slip Angle'};
+            
             elseif contains_and(str, {'forc', 'sens'})
                 [data, times] = logger.GetForceSensorReadings();
                 labels = {'$F_x$', '$F_y$', '$F_z$', 'Force Sensor'};
@@ -306,7 +333,7 @@ classdef logger < handle
             elseif contains_or(str, {'contact', 'colli'})
                 [data, times] = logger.GetCollisionStatus();
                 labels = {'Contact Status', 'Contact Status'};
-
+            
             else
                 error('Input string not recognized.');
             end
