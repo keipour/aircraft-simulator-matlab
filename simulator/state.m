@@ -29,6 +29,10 @@ classdef state < handle
         RotorSidewardAngles = [];                 % Rotor sideward angles (in degrees)
         TiltAngle           = 0;                  % Robot's tilt angle (in degrees)
         TiltDirection       = 0;                  % Tilt direction w.r.t. north (in degrees)
+        
+        AirVelocity         = zeros(3, 1);        % 3-D airspeed vector (in m/s)
+        AngleOfAttack       = 0;                  % in degrees (used for vtol)
+        SideSlipAngle       = 0;                  % in degrees (used for vtol)
     end
     
     methods
@@ -71,6 +75,10 @@ classdef state < handle
             
             obj.TiltAngle           = s.TiltAngle;
             obj.TiltDirection       = s.TiltDirection;
+
+            obj.AirVelocity         = s.AirVelocity;
+            obj.AngleOfAttack       = s.AngleOfAttack;
+            obj.SideSlipAngle       = s.SideSlipAngle;
         end
         
         function s = struct(obj)
@@ -101,6 +109,10 @@ classdef state < handle
             
             s.TiltAngle           = obj.TiltAngle;
             s.TiltDirection       = obj.TiltDirection;
+
+            s.AirVelocity         = obj.AirVelocity;
+            s.AngleOfAttack       = obj.AngleOfAttack;
+            s.SideSlipAngle       = obj.SideSlipAngle;
         end
     end
 end
