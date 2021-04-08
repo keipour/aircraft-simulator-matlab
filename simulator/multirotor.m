@@ -84,6 +84,11 @@ classdef multirotor < handle
             obj.UpdateNumOfServos();
         end
         
+        function set.Mass(obj, value)
+            obj.Mass = value;
+            obj.UpdateStructure();
+        end
+        
         function AddServo(obj, rotor_numbers, axes, initial_angle)
             obj.Servos{obj.NumOfServos + 1} = servo(obj, rotor_numbers, axes, initial_angle);
             obj.UpdateNumOfServos
@@ -247,7 +252,7 @@ classdef multirotor < handle
                     F = (obj.GetRotationMatrix()' * obj.NE_L) / obj.TotalMass;
                 end
  
-                accel = physics.Gravity + wind_force / obj.TotalMass + F * sign(rotor_speed) * rotor_speeds.^2;
+                accel = physics.Gravity + wind_force / obj.TotalMass + F * (abs(rotor_speeds) .* rotor_speeds);
             end
         end
         
@@ -267,7 +272,7 @@ classdef multirotor < handle
                 M1 = obj.I_inv * (obj.GetGravityMoment(obj.GetRotationMatrix()) - cross(obj.State.Omega, obj.I * obj.State.Omega));
             end
             
-            omega_dot = M1 + M2 * sign(rotor_speed) * rotor_speeds.^2;
+            omega_dot = M1 + M2 * (abs(rotor_speeds) .* rotor_speeds);
         end
         
         function set.I(obj, value)
