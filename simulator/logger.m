@@ -118,8 +118,8 @@ classdef logger < handle
             data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
         end
         
-        function [data, times] = GetRotorSpeedsSquaredCommand()
-            [data, times] = logger.GetData(logger_signals.RotorSpeedsSquaredCommand);
+        function [data, times] = GetRotorSpeedsCommand()
+            [data, times] = logger.GetData(logger_signals.RotorSpeedsCommand);
             data = cell2mat(cellfun(@(s)s', data, 'uni', 0));
         end
         

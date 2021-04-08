@@ -165,7 +165,7 @@ classdef multirotor < handle
             obj.State = new_state;
         end
         
-        function wrench = CalcGeneratedWrench(obj, rotor_speeds_squared)
+        function wrench = CalcGeneratedWrench(obj, rotor_speeds)
             
             RBI = obj.GetRotationMatrix();
             
@@ -174,11 +174,11 @@ classdef multirotor < handle
             
             J_x = [obj.NE_M; RBI' * obj.NE_L];
                         
-            wrench = F_x + J_x * rotor_speeds_squared;
+            wrench = F_x + J_x * (rotor_speeds.^2);
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
-                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal, air_velocity)
+                wind_force, rotor_speeds, dt, is_collision, collision_normal, air_velocity)
 
             ext_wrench = [zeros(3, 1); wind_force];
             if obj.HasArm
@@ -215,8 +215,8 @@ classdef multirotor < handle
             new_state.TiltDirection = atan2d(-z_axis(2), -z_axis(1));
             
             for i = 1 : obj.NumOfRotors
-                [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
-                new_state.RotorSpeeds(i) = sqrt(rs);
+                [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(rotor_speeds(i));
+                new_state.RotorSpeeds(i) = rs;
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
                 new_state.RotorInwardAngles(i) = obj.Rotors{i}.InwardAngle;
                 new_state.RotorSidewardAngles(i) = obj.Rotors{i}.SidewardAngle;
@@ -227,7 +227,7 @@ classdef multirotor < handle
             end
         end
         
-        function accel = CalculateAccelerationManipulability(obj, wind_force, rotor_speeds_squared, get_maximum)
+        function accel = CalculateAccelerationManipulability(obj, wind_force, rotor_speeds, get_maximum)
             if nargin < 4
                 get_maximum = false;
             end
@@ -240,18 +240,18 @@ classdef multirotor < handle
 
             if get_maximum
                 accel = (obj.GetGravityForce() + ...
-                    obj.GetThrustForce(eye(3), rotor_speeds_squared, get_maximum)) / obj.TotalMass;
+                    obj.GetThrustForce(eye(3), rotor_speeds, get_maximum)) / obj.TotalMass;
             else
                 if ~isequal(RPY, obj.State.RPY)
                     RPY = obj.State.RPY;
                     F = (obj.GetRotationMatrix()' * obj.NE_L) / obj.TotalMass;
                 end
  
-                accel = physics.Gravity + wind_force / obj.TotalMass + F * rotor_speeds_squared;
+                accel = physics.Gravity + wind_force / obj.TotalMass + F * sign(rotor_speed) * rotor_speeds.^2;
             end
         end
         
-        function omega_dot = CalculateAngularAccelerationManipulability(obj, rotor_speeds_squared)
+        function omega_dot = CalculateAngularAccelerationManipulability(obj, rotor_speeds)
             
             persistent M1 M2 RPY Omega
             if isempty(M1) || isempty(M2) || isempty(RPY) || isempty(Omega)
@@ -267,7 +267,7 @@ classdef multirotor < handle
                 M1 = obj.I_inv * (obj.GetGravityMoment(obj.GetRotationMatrix()) - cross(obj.State.Omega, obj.I * obj.State.Omega));
             end
             
-            omega_dot = M1 + M2 * rotor_speeds_squared;
+            omega_dot = M1 + M2 * sign(rotor_speed) * rotor_speeds.^2;
         end
         
         function set.I(obj, value)
@@ -479,7 +479,7 @@ classdef multirotor < handle
             last_collision_status = is_collision;
         end
         
-        function new_state = CalcStateLagrange(obj, RotorSpeedsSquared, dt)
+        function new_state = CalcStateLagrange(obj, rotor_speeds, dt)
             % Create the new state
             new_state = state(obj.NumOfRotors, obj.NumOfServos);
         end
@@ -561,13 +561,13 @@ classdef multirotor < handle
             F = physics.Gravity * obj.TotalMass;
         end
         
-        function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared, get_maximum)
+        function F = GetThrustForce(obj, Rot_IB, rotor_speeds, get_maximum)
             FB = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 if nargin < 4 || get_maximum == false
-                    FB = FB + obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
+                    FB = FB + obj.Rotors{i}.GetThrustForce(rotor_speeds(i));
                 else
-                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxSpeedSquared))];
+                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxSpeed))];
                     FB = FB + max_thrust;
                 end
             end
@@ -594,19 +594,19 @@ classdef multirotor < handle
             end
         end
         
-        function M = GetThrustMoment(obj, RotorSpeedsSquared)
+        function M = GetThrustMoment(obj, rotor_speeds)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                F = obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
+                F = obj.Rotors{i}.GetThrustForce(rotor_speeds(i));
                 M = M + cross(r, F);
             end
         end
         
-        function M = GetReactionMoment(obj, RotorSpeedsSquared)
+        function M = GetReactionMoment(obj, rotor_speeds)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               M = M + obj.Rotors{i}.GetReactionMoment(RotorSpeedsSquared(i));
+               M = M + obj.Rotors{i}.GetReactionMoment(rotor_speeds(i));
             end
         end
         

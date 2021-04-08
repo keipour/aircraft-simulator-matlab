@@ -33,6 +33,7 @@ classdef options
         MV_ServoColor = [0, 51, 102] / 255;
         MV_RotorColorCW = [0.4, 0.4, 1];
         MV_RotorColorCCW = [0.4, 1, 0.4];
+        MV_RotorColorBi = [1, 0.4, 0.4];
         MV_RotorOpacity = 0.85;
         MV_ShowPlotAxes = 'off'; % Options are: 'on' | 'off'
         

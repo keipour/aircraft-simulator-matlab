@@ -23,12 +23,12 @@ classdef control_allocation < handle
             end
         end
         
-        function [rotor_speeds_squared, saturated] = CalcRotorSpeeds(obj, mult, lin_accel, ang_accel)
+        function [rotor_speeds, saturated] = CalcRotorSpeeds(obj, mult, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
             persistent lin_accel_last
             persistent ang_accel_last
-            persistent rotor_speeds_squared_last
+            persistent rotor_speeds_last
             persistent saturated_last
             if isempty(lin_accel_last)
                 lin_accel_last = zeros(3, 1);
@@ -36,36 +36,36 @@ classdef control_allocation < handle
             if isempty(ang_accel_last)
                 ang_accel_last = zeros(3, 1);
             end
-            if isempty(rotor_speeds_squared_last)
-                rotor_speeds_squared_last = zeros(mult.NumOfRotors, 1);
+            if isempty(rotor_speeds_last)
+                rotor_speeds_last = zeros(mult.NumOfRotors, 1);
             end
             if isempty(saturated_last)
                 saturated_last = false;
             end
             
             if isequal(lin_accel, lin_accel_last) && isequal(ang_accel, ang_accel_last)
-                rotor_speeds_squared = rotor_speeds_squared_last;
+                rotor_speeds = rotor_speeds_last;
                 saturated = saturated_last;
                 return;
             end
         
             if obj.Method == control_allocation_types.NDI
-                rotor_speeds_squared = obj.NDIRotorSpeeds(mult, lin_accel, ang_accel);
+                rotor_speeds = obj.NDIRotorSpeeds(mult, lin_accel, ang_accel);
             end
 
             saturation_flag = false;
-            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxSpeedSquared, mult.Rotors, 'uni', 0));
-            if any(rotor_speeds_squared > max_rotor_speeds)
-                %mx = max((rotor_speeds_squared - max_rotor_speeds) ./ max_rotor_speeds);
-                %rotor_speeds_squared = rotor_speeds_squared - mx * max_rotor_speeds - 1e-5;
-                ind = rotor_speeds_squared > max_rotor_speeds;
-                rotor_speeds_squared(ind) = max_rotor_speeds(ind);
+            max_rotor_speeds = cell2mat(cellfun(@(s)s.MaxSpeed, mult.Rotors, 'uni', 0));
+            if any(rotor_speeds > max_rotor_speeds)
+                %mx = max((rotor_speeds - max_rotor_speeds) ./ max_rotor_speeds);
+                %rotor_speeds = rotor_speeds - mx * max_rotor_speeds - 1e-5;
+                ind = rotor_speeds > max_rotor_speeds;
+                rotor_speeds(ind) = max_rotor_speeds(ind);
                 saturation_flag = true;
             end
-            min_rotor_speeds = cell2mat(cellfun(@(s)s.MinSpeedSquared, mult.Rotors, 'uni', 0));
-            if any(rotor_speeds_squared < min_rotor_speeds)
-                ind = rotor_speeds_squared < min_rotor_speeds;
-                rotor_speeds_squared(ind) = min_rotor_speeds(ind);
+            min_rotor_speeds = cell2mat(cellfun(@(s)s.MinSpeed, mult.Rotors, 'uni', 0));
+            if any(rotor_speeds < min_rotor_speeds)
+                ind = rotor_speeds < min_rotor_speeds;
+                rotor_speeds(ind) = min_rotor_speeds(ind);
                 saturation_flag = true;
             end
             
@@ -76,7 +76,7 @@ classdef control_allocation < handle
             lin_accel_last = lin_accel;
             ang_accel_last = ang_accel;
             saturated_last = saturated;
-            rotor_speeds_squared_last = rotor_speeds_squared;
+            rotor_speeds_last = rotor_speeds;
         end
     end
     
@@ -108,7 +108,7 @@ classdef control_allocation < handle
             obj.NDI_M = NDI_F + NDI_G;
         end
         
-        function rotor_speeds_squared = NDIRotorSpeeds(obj, multirotor, lin_accel, euler_accel)
+        function rotor_speeds = NDIRotorSpeeds(obj, multirotor, lin_accel, euler_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
         % using NDI method
             
@@ -159,7 +159,7 @@ classdef control_allocation < handle
             B = [B_force; B_moment];
             
             % Calculate the rotor speeds
-            rotor_speeds_squared = pinv(B) * (y - A); 
+            rotor_speeds = sqrt(pinv(B) * (y - A));
         end
     end
 end

@@ -18,24 +18,25 @@ classdef rotor < handle
         MotorMass = (0.015) + 0.175;            % in Kilograms (for KDE3510XF-475)
         ESCMass = 0.084;                        % in Kilograms (for KDE-UAS35HVC)
         ArmMass = 0.10 + (0.084);               % in Kilograms
+
         RotationDirection = 1;                  % -1 for CW, 1 for CCW around Z
                                                 % Remember that Z is downward
                                                 
         UpperSpeedPercentage = 100;             % The percentage of the maximum 
                                                 % rpm that sets the upper speed
-                                                % limit (0..100)
+                                                % limit (-100..100)
         
         LowerSpeedPercentage = 0;               % The percentage of the minimum 
                                                 % rpm that sets the lower speed
-                                                % limit (0..100)                                           
+                                                % limit (-100..100)
     end
     
     properties (GetAccess = public, SetAccess = private)
-        R_BR                                    % Rotation matrix R_BR
-        Position                                % Position of the rotor in B
-        MaxSpeedSquared                         % Maximum rotation speed squared in Hz^2
-        MinSpeedSquared                         % Minimum rotation speed squared in Hz^2
-        RPMLimit                                % Maximum RPM for the motor
+        R_BR                % Rotation matrix R_BR
+        Position            % Position of the rotor in B
+        MaxSpeed            % Maximum rotation speed in Hz
+        MinSpeed            % Minimum rotation speed in Hz
+        RPMLimit            % Maximum RPM for the motor
     end
     
     methods
@@ -48,34 +49,34 @@ classdef rotor < handle
             end
         end
 
-        function M = GetReactionMoment(obj, rotor_speed_squared)
-            rotor_speed_squared = obj.LimitRotorSpeed(rotor_speed_squared);
+        function M = GetReactionMoment(obj, rotor_speed)
+            rotor_speed = obj.LimitRotorSpeed(rotor_speed);
             M = obj.R_BR * [0; 0; obj.RotationDirection * obj.TorqueConstant ...
-                * rotor_speed_squared];
+                * sign(rotor_speed) * rotor_speed.^2];
         end
 
         function M = GetReactionMomentPerUnitInput(obj)
             M = obj.R_BR * [0; 0; obj.RotationDirection * obj.TorqueConstant];
         end
 
-        function F = GetThrustForce(obj, rotor_speed_squared)
-            rotor_speed_squared = obj.LimitRotorSpeed(rotor_speed_squared);
-            F = obj.R_BR * [0; 0; -obj.ThrustConstant * rotor_speed_squared];
+        function F = GetThrustForce(obj, rotor_speed)
+            rotor_speed = obj.LimitRotorSpeed(rotor_speed);
+            F = obj.R_BR * [0; 0; -obj.ThrustConstant * sign(rotor_speed) * rotor_speed.^2];
         end
 
         function F = GetThrustForcePerUnitInput(obj)
             F = obj.R_BR * [0; 0; -obj.ThrustConstant];
         end
         
-        function [rotor_speed_squared, saturated] = LimitRotorSpeed(obj, rotor_speed_squared)
+        function [rotor_speed, saturated] = LimitRotorSpeed(obj, rotor_speed)
             flag = false;
 
-            if rotor_speed_squared > obj.MaxSpeedSquared
-                rotor_speed_squared = obj.MaxSpeedSquared;
+            if rotor_speed > obj.MaxSpeed
+                rotor_speed = obj.MaxSpeed;
                 flag = true;
             end
-            if rotor_speed_squared < obj.MinSpeedSquared
-                rotor_speed_squared = obj.MinSpeedSquared;
+            if rotor_speed < obj.MinSpeed
+                rotor_speed = obj.MinSpeed;
                 flag = true;
             end
 
@@ -132,8 +133,8 @@ classdef rotor < handle
         function UpdateStructure(obj)
             obj.R_BR = obj.CalcRotorationMatrix(obj.ArmAngle, obj.InwardAngle, obj.SidewardAngle);
             obj.RPMLimit = obj.Kv * obj.BatteryVoltage;
-            obj.MaxSpeedSquared = (obj.UpperSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
-            obj.MinSpeedSquared = (obj.LowerSpeedPercentage / 100 * obj.RPMLimit / 30 * pi).^2;
+            obj.MaxSpeed = obj.UpperSpeedPercentage / 100 * obj.RPMLimit / 30 * pi;
+            obj.MinSpeed = obj.LowerSpeedPercentage / 100 * obj.RPMLimit / 30 * pi;
             obj.Position = obj.GetPosition();
         end
         
@@ -157,8 +158,8 @@ classdef rotor < handle
             obj.RotationDirection = rot.RotationDirection;
             obj.R_BR = rot.R_BR;
             obj.Position = rot.Position;
-            obj.MaxSpeedSquared = rot.MaxSpeedSquared;
-            obj.MinSpeedSquared = rot.MinSpeedSquared;
+            obj.MaxSpeed = rot.MaxSpeed;
+            obj.MinSpeed = rot.MinSpeed;
             obj.LowerSpeedPercentage = rot.LowerSpeedPercentage;
             obj.UpperSpeedPercentage = rot.UpperSpeedPercentage;
         end
