@@ -52,7 +52,7 @@ classdef rotor < handle
         function M = GetReactionMoment(obj, rotor_speed)
             rotor_speed = obj.LimitRotorSpeed(rotor_speed);
             M = obj.R_BR * [0; 0; obj.RotationDirection * obj.TorqueConstant ...
-                * sign(rotor_speed) * rotor_speed.^2];
+                * abs(rotor_speed) * rotor_speed];
         end
 
         function M = GetReactionMomentPerUnitInput(obj)
@@ -61,7 +61,7 @@ classdef rotor < handle
 
         function F = GetThrustForce(obj, rotor_speed)
             rotor_speed = obj.LimitRotorSpeed(rotor_speed);
-            F = obj.R_BR * [0; 0; -obj.ThrustConstant * sign(rotor_speed) * rotor_speed.^2];
+            F = obj.R_BR * [0; 0; -obj.ThrustConstant * abs(rotor_speed) * rotor_speed];
         end
 
         function F = GetThrustForcePerUnitInput(obj)

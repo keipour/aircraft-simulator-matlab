@@ -128,16 +128,16 @@ function accel = analyze_accelerations(mult, wind_force, n_steps)
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = mult.Rotors{i}.MaxSpeedSquared;
-        mins(i) = mult.Rotors{i}.MinSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxSpeed;
+        mins(i) = mult.Rotors{i}.MinSpeed;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
 
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
-        rotor_speeds_squared = mins + nextnum' .* steps;
-        accel(i, :) = mult.CalculateAccelerationManipulability(wind_force, rotor_speeds_squared);
+        rotor_speeds = mins + nextnum' .* steps;
+        accel(i, :) = mult.CalculateAccelerationManipulability(wind_force, rotor_speeds);
     end
 end
 
@@ -148,16 +148,16 @@ function omega_dot = analyze_angular_accelerations(mult, n_steps)
     mins = zeros(n_rotors, 1);
     maxs = zeros(n_rotors, 1);
     for i = 1 : n_rotors
-        maxs(i) = mult.Rotors{i}.MaxSpeedSquared;
-        mins(i) = mult.Rotors{i}.MinSpeedSquared;
+        maxs(i) = mult.Rotors{i}.MaxSpeed;
+        mins(i) = mult.Rotors{i}.MinSpeed;
     end
 
     steps = (maxs - mins) ./ (n_steps - 1);
 
     for i = 1 : n_total
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
-        rotor_speeds_squared = mins + nextnum' .* steps;
-        omega_dot(i, :) = mult.CalculateAngularAccelerationManipulability(rotor_speeds_squared);
+        rotor_speeds = mins + nextnum' .* steps;
+        omega_dot(i, :) = mult.CalculateAngularAccelerationManipulability(rotor_speeds);
     end
 end
 
