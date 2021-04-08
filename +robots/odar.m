@@ -35,7 +35,7 @@ function m = odar(add_arm)
         m.AddRod(back_end, back_end - short_arm * m.Rotors{i}.R_BR(:, 3));
     end    
 
-    MinimumRotorSpeed = -100; % Percentage of the minimum limit
+    MinimumRotorSpeed = -100; % Percentage of the minimum limit to make rotors bidirectional
     for i = 1 : m.NumOfRotors
         m.Rotors{i}.LowerSpeedPercentage = MinimumRotorSpeed;
     end

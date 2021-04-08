@@ -12,6 +12,13 @@ function m = floating_hex(add_arm)
     m = multirotor(RotorPlacementAngles, RotorRotationDirections);
     m.SetRotorAngles(RotorInwardAngle, RotorSidewardAngle, RotorDihedralAngle);    
 
+    MinimumRotorSpeed = -100; % Percentage of the minimum limit to make rotors bidirectional
+    for i = 1 : m.NumOfRotors
+        m.Rotors{i}.LowerSpeedPercentage = MinimumRotorSpeed;
+    end
+    
+    m.Mass = 2; % in Kg
+    
     if add_arm
         m.AddEndEffector(arm);
     end
