@@ -165,7 +165,7 @@ classdef multirotor < handle
             obj.State = new_state;
         end
         
-        function wrench = CalcGeneratedWrench(obj, rotor_speeds_squared)
+        function wrench = CalcGeneratedWrench(obj, plantinput)
             
             RBI = obj.GetRotationMatrix();
             
@@ -174,11 +174,11 @@ classdef multirotor < handle
             
             J_x = [obj.NE_M; RBI' * obj.NE_L];
                         
-            wrench = F_x + J_x * rotor_speeds_squared;
+            wrench = F_x + J_x * plantinput.RotorSpeedsSquared;
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
-                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal, air_velocity)
+                wind_force, plantinput, dt, is_collision, collision_normal, air_velocity)
 
             ext_wrench = [zeros(3, 1); wind_force];
             if obj.HasArm
@@ -215,7 +215,7 @@ classdef multirotor < handle
             new_state.TiltDirection = atan2d(-z_axis(2), -z_axis(1));
             
             for i = 1 : obj.NumOfRotors
-                [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(RotorSpeedsSquared(i));
+                [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(plantinput.RotorSpeedsSquared(i));
                 new_state.RotorSpeeds(i) = sqrt(rs);
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
                 new_state.RotorInwardAngles(i) = obj.Rotors{i}.InwardAngle;

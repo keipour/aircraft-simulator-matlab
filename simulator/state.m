@@ -33,6 +33,16 @@ classdef state < handle
         AirVelocity         = zeros(3, 1);        % 3-D airspeed vector (in m/s)
         AngleOfAttack       = 0;                  % in degrees (used for vtol)
         SideSlipAngle       = 0;                  % in degrees (used for vtol)
+        
+        AileronLeftPos      = 0;                  % Value in [-1..1] range
+        AileronRightPos     = 0;                  % Value in [-1..1] range
+        RudderPos           = 0;                  % Value in [-1..1] range
+        ElevatorPos         = 0;                  % Value in [-1..1] range
+        
+        AileronLeftRate     = 0;
+        AileronRightRate    = 0;
+        RudderRate          = 0;
+        ElevatorRate        = 0;
     end
     
     methods
@@ -79,6 +89,16 @@ classdef state < handle
             obj.AirVelocity         = s.AirVelocity;
             obj.AngleOfAttack       = s.AngleOfAttack;
             obj.SideSlipAngle       = s.SideSlipAngle;
+            
+            obj.AileronLeftPos      = s.AileronLeftPos;
+            obj.AileronRightPos     = s.AileronRightPos;
+            obj.RudderPos           = s.RudderPos;
+            obj.ElevatorPos         = s.ElevatorPos;
+
+            obj.AileronLeftRate     = s.AileronLeftRate;
+            obj.AileronRightRate    = s.AileronRightRate;
+            obj.RudderRate          = s.RudderRate;
+            obj.ElevatorRate        = s.ElevatorRate;
         end
         
         function s = struct(obj)
@@ -96,7 +116,7 @@ classdef state < handle
             s.RotorInwardAngles   = obj.RotorInwardAngles;
             s.RotorSidewardAngles = obj.RotorSidewardAngles;
             s.RotorsSaturated     = obj.RotorsSaturated;
-
+            
             s.EndEffectorPosition = obj.EndEffectorPosition;
             s.EndEffectorVelocity = obj.EndEffectorVelocity;
             s.EndEffectorOmega    = obj.EndEffectorOmega;
@@ -113,6 +133,16 @@ classdef state < handle
             s.AirVelocity         = obj.AirVelocity;
             s.AngleOfAttack       = obj.AngleOfAttack;
             s.SideSlipAngle       = obj.SideSlipAngle;
+
+            s.AileronLeftPos      = obj.AileronLeftPos;
+            s.AileronRightPos     = obj.AileronRightPos;
+            s.RudderPos           = obj.RudderPos;
+            s.ElevatorPos         = obj.ElevatorPos;
+
+            s.AileronLeftRate     = obj.AileronLeftRate;
+            s.AileronRightRate    = obj.AileronRightRate;
+            s.RudderRate          = obj.RudderRate;
+            s.ElevatorRate        = obj.ElevatorRate;            
         end
     end
 end

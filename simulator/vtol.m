@@ -20,18 +20,19 @@ classdef vtol < multirotor
             obj = obj@multirotor(ArmAngles, RotationDirections);
         end
         
-        function wrench = CalcGeneratedWrench(obj, rotor_speeds_squared)
-            wrench = CalcGeneratedWrench@multirotor(obj, rotor_speeds_squared);
+        function wrench = CalcGeneratedWrench(obj, plantinput)
+            wrench = CalcGeneratedWrench@multirotor(obj, plantinput);
             %wrench = zeros(6, 1);
             %wrench(6) = wrench(6) - 0.4 * physics.AirDensity * 0.52 / 2 * norm(obj.State.Velocity(1:2))^2; % Add vertical lift
             wrench(4:6) = wrench(4:6) + obj.CalcAerodynamicForce(obj.State.AirVelocity);
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
-                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal, air_velocity)
+                wind_force, plantinput, dt, is_collision, collision_normal, ...
+                air_velocity)
             
             new_state = CalcNextState@multirotor(obj, wrench, tf_sensor_wrench, ...
-                wind_force, RotorSpeedsSquared, dt, is_collision, collision_normal, air_velocity);
+                wind_force, plantinput, dt, is_collision, collision_normal, air_velocity);
             [~, alpha, beta] = CalcWindToBodyRotation(obj, air_velocity);
             new_state.AngleOfAttack = alpha;
             new_state.SideSlipAngle = beta;

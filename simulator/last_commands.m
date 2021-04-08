@@ -5,7 +5,7 @@ classdef last_commands < handle
         DesiredLinearAcceleration support_files.data_field = support_files.data_field;
         DesiredRPY support_files.data_field = support_files.data_field;
         DesiredWaypoint support_files.data_field = support_files.data_field;
-        RotorSpeedsSquaredCommand support_files.data_field = support_files.data_field;
+        PlantInputCommand support_files.data_field = support_files.data_field;
         ContactNormal support_files.data_field = support_files.data_field;
         ContactForce support_files.data_field = support_files.data_field;
     end
@@ -16,7 +16,7 @@ classdef last_commands < handle
             last_commands.DesiredLinearAcceleration.Reset();
             last_commands.DesiredRPY.Reset();
             last_commands.DesiredWaypoint.Reset();
-            last_commands.RotorSpeedsSquaredCommand.Reset();
+            last_commands.PlantInputCommand.Reset();
             last_commands.ContactNormal.Reset();
             last_commands.ContactForce.Reset();
         end
