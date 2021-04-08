@@ -1,7 +1,7 @@
 %% Visualizer for multirotors
 % This file visualizes the multirotor geometry
 % Author: Azarakhsh Keipour (keipour@gmail.com)
-% Last updated: November 27, 2020
+% Last updated: April 08, 2021
 function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_collision_model)
     if nargin < 3
         plot_only = false;
@@ -31,6 +31,7 @@ function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_co
     arm_lengths = cell2mat(cellfun(@(s)s.ArmLength', m.Rotors, 'uni', 0));
     arm_angles = cell2mat(cellfun(@(s)s.ArmAngle', m.Rotors, 'uni', 0)) * pi / 180;
     phi_dihs = cell2mat(cellfun(@(s)s.DihedralAngle', m.Rotors, 'uni', 0)) * pi / 180;
+    rotor_dirs = cell2mat(cellfun(@(s)s.RotationDirection', m.Rotors, 'uni', 0));
     [~, arms_order] = sort(arm_angles);
     
     % Calculate the rotor coordinates (which also serve as the end points for arms)
@@ -57,10 +58,13 @@ function [H_m, H_r] = visualize_multirotor(m, plot_axes_only, plot_only, draw_co
     
     % Draw the rotors
     for i = 1 : num_of_rotors
+        if m.Rotors{i}.MinSpeed < 0
+            rotor_dirs(i) = 0;
+        end
         hold on
         if plot_axes_only == false
             H_r{i} = plotRotor([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR * [0;0;-1], ...
-                m.Rotors{i}.RotationDirection, axis_arrow_size, motor_height, motor_radius, m.Rotors{i}.Diameter, ~plot_rotor_axes);
+                rotor_dirs(i), axis_arrow_size, motor_height, motor_radius, m.Rotors{i}.Diameter, ~plot_rotor_axes);
         else
             H_m = [H_m; plotAxes([X_rotors(i); Y_rotors(i); Z_rotors(i)], m.Rotors{i}.R_BR,  axis_arrow_size / 2)];
         end
@@ -273,6 +277,8 @@ function H = plotRotor(position, axis, direction, arrow_size, motor_height, moto
     rotor_color = options.MV_RotorColorCW; % CW
     if direction == 1
         rotor_color = options.MV_RotorColorCCW;
+    elseif direction == 0
+        rotor_color = options.MV_RotorColorBi;
     end
     motor_color = options.MV_MotorColor;
     dmot = motor_height * axis;
@@ -450,7 +456,7 @@ P1=n1+Pc;
 
 X1=[];Y1=[];Z1=[];
 j=1;
-for theta=([0:N])*2*pi./(N);
+for theta=([0:N])*2*pi./(N)
     R1=Pc+radii*cos(theta).*(P1-Pc) + radii*sin(theta).*cross(dr,(P1-Pc)) -origin_shift;
     X1(2:3,j)=R1(:,1);
     Y1(2:3,j)=R1(:,2);
