@@ -11,7 +11,8 @@ addpath('simulator');
 %r = robots.quadrotor(true);
 %r = robots.vtol_custom();
 %r = robots.tilted_hex(true);
-r = robots.odar(true);
+r = robots.odar(false);
+%r = robots.odar_multilink(true);
 
 %% Define the world
 
