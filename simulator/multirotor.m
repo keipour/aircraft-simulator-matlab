@@ -216,7 +216,7 @@ classdef multirotor < handle
             
             for i = 1 : obj.NumOfRotors
                 [rs, sat] = obj.Rotors{i}.LimitRotorSpeed(rotor_speeds(i));
-                new_state.RotorSpeeds(i) = sqrt(rs);
+                new_state.RotorSpeeds(i) = rs;
                 new_state.RotorsSaturated = new_state.RotorsSaturated || sat;
                 new_state.RotorInwardAngles(i) = obj.Rotors{i}.InwardAngle;
                 new_state.RotorSidewardAngles(i) = obj.Rotors{i}.SidewardAngle;
@@ -561,13 +561,13 @@ classdef multirotor < handle
             F = physics.Gravity * obj.TotalMass;
         end
         
-        function F = GetThrustForce(obj, Rot_IB, RotorSpeedsSquared, get_maximum)
+        function F = GetThrustForce(obj, Rot_IB, rotor_speeds, get_maximum)
             FB = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 if nargin < 4 || get_maximum == false
-                    FB = FB + obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
+                    FB = FB + obj.Rotors{i}.GetThrustForce(rotor_speeds(i));
                 else
-                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxSpeedSquared))];
+                    max_thrust = [0; 0; -norm(obj.Rotors{i}.GetThrustForce(obj.Rotors{i}.MaxSpeed))];
                     FB = FB + max_thrust;
                 end
             end
@@ -594,19 +594,19 @@ classdef multirotor < handle
             end
         end
         
-        function M = GetThrustMoment(obj, RotorSpeedsSquared)
+        function M = GetThrustMoment(obj, rotor_speeds)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
                 r = obj.Rotors{i}.Position;
-                F = obj.Rotors{i}.GetThrustForce(RotorSpeedsSquared(i));
+                F = obj.Rotors{i}.GetThrustForce(rotor_speeds(i));
                 M = M + cross(r, F);
             end
         end
         
-        function M = GetReactionMoment(obj, RotorSpeedsSquared)
+        function M = GetReactionMoment(obj, rotor_speeds)
             M = zeros(3, 1);
             for i = 1 : obj.NumOfRotors
-               M = M + obj.Rotors{i}.GetReactionMoment(RotorSpeedsSquared(i));
+               M = M + obj.Rotors{i}.GetReactionMoment(rotor_speeds(i));
             end
         end
         

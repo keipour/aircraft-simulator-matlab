@@ -65,12 +65,12 @@ classdef simulation < handle
         
         function NextStepPlant(obj, time)
         % Update the plant state for the next time step and advance time
-            rotor_speeds_squared = last_commands.RotorSpeedsSquaredCommand.Data;
-            if ~last_commands.RotorSpeedsSquaredCommand.IsInitialized()
-                rotor_speeds_squared = zeros(obj.Multirotor.NumOfRotors, 1);
+            rotor_speeds = last_commands.RotorSpeedsCommand.Data;
+            if ~last_commands.RotorSpeedsCommand.IsInitialized()
+                rotor_speeds = zeros(obj.Multirotor.NumOfRotors, 1);
             end
             [contact_status, contact_normal, contact_wrench, rot_ic] = ...
-                obj.UpdateAllStates(rotor_speeds_squared, time);
+                obj.UpdateAllStates(rotor_speeds, time);
             if contact_status == true
                 last_commands.ContactNormal.Set(contact_normal, time);
                 last_commands.ContactForce.Set(rot_ic' * contact_wrench(4 : 6), time);
@@ -85,9 +85,9 @@ classdef simulation < handle
             end
             lin_acc_des = last_commands.DesiredLinearAcceleration.Data;
             euler_acc_des = last_commands.DesiredEulerAcceleration.Data;
-            rotor_speeds_squared = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
-            last_commands.RotorSpeedsSquaredCommand.Set(rotor_speeds_squared, time);
-            logger.Add(logger_signals.RotorSpeedsSquaredCommand, rotor_speeds_squared);
+            rotor_speeds = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
+            last_commands.RotorSpeedsCommand.Set(rotor_speeds, time);
+            logger.Add(logger_signals.RotorSpeedsCommand, rotor_speeds);
         end
         
         function NextStepAttitudeController(obj, time)
@@ -305,7 +305,7 @@ classdef simulation < handle
     methods (Access = private)
 
         function [contact_status, contact_normal, contact_wrench, rot_ic] = ...
-                UpdateAllStates(obj, rotor_speeds_squared, time)
+                UpdateAllStates(obj, rotor_speeds, time)
             
             % Save the last time we updated the state
             persistent last_time;
@@ -325,9 +325,9 @@ classdef simulation < handle
             wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
             
             % Calculate the next state of the robot if there are no collisions
-            wrench = obj.Multirotor.CalcGeneratedWrench(rotor_speeds_squared);
+            wrench = obj.Multirotor.CalcGeneratedWrench(rotor_speeds);
             new_state = obj.Multirotor.CalcNextState(wrench, ...
-                zeros(6, 1), wind_force, rotor_speeds_squared, dt, ...
+                zeros(6, 1), wind_force, rotor_speeds, dt, ...
                 false, zeros(3, 1), -air_velocity);
             
             % Check for collistion in the new potential state
@@ -375,7 +375,7 @@ classdef simulation < handle
                 end
                 
                 new_state = obj.Multirotor.CalcNextState(wrench, ft_sensor,...
-                    wind_force, rotor_speeds_squared, dt, true, contact_normal, -air_velocity);
+                    wind_force, rotor_speeds, dt, true, contact_normal, -air_velocity);
             end
             
             contact_status = col_ind > 0;

@@ -14,8 +14,8 @@ classdef controller < handle
             obj.HMFController = hmf_controller;
         end
         
-        function rotor_speeds_squared = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
-            rotor_speeds_squared = obj.ControlAllocation.CalcRotorSpeeds(mult, lin_acc_des, euler_acc_des);
+        function rotor_speeds = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
+            rotor_speeds = obj.ControlAllocation.CalcRotorSpeeds(mult, lin_acc_des, euler_acc_des);
         end
         
         function euler_accel = ControlAttitude(obj, mult, rpy_des, rpy_dot_des, eul_acc_des, dt)
