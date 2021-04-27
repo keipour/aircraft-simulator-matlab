@@ -10,9 +10,11 @@ function c = fully_actuated(mult, attitude_strategy)
     
     c.AttitudeController.SetPID(1000, 5, 600);
     c.PositionController.SetPID(3, 0, 7);
+    c.SurfaceController.SetPID(10,1,0.1);
 
     c.HMFController.ForceController.SetPID(1, 0, 3);
     c.HMFController.PositionController.SetPID(7, 1, 7);
 
     c.SetAttitudeStrategy(attitude_strategy);
+    
 end

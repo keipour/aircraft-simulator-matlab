@@ -4,6 +4,7 @@ classdef controller < handle
         AttitudeController attitude_controller
         PositionController position_controller
         HMFController hmf_controller
+        SurfaceController surface_controller
     end
     
     methods
@@ -12,6 +13,7 @@ classdef controller < handle
             obj.AttitudeController = attitude_controller;
             obj.PositionController = position_controller;
             obj.HMFController = hmf_controller;
+            obj.SurfaceController = surface_controller;
         end
         
         function rotor_speeds_squared = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
@@ -32,10 +34,15 @@ classdef controller < handle
             [lin_accel, rpy_des] = obj.HMFController.ControlMotionAndForce(mult, ...
                 force_des, pos_des, yaw_des, vel_des, acc_des, contact_normal, vel_mat, force_constraint, dt);
         end
-        
+        %% Addon Controller for aileron %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function ail_angle = ControlAileron(obj,mult,ail_des,ail_dot_des,dt)
+            ail_angle = obj.SurfaceController.CalculateControlCommand(obj,mult,ail_des,ail_dot_des,dt);
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function Reset(obj)
             obj.AttitudeController.Reset();
             obj.PositionController.Reset();
+            obj.SurfaceController.Reset();
         end
         
         function SetAttitudeStrategy(obj, attitude_strategy)

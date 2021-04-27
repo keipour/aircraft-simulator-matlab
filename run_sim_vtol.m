@@ -22,7 +22,7 @@ sim = simulation(m, c, w);
 
 %% Initial multirotor state
 
-pos = [0; 0; -4];
+pos = [0; 0; -6];
 vel = [0; 0; 0];
 rpy = [0; 0; 0];
 omega = [0; 0; 0];

@@ -29,6 +29,8 @@ classdef state < handle
         RotorSidewardAngles = [];                 % Rotor sideward angles (in degrees)
         TiltAngle           = 0;                  % Robot's tilt angle (in degrees)
         TiltDirection       = 0;                  % Tilt direction w.r.t. north (in degrees)
+        Aileron             = 0;                  % Angle of aileron (in degree)
+        AileronRate         = 0;                  % Derivative of aileron
         
         AirVelocity         = zeros(3, 1);        % 3-D airspeed vector (in m/s)
         AngleOfAttack       = 0;                  % in degrees (used for vtol)
