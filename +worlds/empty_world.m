@@ -28,7 +28,7 @@ function e = empty_world(wind, load_texture, x_limit, y_limit)
     end
     
     e = environment;
-    h = e.AddGroundPlane(x_limit, y_limit);
+    %h = e.AddGroundPlane(x_limit, y_limit);
     if load_texture
         e.AddTextureToObject(h, ['+worlds' filesep 'textures' filesep 'grass.jpg'], 0.12, 8);
     end

@@ -32,7 +32,7 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Simulate trajectory following
 [traj, total_time] = trajectories.vtol_simple();
-sim.SetTotalTime(2);
+sim.SetTotalTime(15);
 pos_thresh = 0.2;
 rpy_thresh = 3; 
 force_thresh = 0.2;
@@ -59,4 +59,4 @@ graphics.PlotSignalsByName(2, {'alpha', 'beta', 'airspeed'});
 fpv_cam = camera;
 fpv_cam.Offset = [0; 0; -0.35];
 graphics.AnimateLoggedTrajectory(sim.Multirotor, sim.Environment, 0, 1, true, true, []);
-%graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true, fpv_cam);
+% graphics.RecordLoggedTrajectoryAnimation('myvideo', 30, sim.Multirotor, sim.Environment, 0, 1, true, true, fpv_cam);

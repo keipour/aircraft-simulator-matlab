@@ -9,11 +9,9 @@ classdef vtol < multirotor
         C_A = 0.01; %Aileron constant
         C_E = 0.01; %Elevator constant
         C_R = 0.01; %Rudder constant
-        r_w = 0.0625; %wing center of lift wrt, center of gravity in meters
-        r_t = 0.6385; %tail center of lift wrt, center of gravity in meters
-        S_A = 0.0720; %aileron surface area in m^2
-        S_E = 0.03; %elevator surface area in m^2
-        S_R = 0.008; %rudder surface area in m^2
+        r_w = 0.0625; %wing center of lift wrt, center of gravity
+        r_t = 0.6385; %tail center of lift wrt, center of gravity
+        S_A = ; %aileron surface area
         
     end
 
@@ -35,10 +33,10 @@ classdef vtol < multirotor
             wrench = CalcGeneratedWrench@multirotor(obj, plantinput);
             %wrench = zeros(6, 1);
             %wrench(6) = wrench(6) - 0.4 * physics.AirDensity * 0.52 / 2 * norm(obj.State.Velocity(1:2))^2; % Add vertical lift
-%             obj.CalcAerodynamicMoment(obj.State.AirVelocity)
+            obj.CalcAerodynamicMoment(obj.State.AirVelocity)
 %             wrench(1:3) = wrench(1:3) + obj.CalcAerodynamicMoment(obj.State.AirVelocity);
             wrench(4:6) = wrench(4:6) + obj.CalcAerodynamicForce(obj.State.AirVelocity);
-%             wrench(6) = 0.8*wrench(6)
+            wrench(6) = 0.8*wrench(6)
         end
         
         function new_state = CalcNextState(obj, wrench, tf_sensor_wrench, ...
@@ -69,34 +67,33 @@ classdef vtol < multirotor
             
             force = rbw * [drag; lateral; -lift];
         end
-        function moment = CalcAerodynamicMoment(obj, Va_i) %TODO
-            [rbw, ~, ~] = obj.CalcWindToBodyRotation(Va_i);
-            Va_b = rbw*Va_i;
+        function moment = CalcAerodynamicMoment(obj, Va_i)
+            [rbw, alpha, ~] = obj.CalcWindToBodyRotation(Va_i);
+            q_bar = (Va_i' * Va_i) * physics.AirDensity / 2;
             
+            c_i = get_ci(alpha);
+            c_m = get_cm(alpha);
+            c_n = get_cn(alpha);
             
-            
-            q_bar = (Va_b' * Va_b) * physics.AirDensity / 2;
-            roll_moment = q_bar * obj.S_A * obj.C_A * 2 * d_a
-%             c_i = get_ci(alpha);
-%             c_m = get_cm(alpha);
-%             c_n = get_cn(alpha);
-%             
-%             roll_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_i;
-%             pitch_moment = q_bar * obj.WingSurfaceArea * obj.MeanChord * c_m;
-%             yaw_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_n;
+            roll_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_i;
+            pitch_moment = q_bar * obj.WingSurfaceArea * obj.MeanChord * c_m;
+            yaw_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_n;
             
             moment = rbw * [roll_moment; pitch_moment; yaw_moment];
         end
-        function moment = CalcDeflectionMoment(obj, Va_i, d_a, d_e, d_r)
-            [rbw, ~, ~] = obj.CalcWindToBodyRotation(Va_i);
-            Va_b = rbw*Va_i;
+        function moment = CalcDeflectionMoment(obj, Va_i)
+            [rbw, alpha, ~] = obj.CalcWindToBodyRotation(Va_i);
+            q_bar = (Va_i' * Va_i) * physics.AirDensity / 2;
             
-            q_bar = (Va_b' * Va_b) * physics.AirDensity / 2;
-            roll_moment = q_bar * obj.S_A * obj.C_A * 2 * d_a;
-            pitch_moment = q_bar * obj.S_E * obj.C_E * d_e;
-            yaw_moment = q_bar * obj.S_R * obj.C_R * d_r;
+            c_i = get_ci(alpha);
+            c_m = get_cm(alpha);
+            c_n = get_cn(alpha);
             
-            moment = [roll_moment; pitch_moment; yaw_moment];
+            roll_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_i;
+            pitch_moment = q_bar * obj.WingSurfaceArea * obj.MeanChord * c_m;
+            yaw_moment = q_bar * obj.WingSurfaceArea * obj.Wingspan * c_n;
+            
+            moment = rbw * [roll_moment; pitch_moment; yaw_moment];
         end
 
         function [R_BW, alpha, beta] = CalcWindToBodyRotation(obj, Va_i)
