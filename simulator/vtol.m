@@ -14,6 +14,9 @@ classdef vtol < multirotor
         S_A = 0.0720; %aileron surface area in m^2
         S_E = 0.03; %elevator surface area in m^2
         S_R = 0.008; %rudder surface area in m^2
+        l3 = 0.5189; %front props delta x from center of mass in meters
+        l4 = 0.4574; %back props delta x from center of mass in meters
+        L0 = 0.3642; %tilting rotors y offset
         
     end
 
@@ -87,7 +90,7 @@ classdef vtol < multirotor
             
             moment = rbw * [roll_moment; pitch_moment; yaw_moment];
         end
-        function moment = CalcDeflectionMoment(obj, Va_i, d_a, d_e, d_r)
+        function moment = CalcDeflectionMoment(obj, Va_i, plantinput)
             [rbw, ~, ~] = obj.CalcWindToBodyRotation(Va_i);
             Va_b = rbw*Va_i;
             
