@@ -86,7 +86,11 @@ classdef simulation < handle
             lin_acc_des = last_commands.DesiredLinearAcceleration.Data;
             euler_acc_des = last_commands.DesiredEulerAcceleration.Data;
             plantinput = plant_input(obj.Multirotor.NumOfRotors, obj.Multirotor.NumOfServos);
-            plantinput.RotorSpeedsSquared = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
+            [rotor_speed_squared, deflections] = obj.Controller.ControlAcceleration(obj.Multirotor, lin_acc_des, euler_acc_des);
+            plantinput.RotorSpeedsSquared = rotor_speed_squared;
+            plantinput.AileronLeftRate = deflections(1);
+            plantinput.ElevatorRate = deflections(2);
+            plantinput.RudderRate = deflections(3);
             last_commands.PlantInputCommand.Set(plantinput, time);
             %logger.Add(logger_signals.PlantInputCommand, plantinput);
         end

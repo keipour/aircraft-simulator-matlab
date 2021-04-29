@@ -32,7 +32,7 @@ sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
 % Simulate trajectory following
 [traj, total_time] = trajectories.vtol_simple();
-sim.SetTotalTime(15);
+sim.SetTotalTime(25);
 pos_thresh = 0.2;
 rpy_thresh = 3; 
 force_thresh = 0.2;

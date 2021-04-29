@@ -39,7 +39,8 @@ classdef vtol < multirotor
             %wrench = zeros(6, 1);
             %wrench(6) = wrench(6) - 0.4 * physics.AirDensity * 0.52 / 2 * norm(obj.State.Velocity(1:2))^2; % Add vertical lift
 %             obj.CalcAerodynamicMoment(obj.State.AirVelocity)
-%             wrench(1:3) = wrench(1:3) + obj.CalcAerodynamicMoment(obj.State.AirVelocity);
+%             wrench(1:3) = wrench(1:3)/(1 + norm(obj.State.AirVelocity)) + obj.CalcDeflectionMoment(obj.State.AirVelocity, plantinput);
+            wrench(1:3) = wrench(1:3) + obj.CalcDeflectionMoment(obj.State.AirVelocity, plantinput);
             wrench(4:6) = wrench(4:6) + obj.CalcAerodynamicForce(obj.State.AirVelocity);
 %             wrench(6) = 0.8*wrench(6)
         end
@@ -95,9 +96,9 @@ classdef vtol < multirotor
             Va_b = rbw*Va_i;
             
             q_bar = (Va_b' * Va_b) * physics.AirDensity / 2;
-            roll_moment = q_bar * obj.S_A * obj.C_A * 2 * d_a;
-            pitch_moment = q_bar * obj.S_E * obj.C_E * d_e;
-            yaw_moment = q_bar * obj.S_R * obj.C_R * d_r;
+            roll_moment = q_bar * obj.S_A * obj.C_A * 2 * plantinput.AileronLeftRate;
+            pitch_moment = q_bar * obj.S_E * obj.C_E * plantinput.ElevatorRate;
+            yaw_moment = q_bar * obj.S_R * obj.C_R * plantinput.RudderRate;
             
             moment = [roll_moment; pitch_moment; yaw_moment];
         end

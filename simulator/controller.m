@@ -1,6 +1,6 @@
 classdef controller < handle
     properties
-        ControlAllocation control_allocation
+        ControlAllocation control_allocation_vtol
         AttitudeController attitude_controller
         PositionController position_controller
         HMFController hmf_controller
@@ -8,14 +8,14 @@ classdef controller < handle
     
     methods
         function obj = controller(mult)
-            obj.ControlAllocation = control_allocation(mult);
+            obj.ControlAllocation = control_allocation_vtol(mult);
             obj.AttitudeController = attitude_controller;
             obj.PositionController = position_controller;
             obj.HMFController = hmf_controller;
         end
         
-        function rotor_speeds_squared = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
-            rotor_speeds_squared = obj.ControlAllocation.CalcRotorSpeeds(mult, lin_acc_des, euler_acc_des);
+        function [rotor_speeds_squared, deflections] = ControlAcceleration(obj, mult, lin_acc_des, euler_acc_des)
+            [rotor_speeds_squared, deflections] = obj.ControlAllocation.CalcActuators(mult, lin_acc_des, euler_acc_des);
         end
         
         function euler_accel = ControlAttitude(obj, mult, rpy_des, rpy_dot_des, eul_acc_des, dt)

@@ -23,15 +23,19 @@ classdef control_allocation_vtol < handle
             end
         end
         
-        function [rotor_speeds_squared, saturated] = CalcActuators(obj, mult, lin_accel, ang_accel)
+        function [rotor_speeds_squared, deflections , saturated] = CalcActuators(obj, mult, lin_accel, ang_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
             
             persistent lin_accel_last
             persistent ang_accel_last
             persistent rotor_speeds_squared_last
+            persistent deflections_last
             persistent saturated_last
             if isempty(lin_accel_last)
                 lin_accel_last = zeros(3, 1);
+            end
+            if isempty(deflections_last)
+                deflections_last = zeros(3, 1);
             end
             if isempty(ang_accel_last)
                 ang_accel_last = zeros(3, 1);
@@ -45,12 +49,13 @@ classdef control_allocation_vtol < handle
             
             if isequal(lin_accel, lin_accel_last) && isequal(ang_accel, ang_accel_last)
                 rotor_speeds_squared = rotor_speeds_squared_last;
+                deflections = deflections_last;
                 saturated = saturated_last;
                 return;
             end
         
             if obj.Method == control_allocation_types.NDI
-                rotor_speeds_squared = obj.NDIRotorSpeeds(mult, lin_accel, ang_accel);
+                [rotor_speeds_squared, deflections] = obj.ActuatorCommands(mult, lin_accel, ang_accel);
             end
 
             saturation_flag = false;
@@ -107,48 +112,13 @@ classdef control_allocation_vtol < handle
             
             obj.NDI_M = NDI_F + NDI_G;
         end
-        
-        function rotor_speeds_squared = NDIRotorSpeeds(obj, multirotor, lin_accel, euler_accel, air_velocity, tiltangle)
+        function rotor_speeds_squared = NDIRotorSpeeds(obj, multirotor, lin_accel, euler_accel)
         % Calculate the rotor speeds from the desired linear and angular accelerations
         % using NDI method
             
             % Create the desired output matrix y
             y = [lin_accel; euler_accel];
-            M_des = euler_accel * multirotor.I;
-            F_des = lin_accel * multirotor.TotalMass;
-            [rbw, ~, ~] = multirotor.CalcWindToBodyRotation(air_velocity);
-            Va_b = rbw*Va_i;
-            q_bar = (Va_b' * Va_b) * physics.AirDensity / 2;
-            
-            del_a = M_des(1) / (multirotor.C_A * multirotor.WingSurfaceArea * multirotor.WingSpan * q_bar);
-            del_e = ( M_des(2) - (multirotor.l3 - multirotor.l4)/2*F_des(1) ) / (multirotor.C_E * multirotor.WingSurfaceArea * multirotor.MeanChord * q_bar);
-            del_r = M_des(3) / (multirotor.C_R * multirotor.WingSurfaceArea * multirotor.WingSpan * q_bar);
-            
-            a = 0.0185;
-            b = 35.217;
-            
-            f1 = min(max(0, a*(q_bar - b) + 0.5), 1);
-            del_a = del_a * f1;
-            del_e = del_e * f1;
-            del_r = del_r * f1;
-            
-            M_def = [multirotor.C_A * multirotor.WingSurfaceArea * multirotor.WingSpan * q_bar * del_a;
-                     multirotor.C_E * multirotor.WingSurfaceArea * multirotor.MeanChord * q_bar * del_e
-                     multirotor.C_R * multirotor.WingSurfaceArea * multirotor.WingSpan * q_bar * del_r];
-                 
-            M_r = M_des - M_def;
-            
-            y = [F_des(1); F_des(3);M_r];
-            
-            A1 = [sin(tiltangle), sin(tiltangle), sin(tiltangle), sin(tiltangle)];
-            A2 = [-cos(tiltangle), -cos(tiltangle), -cos(tiltangle), -cos(tiltangle)];
-            A3 = [-multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), -multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle)]; 
-            A4 = [-multirotor.l3*cos(tiltangle), multirotor.l4*cos(tiltangle), multirotor.l4*cos(tiltangle), -multirotor.l3*cos(tiltangle)];
-            A5 = [-multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), -multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle)];
-            A = [A1;A2;A3;A4;A5];
-            
-            rotor_speeds = y * pinv(A);
-            
+        
             % Get the rotation matrix
             RBI = multirotor.GetRotationMatrix();
             
@@ -195,6 +165,57 @@ classdef control_allocation_vtol < handle
             % Calculate the rotor speeds
             rotor_speeds_squared = pinv(B) * (y - A); 
         end
+        function [rotor_speeds_squared, deflections] = ActuatorCommands(obj, multirotor, lin_accel, euler_accel)
+        % Calculate the rotor speeds from the desired linear and angular accelerations
+        % using NDI method
+            
+            % Create the desired output matrix y
+            y = [lin_accel; euler_accel];
+            M_des = (euler_accel' * multirotor.I)';
+            F_des = lin_accel * multirotor.TotalMass;
+%             [rbw, ~, ~] = multirotor.CalcWindToBodyRotation(multirotor.State.AirVelocity);
+            Va_i = multirotor.State.AirVelocity;
+            q_bar = (Va_i' * Va_i) * physics.AirDensity / 2;
+            
+            del_a = M_des(1) / (multirotor.C_A * multirotor.WingSurfaceArea * multirotor.Wingspan * q_bar);
+            del_e = ( M_des(2) - (multirotor.l3 - multirotor.l4)/2*F_des(1) ) / (multirotor.C_E * multirotor.WingSurfaceArea * multirotor.MeanChord * q_bar);
+            del_r = M_des(3) / (multirotor.C_R * multirotor.WingSurfaceArea * multirotor.Wingspan * q_bar);
+            
+            del_a = min(max(del_a, -1), 1);
+            del_e = min(max(del_e, -1), 1);
+            del_r = min(max(del_r, -1), 1);
+            
+            a = 0.0185;
+            b = 35.217;
+            
+            f1 = min(max(0, a*(q_bar - b) + 0.5), 1);
+            del_a = del_a * f1;
+            del_e = del_e * f1;
+            del_r = del_r * f1;
+            
+            deflections = [del_a, del_e, del_r];
+            
+            M_def = [multirotor.C_A * multirotor.WingSurfaceArea * multirotor.Wingspan * q_bar * del_a;
+                     multirotor.C_E * multirotor.WingSurfaceArea * multirotor.MeanChord * q_bar * del_e
+                     multirotor.C_R * multirotor.WingSurfaceArea * multirotor.Wingspan * q_bar * del_r];
+                 
+            M_r = M_des - M_def;
+            
+%             y = [F_des(1); F_des(3);M_r];
+%             
+%             A1 = [sin(tiltangle), sin(tiltangle), sin(tiltangle), sin(tiltangle)];
+%             A2 = [-cos(tiltangle), -cos(tiltangle), -cos(tiltangle), -cos(tiltangle)];
+%             A3 = [-multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), -multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle)]; 
+%             A4 = [-multirotor.l3*cos(tiltangle), multirotor.l4*cos(tiltangle), multirotor.l4*cos(tiltangle), -multirotor.l3*cos(tiltangle)];
+%             A5 = [-multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), -multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle)];
+%             A = [A1;A2;A3;A4;A5];
+%             
+%             rotor_speeds = y * pinv(A);
+            angular_accel_r = (M_r' * multirotor.I_inv)';
+            rotor_speeds_squared = NDIRotorSpeeds(obj, multirotor, lin_accel, angular_accel_r);
+            
+        end
+        
     end
 end
 
