@@ -140,9 +140,15 @@ classdef control_allocation_vtol < handle
             
             y = [F_des(1); F_des(3);M_r];
             
-            A1 = [sin(tiltangle), cos(tiltangle), sin(tiltangle), cos(tiltangle)];
-            A2 = [-cos(tiltangle), -cos(tiltangle), sin(tiltangle), sin(tiltangle)];
-            A3 = [sin(tiltangle), cos(tiltangle), sin(tiltangle), cos(tiltangle)];
+            A1 = [sin(tiltangle), sin(tiltangle), sin(tiltangle), sin(tiltangle)];
+            A2 = [-cos(tiltangle), -cos(tiltangle), -cos(tiltangle), -cos(tiltangle)];
+            A3 = [-multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), -multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) + Cq/Ct*sin(tiltangle), multirotor.L0 * cos(tiltangle) - Cq/Ct*sin(tiltangle)]; 
+            A4 = [-multirotor.l3*cos(tiltangle), multirotor.l4*cos(tiltangle), multirotor.l4*cos(tiltangle), -multirotor.l3*cos(tiltangle)];
+            A5 = [-multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), -multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) - Cq/Ct*cos(tiltangle), multirotor.L0 * sin(tiltangle) + Cq/Ct*cos(tiltangle)];
+            A = [A1;A2;A3;A4;A5];
+            
+            rotor_speeds = y * pinv(A);
+            
             % Get the rotation matrix
             RBI = multirotor.GetRotationMatrix();
             
