@@ -50,7 +50,7 @@ sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
 
 %% Draw Additional plots
 
-graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, false, true);
+graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel', 'sat'}, false, true);
 graphics.PlotSignalsByName(2, {'servo', 'inward', 'sideward'}, false, true);
 graphics.PlotSignalsByName(2, {'alpha', 'beta', 'airspeed'});
 
