@@ -1,5 +1,5 @@
 % Trajectory for writing AIR on the wall
-function [traj, total_time] = multi_paint_air()
+function [traj, total_time] = copter_paint_air()
 
     total_time = 75;
     traj = {[13, 6, -1, 0];

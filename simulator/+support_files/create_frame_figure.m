@@ -71,6 +71,13 @@ function [fig, form_handles, plot_handles, plot_data, xyz_limits] = create_frame
             'LineWidth', options.AH_LineWidth, 'FontSize', options.AH_FontSize, ...
             'FontWeight', options.AH_FontWeight);
     end
+    
+    hpnlEndEffector = findobj(fig, 'Tag', 'pnlEndEffector');
+    if rbt.HasEndEffector()
+        set(hpnlEndEffector, 'Visible', 'on');
+    else
+        set(hpnlEndEffector, 'Visible', 'off');
+    end
 end
 
 %% Helper functions
