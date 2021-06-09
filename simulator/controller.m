@@ -22,9 +22,9 @@ classdef controller < handle
             euler_accel = obj.AttitudeController.CalculateControlCommand(mult, rpy_des, rpy_dot_des, eul_acc_des, dt);
         end
         
-        function [lin_accel, rpy_des] = ControlPosition(obj, mult, pos_des, yaw_des, vel_des, acc_des, dt)
+        function [lin_accel, rpy_des] = ControlPosition(obj, mult, pos_des, yaw_or_rpy_des, vel_des, acc_des, dt)
             lin_accel = obj.PositionController.CalculateControlCommand(mult, pos_des, vel_des, acc_des, dt);
-            rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_des);
+            rpy_des = obj.PositionController.CalculateAttitude(lin_accel, yaw_or_rpy_des);
         end
         
         function [lin_accel, rpy_des] = ControlMotionAndForce(obj, mult, force_des, pos_des, yaw_des, vel_des, acc_des, ...

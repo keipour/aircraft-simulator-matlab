@@ -152,7 +152,7 @@ classdef simulation < handle
             waypoint_des = last_commands.DesiredWaypoint.Data;
             
             [lin_accel, rpy_des] = obj.Controller.ControlPosition(obj.Multirotor, ...
-                waypoint_des.Position, waypoint_des.RPY(3), [], [], time);
+                waypoint_des.Position, waypoint_des.RPY, [], [], time);
 
             last_commands.DesiredRPY.Set(rpy_des, time);
             last_commands.DesiredLinearAcceleration.Set(lin_accel, time);

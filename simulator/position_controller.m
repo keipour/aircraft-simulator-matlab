@@ -52,20 +52,26 @@ classdef position_controller < pid_controller
             obj.LastTime = time;
         end
 
-        function rpy_des = CalculateAttitude(obj, acc_cmd, yaw_des)
+        function rpy_des = CalculateAttitude(obj, acc_cmd, yaw_or_rpy_des)
         % Calculate the desired attitude to achieve the input acceleration
         % The desired attitude aligns the required force direction
         % (acceleration - gravity) with the Z axis. FRD frame is used here.
+            if length(yaw_or_rpy_des) == 3 && obj.AttitudeStrategy ~= attitude_strategies.FullPose
+                yaw_or_rpy_des = yaw_or_rpy_des(3);
+            end
+        
             if obj.AttitudeStrategy == attitude_strategies.FullTilt
-                rpy_des = position_controller.CalculateFullAttitude(acc_cmd, yaw_des);
+                rpy_des = position_controller.CalculateFullAttitude(acc_cmd, yaw_or_rpy_des);
             elseif obj.AttitudeStrategy == attitude_strategies.ZeroTilt
-                rpy_des = position_controller.CalculateZeroTiltAttitude(acc_cmd, yaw_des);
+                rpy_des = position_controller.CalculateZeroTiltAttitude(acc_cmd, yaw_or_rpy_des);
             elseif obj.AttitudeStrategy == attitude_strategies.MinTilt
-                rpy_des = position_controller.CalculateMinimumTiltAttitude(acc_cmd, yaw_des);
+                rpy_des = position_controller.CalculateMinimumTiltAttitude(acc_cmd, yaw_or_rpy_des);
             elseif obj.AttitudeStrategy == attitude_strategies.FixedTilt
-                rpy_des = position_controller.CalculateFixedTiltAttitude(acc_cmd, yaw_des);
+                rpy_des = position_controller.CalculateFixedTiltAttitude(acc_cmd, yaw_or_rpy_des);
             elseif obj.AttitudeStrategy == attitude_strategies.FixedAttitude
-                rpy_des = position_controller.CalculateFixedOrientationAttitude(acc_cmd, yaw_des);
+                rpy_des = position_controller.CalculateFixedOrientationAttitude(acc_cmd, yaw_or_rpy_des);
+            elseif obj.AttitudeStrategy == attitude_strategies.FullPose
+                rpy_des = yaw_or_rpy_des;
             end
         end
 

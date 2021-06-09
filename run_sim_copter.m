@@ -21,7 +21,7 @@ w = worlds.empty_world(average_wind, false);
 %w = worlds.sloped_wall_20_deg(average_wind, false);
 
 % Define the controller
-c = controllers.fully_actuated(r, attitude_strategies.FullTilt);
+c = controllers.fully_actuated(r, attitude_strategies.FullPose);
 
 % Define the simulation object
 sim = simulation(r, c, w);
