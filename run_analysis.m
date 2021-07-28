@@ -59,4 +59,15 @@ wind_force = [0; 0; 0]; % in N
 %m.VisualizeAxes();
 
 %% Analyze the dynamic manipulability
-m.AnalyzeDynamicManipulability(wind_force);
+% m.AnalyzeDynamicManipulability(wind_force);
+
+% Get the range of possible angular accelerations for the given fixed
+% linear accelerations (can be converted from applied forces knowing the 
+% mass and gravity)
+% Note that currently it can calculate the acceleration set for any given
+% combination of accelerations, but the visualization only happens
+% correctly if the three linear accelerations are given and the angular
+% accelerations are requested. The requested dimensions are specified by
+% nan values in the second input argument of the analysis function below.
+fixed_lin_accel = [1.0, 1.0, 1.0];
+m.AnalyzeDynamicManipulability6D(wind_force, [fixed_lin_accel, nan, nan, nan]);

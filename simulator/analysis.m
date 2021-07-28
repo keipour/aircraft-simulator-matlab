@@ -55,6 +55,37 @@ classdef analysis
             end
         end
 
+        function result = AnalyzeDynamicManipulability6D(mult, wind_force, fixed_values)
+            accel_6d = analyze_6d_accelerations(mult, wind_force, 3);
+            accel = accel_6d;
+            for i = 1 : 6
+                if isnan(fixed_values(i))
+                    continue
+                end
+                index = i - (length(fixed_values) - size(accel, 2));
+                accel = intersect_hyperplane_with_convex_hull(accel, fixed_values(i), index);
+            end
+            
+            % Note: Currently for drawing it assumes that the forces are 
+            % given, so it draws them as angular accelerations
+            if size(accel, 2) == 3
+                if options.DM_DrawAngularAccelerationConvexHull
+                    graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Accelerations', '\dot{\omega}');
+                end
+                graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Accelerations', '\dot{\omega}', ...
+                    false, contains(options.DM_DrawAngularAccelerationCrossSections, 'x'), ...
+                    contains(options.DM_DrawAngularAccelerationCrossSections, 'y'), ...
+                    contains(options.DM_DrawAngularAccelerationCrossSections, 'z'), ...
+                    0, zeros(3, 1));
+            end
+            
+            % Analyze the plant from the resulted force/moment space
+            result = analyze_plant_structure(mult, accel_6d(:, 4:6), accel_6d(:, 1:3), 0, zeros(3, 1));
+            if options.DM_PrintAnalysis
+                graphics.PrintDynamicManipulabilityAnalysis(result);
+            end
+        end
+        
         function result = AnalyzeDynamicManipulability(mult, wind_force)
             [accel, accel_omni_radius, contact_point] = analysis.AnalyzeAccelerationDynamicManipulability(mult, wind_force, 3);
             omega_dot = analysis.AnalyzeAngularAccelerationDynamicManipulability(mult, 3);
@@ -66,7 +97,7 @@ classdef analysis
         
         function [accel, omni_radius, contact_point] = AnalyzeAccelerationDynamicManipulability(mult, wind_force, n_steps)
             plot_z_axis_from_zero = options.DM_CrossSectionZFromZero;
-            accel = analyze_accelerations(mult, wind_force, n_steps);
+            accel = analyze_linear_accelerations(mult, wind_force, n_steps);
             [omni_radius, contact_point] = get_maximum_inscribed_sphere(accel, zeros(3, 1));
 
             draw_sphere_radius = 0;
@@ -121,7 +152,7 @@ function [sphere_radius, contact_point] = get_maximum_inscribed_sphere(X, center
     end
 end
 
-function accel = analyze_accelerations(mult, wind_force, n_steps)
+function accel = analyze_linear_accelerations(mult, wind_force, n_steps)
     n_rotors = mult.NumOfRotors;
     n_total = n_steps ^ n_rotors;
     accel = zeros(n_total, 3);
@@ -158,6 +189,27 @@ function omega_dot = analyze_angular_accelerations(mult, n_steps)
         nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
         rotor_speeds = mins + nextnum' .* steps;
         omega_dot(i, :) = mult.CalculateAngularAccelerationManipulability(rotor_speeds);
+    end
+end
+
+function accel_6d = analyze_6d_accelerations(mult, wind_force, n_steps)
+    n_rotors = mult.NumOfRotors;
+    n_total = n_steps ^ n_rotors;
+    accel_6d = zeros(n_total, 6);
+    mins = zeros(n_rotors, 1);
+    maxs = zeros(n_rotors, 1);
+    for i = 1 : n_rotors
+        maxs(i) = mult.Rotors{i}.MaxSpeed;
+        mins(i) = mult.Rotors{i}.MinSpeed;
+    end
+
+    steps = (maxs - mins) ./ (n_steps - 1);
+
+    for i = 1 : n_total
+        nextnum = dec2base(i - 1, n_steps, n_rotors) - '0';
+        rotor_speeds = mins + nextnum' .* steps;
+        accel_6d(i, 1 : 3) = mult.CalculateAngularAccelerationManipulability(rotor_speeds);
+        accel_6d(i, 4 : 6) = mult.CalculateAccelerationManipulability(wind_force, rotor_speeds);
     end
 end
 
@@ -325,4 +377,29 @@ function [settling_time, settling_index] = calc_settling_time(des, X, t, sys_typ
     else
         settling_index = 1;
     end
+end
+
+function new_accel = intersect_hyperplane_with_convex_hull(accel, fixed_value, index)
+    if isnan(fixed_value)
+        new_accel = accel;
+        return;
+    end
+    new_accel = [];
+    hull = convhulln(accel);
+    for i = 1 : size(hull, 1)
+        next_i = mod(i, size(hull, 2)) + 1;
+        p1 = accel(hull(i, :));
+        d1 = p1(index) - fixed_value;
+        p2 = accel(hull(next_i, :));
+        d2 = p2(index) - fixed_value;
+        if d1 * d2 <= 0
+            alpha = abs(d2) / (abs(d1) + abs(d2));
+            new_p = alpha * p1 + (1 - alpha) * p2;
+            new_p(index) = [];
+            new_accel = [new_accel; new_p];
+        end
+    end
+    new_hull = convhulln(new_accel);
+    unique_inds = unique(new_hull(:));
+    new_accel = new_accel(unique_inds, :);
 end

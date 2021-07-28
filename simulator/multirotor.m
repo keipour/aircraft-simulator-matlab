@@ -378,6 +378,13 @@ classdef multirotor < handle
             result = analysis.AnalyzeDynamicManipulability(obj, wind_force);
         end
         
+        function result = AnalyzeDynamicManipulability6D(obj, wind_force, fixed_values)
+            if nargin < 2
+                wind_force = zeros(3, 1);
+            end
+            result = analysis.AnalyzeDynamicManipulability6D(obj, wind_force, fixed_values);
+        end
+        
         function RBI = GetRotationMatrix(obj)
             roll = obj.State.RPY(1);
             pitch = obj.State.RPY(2);
