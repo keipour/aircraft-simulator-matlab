@@ -17,6 +17,8 @@ addpath('simulator');
 m = robots.tilted_hex(true);
 
 %% Define the current state
+% table = zeros(41, 1);
+% for i = 0 : 0
 
 position = [0; 0; 0]; % Obviously, position has no effect on manipulability
 velocity = [0; 0; 0]; % in m/s
@@ -55,8 +57,8 @@ wind_force = [0; 0; 0]; % in N
 
 %% Visualize the robot
 
-%m.Visualize();
-%m.VisualizeAxes();
+% m.Visualize();
+% m.VisualizeAxes();
 
 %% Analyze the dynamic manipulability
 % m.AnalyzeDynamicManipulability(wind_force);
@@ -69,5 +71,9 @@ wind_force = [0; 0; 0]; % in N
 % correctly if the three linear accelerations are given and the angular
 % accelerations are requested. The requested dimensions are specified by
 % nan values in the second input argument of the analysis function below.
-fixed_lin_accel = [1.0, 1.0, 1.0];
-m.AnalyzeDynamicManipulability6D(wind_force, [fixed_lin_accel, nan, nan, nan]);
+fixed_lin_accel = [1.0, 0.5, 0.25];
+res = m.AnalyzeDynamicManipulability6D(wind_force, [nan, nan, nan, fixed_lin_accel]);
+
+% table(i + 21) = res.MaximumAngularAccelerationX;
+% end
+% disp(table)

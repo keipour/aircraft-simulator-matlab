@@ -58,12 +58,15 @@ classdef analysis
         function result = AnalyzeDynamicManipulability6D(mult, wind_force, fixed_values)
             accel_6d = analyze_6d_accelerations(mult, wind_force, 3);
             accel = accel_6d;
+
+            n_removed = 0;
             for i = 1 : 6
                 if isnan(fixed_values(i))
                     continue
                 end
-                index = i - (length(fixed_values) - size(accel, 2));
+                index = i - n_removed;
                 accel = intersect_hyperplane_with_convex_hull(accel, fixed_values(i), index);
+                n_removed = n_removed + 1;
             end
             
             % Note: Currently for drawing it assumes that the forces are 
@@ -380,23 +383,21 @@ function [settling_time, settling_index] = calc_settling_time(des, X, t, sys_typ
 end
 
 function new_accel = intersect_hyperplane_with_convex_hull(accel, fixed_value, index)
-    if isnan(fixed_value)
-        new_accel = accel;
-        return;
-    end
     new_accel = [];
     hull = convhulln(accel);
     for i = 1 : size(hull, 1)
-        next_i = mod(i, size(hull, 2)) + 1;
-        p1 = accel(hull(i, :));
-        d1 = p1(index) - fixed_value;
-        p2 = accel(hull(next_i, :));
-        d2 = p2(index) - fixed_value;
-        if d1 * d2 <= 0
-            alpha = abs(d2) / (abs(d1) + abs(d2));
-            new_p = alpha * p1 + (1 - alpha) * p2;
-            new_p(index) = [];
-            new_accel = [new_accel; new_p];
+        for j = 1 : size(hull, 2)
+            next_j = mod(j, size(hull, 2)) + 1;
+            p1 = accel(hull(i, j), :);
+            d1 = p1(index) - fixed_value;
+            p2 = accel(hull(i, next_j), :);
+            d2 = p2(index) - fixed_value;
+            if d1 * d2 <= 0
+                alpha = abs(d2) / (abs(d1) + abs(d2));
+                new_p = alpha * p1 + (1 - alpha) * p2;
+                new_p(index) = [];
+                new_accel = [new_accel; new_p];
+            end
         end
     end
     new_hull = convhulln(new_accel);
