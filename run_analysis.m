@@ -71,9 +71,16 @@ wind_force = [0; 0; 0]; % in N
 % correctly if the three linear accelerations are given and the angular
 % accelerations are requested. The requested dimensions are specified by
 % nan values in the second input argument of the analysis function below.
-fixed_lin_accel = [1.0, 0.5, 0.25];
+for i = 1 : 20
+filename = sprintf('aa%02d.png', i);
+fixed_lin_accel = [0.5, 0.1 * i, 0.25];
 res = m.AnalyzeDynamicManipulability6D(wind_force, [nan, nan, nan, fixed_lin_accel]);
-
+xlim([-100 100])
+ylim([-50 50])
+zlim([-30 30])
+saveas(gcf, filename)
+close all
+end
 % table(i + 21) = res.MaximumAngularAccelerationX;
 % end
 % disp(table)

@@ -75,18 +75,18 @@ classdef analysis
                 if options.DM_DrawAngularAccelerationConvexHull
                     graphics.DrawConvexHull(accel, 'Dynamic Manipulability - Accelerations', '\dot{\omega}');
                 end
-                graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Accelerations', '\dot{\omega}', ...
-                    false, contains(options.DM_DrawAngularAccelerationCrossSections, 'x'), ...
-                    contains(options.DM_DrawAngularAccelerationCrossSections, 'y'), ...
-                    contains(options.DM_DrawAngularAccelerationCrossSections, 'z'), ...
-                    0, zeros(3, 1));
+%                 graphics.PlotCrossSections(accel, 'Dynamic Manipulability - Accelerations', '\dot{\omega}', ...
+%                     false, contains(options.DM_DrawAngularAccelerationCrossSections, 'x'), ...
+%                     contains(options.DM_DrawAngularAccelerationCrossSections, 'y'), ...
+%                     contains(options.DM_DrawAngularAccelerationCrossSections, 'z'), ...
+%                     0, zeros(3, 1));
             end
             
             % Analyze the plant from the resulted force/moment space
             result = analyze_plant_structure(mult, accel_6d(:, 4:6), accel_6d(:, 1:3), 0, zeros(3, 1));
-            if options.DM_PrintAnalysis
-                graphics.PrintDynamicManipulabilityAnalysis(result);
-            end
+%             if options.DM_PrintAnalysis
+%                 graphics.PrintDynamicManipulabilityAnalysis(result);
+%             end
         end
         
         function result = AnalyzeDynamicManipulability(mult, wind_force)
