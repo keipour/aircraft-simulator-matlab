@@ -20,23 +20,19 @@ c = controllers.fully_actuated(m, attitude_strategies.FullTilt);
 % Define the simulation object
 sim = simulation(m, c, w);
 
-%% Initial multirotor state
+%% Simulate the desired experiment with trajectory
 
-pos = [0; 0; -4];
-vel = [0; 0; 0];
-rpy = [0; 0; 0];
-omega = [0; 0; 0];
+[pos, vel, rpy, omega, traj, total_time] = experiments.vtol_simple();
+sim.SetTotalTime(total_time);
+
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
-%% Get the controller response(s)
-
-% Simulate trajectory following
-[traj, total_time] = trajectories.vtol_simple();
-sim.SetTotalTime(total_time);
 pos_thresh = 0.2;
-rpy_thresh = 3; 
+rpy_thresh = 3;
 force_thresh = 0.2;
 sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
+
+%% Get the controller response(s)
 
 % Or simulate attitude response
 %sim.SetTotalTime(10);

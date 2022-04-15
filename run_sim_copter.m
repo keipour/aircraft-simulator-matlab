@@ -16,34 +16,31 @@ r = robots.tilted_hex(true);
 
 % Define the world
 average_wind = [];
-w = worlds.empty_world(average_wind, false);
-%w = worlds.straight_wall(average_wind, false);
-%w = worlds.sloped_wall_20_deg(average_wind, false);
+%w = worlds.empty_world(average_wind, false);
+w = worlds.straight_wall(average_wind, false);
+%wall_angle = -20; w = worlds.sloped_wall(wall_angle, average_wind, false);
 
 % Define the controller
-c = controllers.fully_actuated(r, attitude_strategies.FullPose);
+c = controllers.fully_actuated(r, attitude_strategies.ZeroTilt);
 
 % Define the simulation object
 sim = simulation(r, c, w);
 
-%% Initial multirotor state
+%% Simulate the desired experiment with trajectory
 
-pos = [0; 0; -4];
-vel = [0; 0; 0];
-rpy = [0; 0; 0];
-omega = [0; 0; 0];
+%[pos, vel, rpy, omega, traj, total_time] = experiments.copter_paint_air();
+[pos, vel, rpy, omega, traj, total_time] = experiments.copter_two_points();
+%[pos, vel, rpy, omega, traj, total_time] = experiments.copter_touch_wall();
+sim.SetTotalTime(total_time);
+
 sim.Multirotor.SetInitialState(pos, vel, rpy, omega);
 
-%% Get the controller response(s)
-
-% Simulate trajectory following
-%[traj, total_time] = trajectories.copter_paint_air();
-[traj, total_time] = trajectories.copter_two_points();
-sim.SetTotalTime(total_time);
 pos_thresh = 0.2;
 rpy_thresh = 3; 
 force_thresh = 0.2;
 sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
+
+%% Or get the controller response(s)
 
 % Or simulate attitude response
 %sim.SetTotalTime(10);
@@ -57,7 +54,7 @@ sim.SimulateTrajectory(traj, pos_thresh, rpy_thresh, force_thresh);
 
 %% Draw Additional plots
 
-graphics.PlotSignalsByName(3, {'pos', 'vel', 'accel', 'rpy', 'euler deriv', 'ang accel'}, false, true);
+graphics.PlotSignalsByName(1, {'pos', 'rpy'}, false, true);
 
 %% Animate the result
 
