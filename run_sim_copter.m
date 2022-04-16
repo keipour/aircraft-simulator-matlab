@@ -19,6 +19,7 @@ average_wind = [];
 %w = worlds.empty_world(average_wind, false);
 w = worlds.straight_wall(average_wind, false);
 %wall_angle = -20; w = worlds.sloped_wall(wall_angle, average_wind, false);
+%w = worlds.pole_with_wire(average_wind, false);
 
 % Define the controller
 c = controllers.fully_actuated(r, attitude_strategies.ZeroTilt);

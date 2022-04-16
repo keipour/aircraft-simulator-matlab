@@ -18,8 +18,9 @@ r = robots.odar(false);
 
 average_wind = [];
 %w = worlds.empty_world(average_wind, true);
-w = worlds.straight_wall(average_wind, false);
-%w = worlds.sloped_wall_20_deg(average_wind, false);
+%w = worlds.straight_wall(average_wind, false);
+w = worlds.pole_with_wire(average_wind, true);
+%angle = 10; w = worlds.sloped_wall(angle, average_wind, false);
 
 %% Visualize
 
