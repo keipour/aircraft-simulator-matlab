@@ -200,7 +200,6 @@ classdef rotor < handle
             rotorZB = rotz(arm_angle + 90);
             rotorXp = rotx(inward_angle);
             rotorYpp = roty(sideward_angle);
-
             R_BR = rotorZB * rotorXp * rotorYpp;
         end
     end

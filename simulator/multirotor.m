@@ -46,7 +46,6 @@ classdef multirotor < handle
             % Constructor for the multirotor class
             % The number of rotors is obtained from the length of the
             % ArmAngles input.
-            
             % The number of rotors in the multirotor
             obj.NumOfRotors = length(ArmAngles);
             
@@ -251,7 +250,7 @@ classdef multirotor < handle
                     RPY = obj.State.RPY;
                     F = (obj.GetRotationMatrix()' * obj.NE_L) / obj.TotalMass;
                 end
- 
+                
                 accel = physics.Gravity + wind_force / obj.TotalMass + F * (abs(rotor_speeds) .* rotor_speeds);
             end
         end
@@ -513,6 +512,7 @@ classdef multirotor < handle
             for i = 1 : obj.NumOfRotors
                obj.NE_L(:, i) = obj.Rotors{i}.GetThrustForcePerUnitInput();
             end
+            
 
             % Calculate G matrix (related to body reaction moments)
             NE_G = zeros(3, obj.NumOfRotors);

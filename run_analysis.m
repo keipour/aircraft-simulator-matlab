@@ -22,7 +22,7 @@ m = robots.tilted_hex(true);
 
 position = [0; 0; 0]; % Obviously, position has no effect on manipulability
 velocity = [0; 0; 0]; % in m/s
-rpy = [0; 0; 0]; % Roll, Pitch and Yaw in degrees
+rpy = [15; 0; 0]; % Roll, Pitch and Yaw in degrees
 omega = [0; 0; 0]; % in rad/s
 
 m.SetInitialState(position, velocity, rpy, omega);
@@ -53,7 +53,7 @@ wind_force = physics.GetWindForce(air_velocity, eff_wind_area);
 % Note that there will be a non-zero wind force even if you have zero wind
 % with non-zero velocity. You can just set the force to your desired value
 % if you want so:
-wind_force = [0; 0; 0]; % in N
+wind_force = [0; 0; 1]; % in N
 
 %% Visualize the robot
 
@@ -61,8 +61,11 @@ wind_force = [0; 0; 0]; % in N
 % m.VisualizeAxes();
 
 %% Analyze the dynamic manipulability
-% m.AnalyzeDynamicManipulability(wind_force);
-
+options.DM_PrintAnalysis = false;
+tic
+result = m.AnalyzeDynamicManipulability(wind_force);
+result.AccelerationOmni
+toc
 % Get the range of possible angular accelerations for the given fixed
 % linear accelerations (can be converted from applied forces knowing the 
 % mass and gravity)
@@ -71,8 +74,8 @@ wind_force = [0; 0; 0]; % in N
 % correctly if the three linear accelerations are given and the angular
 % accelerations are requested. The requested dimensions are specified by
 % nan values in the second input argument of the analysis function below.
-fixed_lin_accel = [1.0, 0.5, 0.25];
-res = m.AnalyzeDynamicManipulability6D(wind_force, [nan, nan, nan, fixed_lin_accel]);
+% fixed_lin_accel = [0.000015, 0.000015, 0.000015];
+% res = m.AnalyzeDynamicManipulability6D([0, 0, 0]', [nan, nan, nan, fixed_lin_accel]);
 
 % table(i + 21) = res.MaximumAngularAccelerationX;
 % end
